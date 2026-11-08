@@ -1,6 +1,0 @@
-/* The panel of a data section: a ruled box. */
-.edge {
-  position: relative;
-  background: var(--fill);
-  border: var(--stroke) solid var(--line);
-}

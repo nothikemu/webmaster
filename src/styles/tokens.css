@@ -1,0 +1,135 @@
+/*
+  Design tokens. Every component reads these; nothing else in the CSS contains a raw colour.
+  Concept: a harbor town printed in four inks on aged paper.
+  Ink (sumi), paper (washi), seal red (action) and one flat hue per learning path.
+  No gradients, no glow, no glass. Depth comes from hard offset shadows and screentone dots.
+*/
+:root {
+  /* Ink and paper */
+  --ink: #1b1612;
+  --ink-2: #271f18;
+  --ink-3: #3a2f25;
+  --ink-line: #6b5a49;
+  --paper: #eadfc6;
+  --paper-hi: #f6efdc;
+  --paper-lo: #d8caa6;
+  --paper-line: #a8977a;
+
+  /* Text. Pairs are checked by `pnpm contrast`. */
+  --text: #1b1612; /* on paper */
+  --text-2: #5a4838; /* secondary text on paper */
+  --text-ink: #f6efdc; /* on ink */
+  --text-ink-2: #cfc1a1; /* secondary text on ink */
+
+  /* Action: the seal-red. Fills take paper-coloured text; the -lo and -hi steps are for text. */
+  --seal: #c9341f;
+  --seal-lo: #a42a19; /* red text on paper */
+  --seal-hi: #ff8a72; /* red text on ink */
+
+  /* Path hues. Each is one flat colour with a text-safe step for paper and for ink. */
+  --indigo: #2f4a7c;
+  --indigo-lo: #2f4a7c;
+  --indigo-hi: #9db5e6;
+  --teal: #1f7c7a;
+  --teal-lo: #14595a;
+  --teal-hi: #62d1cb;
+  --ochre: #d98a1b;
+  --ochre-lo: #7d4a00;
+  --ochre-hi: #f4bd52;
+
+  /* Feedback: always paired with an icon and words, never colour alone. */
+  --good: #2c6b35;
+  --good-hi: #8fd49a;
+  --bad: #a42a19;
+  --bad-hi: #ff8a72;
+
+  /* Illustration-only colours (not used for text) */
+  --sky-1: #f3d3a8;
+  --sky-2: #eeb485;
+  --sun: #d63a24;
+  --hill-far: #c49b7a;
+  --hill-near: #8d6a52;
+  --sea: #1f7c7a;
+  --sea-deep: #15595a;
+  --wood: #7a4f33;
+  --wood-deep: #4d2f1d;
+  --lantern: #f4bd52;
+
+  /* Active path hue. Overridden by [data-path]. */
+  --hue: var(--seal);
+  --hue-lo: var(--seal-lo);
+  --hue-hi: var(--seal-hi);
+
+  /* Type */
+  --font-display: 'Dela Gothic One', 'Arial Black', 'Helvetica Neue', Arial, sans-serif;
+  --font-ui: 'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif;
+
+  --t-xs: 0.8125rem;
+  --t-sm: 0.9375rem;
+  --t-0: 1.125rem;
+  --t-1: 1.3125rem;
+  --t-2: 1.625rem;
+  --t-3: clamp(1.9rem, 1.35rem + 1.8vw, 2.65rem);
+  --t-4: clamp(2.4rem, 1.4rem + 3.6vw, 4.1rem);
+  --t-5: clamp(3.1rem, 1rem + 8vw, 7.4rem);
+
+  /* Space (4px base) */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4.5rem;
+  --s-9: 7rem;
+  --gutter: clamp(1.1rem, 0.4rem + 3.2vw, 3.5rem);
+  --measure: 62ch;
+
+  /* Shape: one diagonal cut per corner pair, a hard offset shadow, no radii. */
+  --cut: 14px;
+  --cut-sm: 8px;
+  --bw: 2px;
+  --lift: 4px;
+
+  /* Motion */
+  --dur-press: 90ms;
+  --dur-fast: 160ms;
+  --dur-mid: 280ms;
+  --dur-slow: 520ms;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-snap: cubic-bezier(0.34, 1.45, 0.5, 1);
+
+  --focus: var(--ink);
+}
+
+[data-path='understand'] {
+  --hue: var(--indigo);
+  --hue-lo: var(--indigo-lo);
+  --hue-hi: var(--indigo-hi);
+}
+[data-path='use'] {
+  --hue: var(--teal);
+  --hue-lo: var(--teal-lo);
+  --hue-hi: var(--teal-hi);
+}
+[data-path='responsible'] {
+  --hue: var(--ochre);
+  --hue-lo: var(--ochre-lo);
+  --hue-hi: var(--ochre-hi);
+}
+
+/* Dark surface: re-points text, focus and line tokens. Components do not need to know which surface they are on. */
+[data-surface='ink'] {
+  --text: var(--text-ink);
+  --text-2: var(--text-ink-2);
+  --focus: var(--paper-hi);
+  --hue-lo: var(--hue-hi);
+  --seal-lo: var(--seal-hi);
+  --line: var(--ink-line);
+  color: var(--text);
+}
+[data-surface='paper'] {
+  --line: var(--paper-line);
+}

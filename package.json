@@ -1,36 +1,44 @@
 {
-  "name": "tsa-ai-portal",
+  "name": "tideweight",
   "version": "1.0.0",
   "private": true,
-  "description": "TSA Webmaster 2026-2027: Interactive AI Learning Portal (workspace root).",
+  "type": "module",
+  "description": "Tideweight: an interactive, game-inspired AI learning portal for grades 9-12 (TSA Webmaster 2026-27).",
   "license": "MIT",
   "packageManager": "pnpm@10.28.0",
-  "engines": {
-    "node": ">=20.19.0"
-  },
+  "engines": { "node": ">=20.19.0" },
   "scripts": {
-    "wasm": "node apps/portal/scripts/build-wasm.mjs",
-    "dev": "pnpm wasm && pnpm --filter portal dev",
-    "build": "pnpm wasm && pnpm --filter portal build",
-    "preview": "pnpm --filter portal preview",
-    "test": "pnpm test:rust && pnpm --filter portal test",
-    "test:rust": "cargo test --manifest-path crates/core/Cargo.toml",
-    "typecheck": "pnpm --filter portal typecheck",
-    "lint": "pnpm --filter portal lint",
-    "format": "prettier --write \"apps/portal/{src,tests,plugins,scripts}/**/*.{ts,tsx,css,mjs}\" \"*.{json,md}\"",
-    "smoke": "pnpm --filter portal smoke"
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "test": "vitest run",
+    "contrast": "node scripts/contrast.mjs",
+    "smoke": "node scripts/smoke.mjs"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "@swc/core"
-    ],
-    "overrides": {
-      "@swc/core": "1.12.14",
-      "@swc/wasm": "1.12.14"
-    }
+  "dependencies": {
+    "@fontsource/atkinson-hyperlegible": "5.3.0",
+    "@fontsource/barlow-condensed": "5.3.0",
+    "@fontsource/dela-gothic-one": "5.3.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "prettier": "3.9.10"
-  }
+    "@axe-core/playwright": "4.14.0",
+    "@types/node": "22.20.5",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@typescript-eslint/eslint-plugin": "8.72.1",
+    "@typescript-eslint/parser": "8.72.1",
+    "@vitejs/plugin-react": "5.2.0",
+    "eslint": "8.57.1",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "4.6.2",
+    "playwright": "1.64.1",
+    "typescript": "5.9.3",
+    "vite": "7.3.7",
+    "vitest": "3.2.7"
+  },
+  "pnpm": { "onlyBuiltDependencies": ["esbuild"] }
 }
