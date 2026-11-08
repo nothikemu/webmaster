@@ -48,15 +48,27 @@ pnpm build && pnpm smoke
 
 ## Deploy
 
-`dist/` is a complete static site. Upload that folder to any static host (GitHub Pages, Netlify, Cloudflare Pages, a school server). Nothing needs a server or a database.
+`dist/` is a complete static site. It runs on any static host (GitHub Pages, Netlify, Cloudflare Pages, a school server). Nothing needs a server or a database.
 
-The build writes a real `index.html` for every route and a `404.html`, so deep links work on any host. For a sub-folder (GitHub Pages project sites) set `BASE`:
+### GitHub Pages (set up in this repository)
+
+`.github/workflows/pages.yml` deploys the site on every push to the branches it lists. It runs lint, the tests and the contrast check first, so a failing check stops the deployment, then builds with the right base path and publishes `dist/`.
+
+One-time setting, which only the repository owner can change: **Settings, Pages, Build and deployment, Source: GitHub Actions.** After that, pushes deploy by themselves, and you can also run the workflow by hand from the Actions tab.
+
+The site is then at `https://<owner>.github.io/<repository>/`. For this repository that is **https://nothikemu.github.io/webmaster/**.
+
+To build the same sub-folder version locally:
 
 ```bash
-BASE=/webmaster/ SITE_URL=https://example.github.io pnpm build
+BASE=/webmaster/ SITE_URL=https://nothikemu.github.io pnpm build
 ```
 
-`SITE_URL` adds a `sitemap.xml`. `public/_headers` sets security headers on hosts that read it (Netlify, Cloudflare Pages).
+```bash
+SMOKE_BASE=/webmaster/ pnpm smoke
+```
+
+`SITE_URL` adds a `sitemap.xml`. GitHub Pages cannot send custom headers, so `public/_headers` only takes effect on hosts that read it (Netlify, Cloudflare Pages).
 
 **The TSA submission is one website URL that must be public and not password-protected.** Open the deployed URL in a private window before you upload it.
 

@@ -10,7 +10,7 @@ Each line maps an **official requirement** to the part of the product that meets
 | A2 | At least three distinct learning sections: fundamental concepts, practical tools and techniques, ethical use | Paths: Understand AI, Use AI, Use AI Responsibly (`/learn/*`) | `curriculum meets the TSA requirements` tests: 3 paths, 15 lessons, 5 each, mapped to the three sections | Met |
 | A3 | Interactive, gamified interface (badges, XP, progress dashboard) that visually tracks completion | XP and 10 levels, 9 badges, Logbook dashboard, path meters, lesson route with step ticks | `tests/engine.test.ts` (rules); `scripts/smoke.mjs` finishes a lesson in a real browser and checks 210 XP, persistence and reset | Met |
 | A4 | Semifinalist interview | `docs/INTERVIEW_GUIDE.md` | Team must read and be able to explain it | Team action |
-| A5 | One website URL, public, not password-protected (tsaweb.org preconference page; Texas Online Submission Guidelines) | `dist/` is a static site with no login, no accounts | Not deployed from this environment | **OPEN: deploy and test in a private window** |
+| A5 | One website URL, public, not password-protected (tsaweb.org preconference page; Texas Online Submission Guidelines) | `dist/` is a static site with no login, no accounts. Deployed by `.github/workflows/pages.yml` to https://nothikemu.github.io/webmaster/ | Sub-folder build passes the full smoke suite locally (`SMOKE_BASE=/webmaster/`). Live URL check: see the deployment note below. | **OPEN until the live URL is opened in a private window** |
 
 ## B. Texas TSA (2026-27 HS Event Guidelines and Rulebook)
 
@@ -51,4 +51,4 @@ Each line maps an **official requirement** to the part of the product that meets
 5. **Axe scans the loaded state**, not every state of every experiment.
 6. The decision-map plots in two experiments are visual. Their results are repeated in text.
 7. Image, writing and data AI tools are **not** in the Tool Atlas because their official pages were not read.
-8. The site was **not deployed** from this environment.
+8. GitHub Pages can only be switched on by the repository owner (Settings, Pages, Source: GitHub Actions). Until then the workflow cannot publish.
