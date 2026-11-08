@@ -4,6 +4,7 @@ import { PathScene } from '@/art/PathScenes';
 import { Kernel } from '@/art/Kernel';
 import { Icon, type IconName } from '@/art/Icons';
 import { LESSONS, PATHS, lessonById } from '@/content/paths';
+import { GLOSSARY } from '@/content/glossary';
 import { levelInfo, overallProgress, pathProgress, recommendNext, XP } from '@/engine/progress';
 import { useProgress } from '@/engine/store';
 import { LinkBtn, Meter, Panel } from '@/ui/primitives';
@@ -12,7 +13,7 @@ const TOOLKIT: { to: string; icon: IconName; title: string; body: string; big?: 
   { to: '/lab', icon: 'flask', title: 'Prompt Lab', body: 'Build a prompt part by part and watch a weak request turn into a strong one. A clearly labeled demonstration, not a live AI.', big: true },
   { to: '/tools', icon: 'wrench', title: 'Tool Atlas', body: 'Real AI tools with age rules, costs and limits, each stamped with the date it was checked.' },
   { to: '/scenarios', icon: 'chat', title: 'Scenarios', body: 'Six school situations. Choose, then see what each choice does to honesty, learning and privacy.' },
-  { to: '/codex', icon: 'scroll', title: 'Codex', body: '38 plain-language terms. Finish lessons to collect them.' },
+  { to: '/codex', icon: 'scroll', title: 'Codex', body: `${GLOSSARY.length} plain-language terms. Finish lessons to collect them.` },
   { to: '/certification', icon: 'seal', title: 'Final certification', body: '24 questions across all three paths. Pass at 80 percent and earn a printable certificate.' },
 ];
 

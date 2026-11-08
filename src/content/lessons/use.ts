@@ -28,6 +28,7 @@ export const useLessons: Lesson[] = [
         paragraphs: [
           'Before you open any tool for schoolwork, ask: is AI allowed on this assignment, and under what rules? A tool that is fine for brainstorming can be off limits for the graded part. Your teacher\'s instructions decide, not the tool.',
         ],
+        visual: { kind: 'flow', caption: 'Four questions before and after any tool.', steps: [{ label: 'What is the job?' }, { label: 'Which kind of tool?' }, { label: 'What do the rules allow?', note: 'assignment, class, school' }, { label: 'How will I check it?' }] },
       },
     ],
     example: {
@@ -186,6 +187,7 @@ export const useLessons: Lesson[] = [
         paragraphs: [
           'You can ask for two different versions and choose between them. Choosing is a judgment only you can make, because you know the assignment, your voice and your teacher\'s expectations.',
         ],
+        visual: { kind: 'flow', caption: 'The refine loop. You are the one who decides.', steps: [{ label: 'First answer', note: 'a draft' }, { label: 'Name what is wrong' }, { label: 'Change one thing' }, { label: 'Compare versions' }, { label: 'You choose' }] },
       },
     ],
     example: {
@@ -321,6 +323,7 @@ export const useLessons: Lesson[] = [
         paragraphs: [
           'Good study uses: ask it to quiz you from your own notes, explain a hard idea a second way, point out gaps in your outline, or play a skeptical reader. Poor uses: do the problem set for you. The thinking is the point of homework, and if the AI does it, you lose the practice.',
         ],
+        visual: { kind: 'compare', caption: 'Same tool, two very different uses.', left: { title: 'Builds your skill', items: ['Quiz me from my own notes', 'Explain it a second way', 'Find the gaps in my outline', 'Explain this error, then I fix it'] }, right: { title: 'Skips your skill', items: ['Do my problem set', 'Write my essay', 'Write my whole program', 'Hand in code I cannot explain'] } },
       },
       {
         heading: 'Brainstorm wide, choose yourself',

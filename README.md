@@ -1,60 +1,32 @@
-# Parameter: Interactive AI Learning Portal
+# Tideweight
 
-TSA Webmaster 2026-2027 entry. Three modules (Foundations, Synthesis, Ethics), gamified progress tracking, static HTML/CSS/JS output. Planning documents are in `docs/`.
+A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA Webmaster 2026-27** challenge: *design and develop an interactive Artificial Intelligence (AI) learning portal*.
 
-## Prerequisites
+- **Three learning paths** (fundamental concepts, practical tools and techniques, ethical use), 15 lessons.
+- **Real experiments**: train a neural network, teach a classifier, watch a language model predict words, audit a biased screener.
+- **Gamification that tracks real work**: XP, 10 levels, 9 badges, a progress dashboard, a final certification.
+- **Extras**: Prompt Lab, Tool Atlas (dated, sourced), Scenario simulator, Codex, optional synthesized sound.
+- All progress stays in the browser. No accounts, no server, no tracking.
 
-- Node.js 20.19 or newer
-- pnpm 10 (`corepack enable && corepack prepare pnpm@10.28.0 --activate`)
-- For the WebAssembly kernels (optional; without them the site uses its TypeScript kernels):
-  - Rust stable: `curl https://sh.rustup.rs -sSf | sh`
-  - `rustup target add wasm32-unknown-unknown`
-  - `cargo install wasm-pack --locked`
-- For the smoke test: a Chromium build (`pnpm --filter portal exec playwright install chromium`)
+> **Read before submitting:** [`docs/COMPLIANCE_CHECKLIST.md`](docs/COMPLIANCE_CHECKLIST.md). The Texas TSA generative-AI policy and the Webmaster event rules need your advisor's confirmation. Details are in [`docs/RESEARCH_2026-27.md`](docs/RESEARCH_2026-27.md), section C.
 
-## Install
+## Run it
+
+Needs Node 20.19 or newer and pnpm 10.
 
 ```bash
 pnpm install
 ```
 
-## Run (development)
-
 ```bash
 pnpm dev
 ```
 
-## Build
+## Build and check
 
 ```bash
 pnpm build
 ```
-
-Require the WebAssembly build to succeed (fail instead of falling back):
-
-```bash
-REQUIRE_WASM=1 pnpm build
-```
-
-Build for a sub-path or with a canonical URL (adds `sitemap.xml`):
-
-```bash
-BASE=/my-site/ SITE_URL=https://example.org pnpm build
-```
-
-Skip obfuscation (useful when debugging):
-
-```bash
-NO_OBFUSCATE=1 pnpm build
-```
-
-## Preview the built site
-
-```bash
-pnpm preview
-```
-
-## Test
 
 ```bash
 pnpm test
@@ -65,47 +37,45 @@ pnpm lint
 ```
 
 ```bash
-pnpm typecheck
+pnpm contrast
 ```
 
-Browser smoke test (serves `dist/` itself; build first):
+End-to-end browser test of the built site (routes, a full lesson, persistence, keyboard, and an axe accessibility scan at 1280px and 390px). It needs a Chromium; set `CHROMIUM_PATH` if Playwright's own is not installed:
 
 ```bash
-pnpm smoke
+pnpm build && pnpm smoke
 ```
-
-Useful smoke options: `SMOKE_MIN_FPS=45`, `SMOKE_QUALITY=3`, `SMOKE_ONLY="axe"`, `SMOKE_NO_WEBGPU=1`, `CHROMIUM_PATH=/path/to/chrome`.
 
 ## Deploy
 
-`apps/portal/dist/` is a complete static site. Upload that folder to any static host.
+`dist/` is a complete static site. Upload that folder to any static host (GitHub Pages, Netlify, Cloudflare Pages, a school server). Nothing needs a server or a database.
 
-For `SharedArrayBuffer` (an optional speed-up) the host should send the headers in `_headers` (Netlify and Cloudflare Pages read that file as is). Without them the site works and uses its fallback.
-
-```bash
-pnpm build && npx wrangler pages deploy apps/portal/dist
-```
+The build writes a real `index.html` for every route and a `404.html`, so deep links work on any host. For a sub-folder (GitHub Pages project sites) set `BASE`:
 
 ```bash
-pnpm build && npx netlify deploy --prod --dir apps/portal/dist
+BASE=/webmaster/ SITE_URL=https://example.github.io pnpm build
 ```
 
-### GitHub Pages
+`SITE_URL` adds a `sitemap.xml`. `public/_headers` sets security headers on hosts that read it (Netlify, Cloudflare Pages).
 
-Build for the repository sub-path, then publish `apps/portal/dist` to a `gh-pages` branch:
+**The TSA submission is one website URL that must be public and not password-protected.** Open the deployed URL in a private window before you upload it.
 
-```bash
-REQUIRE_WASM=1 BASE=/tsa-webmaster/ SITE_URL=https://nothikemu.github.io pnpm build
-```
+## How it is organized
 
-```bash
-git worktree add --detach /tmp/pages-wt HEAD && cd /tmp/pages-wt && git checkout --orphan gh-pages && git rm -rf -q . && cp -a /path/to/repo/apps/portal/dist/. . && git add -A && git commit -m "Deploy" && git push -f origin gh-pages
-```
+| Path | What lives there |
+| --- | --- |
+| `src/content/` | All teaching content as plain data: lessons, glossary, tools, scenarios, certification questions |
+| `src/engine/` | The rules of XP, levels and badges (`progress.ts`, pure and tested), saving (`persistence.ts`), the store |
+| `src/widgets/` | The interactive experiments. The maths lives in `widgets/logic/` with no React in it |
+| `src/art/` | Original SVG illustration: scenes, the character Kernel, badge emblems, icons |
+| `src/ui/`, `src/pages/` | Components and pages |
+| `src/styles/` | Design tokens and CSS |
+| `src/audio/` | Synthesized interface sounds (Web Audio, off by default) |
+| `tests/`, `scripts/` | Unit tests, the contrast checker, the browser smoke test |
+| `docs/` | Research, design system, compliance checklist, interview guide |
 
-Then, once: repository **Settings, Pages, Source: Deploy from a branch, branch `gh-pages`, folder `/ (root)`**. Pages cannot send the `_headers` isolation headers, so the site uses its transferable-buffer fallback there.
+Dependencies are deliberately few: React, plus three self-hosted open-licensed fonts. The build tool and test tools are development-only.
 
-Test a sub-path build locally: `SMOKE_BASE=/tsa-webmaster/ SMOKE_ISOLATION=0 pnpm smoke`
+## Licenses and credits
 
-## URL switches (for testing)
-
-`?renderer=webgl2|webgpu`, `?compute=webgpu|webgl2|wasm-worker|wasm-main|ts`, `?quality=0..3`
+Fonts: Dela Gothic One, Barlow Condensed, Atkinson Hyperlegible (SIL Open Font License 1.1). Code: MIT. Artwork and sounds are original and generated by code in this repository. See the site's Credits page for the full list and the AI-assistance disclosure.

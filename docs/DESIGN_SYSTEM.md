@@ -1,102 +1,81 @@
-# Design system: Operator client
+# Design system and art direction
 
-Parameter looks like the front end of a competitive game, built for reading and for doing. One dark screen runs the full width of the window. Art fills it. The interface is thin lines and small capitals. Red is the call to action, and each module grades its whole screen in one hue (teal, violet or red). Light plates carry the reading. The reasoning, sources and what could not be checked are in [DESIGN_RESEARCH.md](DESIGN_RESEARCH.md).
+## The idea
 
-## What makes something look clickable
+**Tideweight is a harbor town printed in four inks on aged paper.** You learn how AI works by walking its three places: the Loom House (how models are woven from data), the Foundry Docks (using AI tools well), and the Beacon (seeing risk and keeping judgment). A small round automaton, **Kernel**, in a woven travelling hat, guides you.
 
-| Control | Look |
+The interface borrows the *discipline* of a premium competitive-game menu: precise rectilinear panels, diagonal cut corners, hard offset shadows, buttons that visibly press, very few colours. The illustration borrows the mood of hand-inked print and Japanese graphic design: flat colour, heavy ink outlines, screentone dots, wave patterns. Neither is copied.
+
+## What we deliberately avoided
+
+The brief prohibits Y2K, Frutiger Aero, acid, vapor and synthwave looks, cyberpunk, liquid glass, glassmorphism, neon gradients, purple-and-blue AI palettes, glowing borders, gradient blobs, floating spheres, generic SaaS dashboards, stock-looking illustration and random HUD decoration. Concretely:
+
+- **No gradients** used as decoration. The only gradient-like CSS is `repeating-linear-gradient` for hatching on disabled and wrong states.
+- **No glow, blur, glass or transparency effects.** Depth is a hard 4px offset shadow.
+- **No purple or violet.** Path 1 uses a muted indigo (a traditional dye colour) as one flat colour, never in a gradient and never glowing.
+- **No HUD ornament** (scanlines, graticules, corner brackets). The earlier version of this project had these; they were removed.
+- **No identical card grid.** Every page has its own composition (see below).
+- The earlier version used VALORANT's exact palette (`#0a121a`, `#ff4655`, `#ece8e1`). That has been replaced entirely.
+
+## Colour (`src/styles/tokens.css`)
+
+| Role | Token | Value | Use |
+| --- | --- | --- | --- |
+| Ink | `--ink` | `#1b1612` | Text on paper, panels, outlines |
+| Paper | `--paper`, `--paper-hi`, `--paper-lo` | `#eadfc6`, `#f6efdc`, `#d8caa6` | Page, raised surfaces, shaded surfaces |
+| Seal | `--seal` | `#c9341f` | The one action colour: primary buttons, selected keys |
+| Path 1 | `--indigo` | `#2f4a7c` | Understand AI |
+| Path 2 | `--teal` | `#1f7c7a` | Use AI |
+| Path 3 | `--ochre` | `#d98a1b` | Use AI Responsibly |
+
+Each hue has text-safe steps (`-lo` for paper, `-hi` for ink). `pnpm contrast` reads the tokens and checks every text and key UI pair against WCAG 2.2 AA. Colour never carries meaning alone: right and wrong show words and icons, locked badges are hatched and dashed, status is written out.
+
+## Type
+
+| Role | Face | Why |
+| --- | --- | --- |
+| Display | Dela Gothic One | A heavy Japanese-poster-style display face with real personality. Used for headlines only. |
+| Interface | Barlow Condensed 600/700 | Condensed, precise, game-menu feel for buttons, keys, labels |
+| Body | Atkinson Hyperlegible 400/700 | Designed by the Braille Institute for legibility |
+
+All three are SIL OFL, self-hosted, Latin subset. Body text is 18px with 1.6 line height and 62ch measure.
+
+## Shape and components
+
+- **One shape language:** a diagonal cut on two opposite corners (`--cut`), no border radii. Panels draw a real 2px ink border on the chamfered shape (`clip-path` plus an inset layer).
+- **Buttons** (`.btn`): a face on a hard offset shadow. *Hover* lifts the face. *Pressed* sinks it onto the shadow. *Focus* is a 3px outline offset 3px. *Disabled* is hatched with `not-allowed`. Primary is seal red, secondary is paper, quiet is shaded. Forward buttons carry an arrow that slides. At least 48px tall.
+- **Keys** (`.key`): toggles and tabs. The selected one is inverted with a red edge and uses `aria-pressed` or `aria-current`.
+- **Options** (`.option`): answers are full-width keys. The checked state, the right state and the wrong state are separate and tested visually.
+- **Meters**: segmented, with the number always printed beside them.
+- **Disclosures**: a visible plus/minus key.
+
+## Page compositions
+
+| Page | Composition |
 | --- | --- |
-| Button (`.btn`) | A filled face with a 3px edge under it. Primary is red, the default is a light plate, the quiet one (`.btn-ghost`) is a dark key. Forward buttons carry an arrow. Reached: the face lifts 2px and brightens. Pressed: it sinks onto its edge. Disabled: hatched, flat, `not-allowed` cursor |
-| Key (`.nav-list a`, `.chip`, `.segmented-item`, `.stepper a`, glossary letters) | The same anatomy at a smaller size. The one that is on (current section, chosen option, pressed chip) is a light plate with a red edge |
-| Answer (`.option`) | A key that spans the row, with a bar on its left that turns to the hue when reached; a chosen answer is a light plate; a right answer is the hue; a wrong one is hatched red |
-| Row in a list (`.path li`) | A key with the state shape, the title, the state in words and an arrow cap at its end; the whole row is the link |
-| Card that is a link (`.realm`, `.cat-path`) | Rises when reached, its frame closes in the hue, and the button on it presses with it |
-| Link in running text | Underlined always; the underline thickens when reached |
-| Text link with an arrow (`.link-arrow`) | Underlined in red, with an arrow that moves when reached |
-| Slider | A ruled track filled in the hue, and a light block for a knob; the cursor is a grab hand |
+| Home | Full-bleed illustrated harbor with the headline on a chamfered paper panel. Staggered path cards (not a row). A dashed route for how a lesson works. An uneven toolkit grid with one tall card. A dark band with Kernel. |
+| Chart (`/learn`) | Three alternating districts, each an illustration beside a route of lessons with stops and status. |
+| Lesson | Dark hero with the path's scene, a sticky rail with the objective and step tracker, alternating text and diagram beats, an experiment bench, a check, a seal. |
+| Prompt Lab | A workbench: a five-part form beside a side-by-side comparison. |
+| Tool Atlas | A field guide of dossier cards with date stamps and expandable access facts. |
+| Scenarios | Staggered case files, then a single play surface with three meters. |
+| Logbook | Level block, next step, stats, path meters, a table, a badge shelf, a chart, settings. |
 
-No control is bare text or an outline alone. Targets are at least 44px. The focus ring is 3px white on the dark screen and 3px ink on light plates, offset past the edge so it is never clipped. The skip link appears under the sticky header when focused, so it overlaps nothing.
+## Artwork
 
-## Tokens
+Everything is hand-authored SVG in `src/art/`, in one language: 3 to 3.5px round ink outlines, flat fills from a fixed palette, hard offset shadows, screentone dots (`#tone`) and wave patterns (`#waves`) defined once in `Defs.tsx`.
 
-All in `src/styles/tokens.css`. Components use tokens, not raw values.
+- `Harbor.tsx`: the hero scene with three landmarks and Kernel.
+- `PathScenes.tsx`: three scenes, one per path (a loom whose threads form a network, a foundry with a PROMPT sign, a lighthouse).
+- `Kernel.tsx`: the guide, in four moods from the same parts.
+- `Medals.tsx`: nine badge emblems, each a different glyph for a real achievement. Locked medals are hatched and dashed.
+- `Icons.tsx`: 32 icons on one pen weight.
+- `Diagram.tsx`: one renderer for every lesson diagram.
 
-| Group | Tokens | Rule |
-| --- | --- | --- |
-| Screen | `--navy-0 #05090e`, `--navy #0a121a`, `--navy-2 #101b26` (panels), `--navy-3`, `--navy-4` (keys) | The page is `--navy`; panels are lighter; keys lighter still |
-| Plates | `--paper #ece8e1`, `--white #f6f3ee`, `--ink #0a121a`, `--ink-2`, `--ink-3` | Reading text and winning results; dark type on a light ground |
-| Text | `--text #ece8e1`, `--text-2 #c9c5bd`, `--text-3 #a0a7b0`, `--line #5a6773` | 14.5:1, 10.3:1, 7.2:1 on the screen; the line is 3.3:1 |
-| Accent | `--red #ff4655`, `--red-lo #b3232f`, `--red-hi #ff9aa2` | One call-to-action colour. `--red-hi` is small red text on the dark screen |
-| Hue | `--m`, `--m-lo`, `--m-hi`, `--m-text`, `--m-ink`, set by `data-module` | Teal `#3aa99f`, violet `#7e74d8`, red `#ff4655`. `--m-ink` is the hue dark enough for a light plate (5.9:1 to 7.1:1) |
-| Shape | `--c` (chamfer 6 to 18px), `--edge 3px`, every radius 0 | One cut corner, a flat edge under a pressable thing |
-| Type | `--font-display`, `--font-hud`, `--font-body`; body 17px | See below |
-| Layout | `--gutter` (fluid, 20 to 72px), `--max: none` | Nothing is held in a centred column |
+Every illustration has a text description (`role="img"` with `aria-label`) or is hidden from assistive technology when decorative. **No raster images, no stock, no image generators were used.**
 
-`[data-surface='paper']` re-points the surface and text tokens for a light plate. `[data-surface='ink']` is the default and a no-op.
+## Motion and sound
 
-### Type
-
-Two typefaces, SIL Open Font License 1.1, bundled as `@fontsource` packages and served from this site, Latin subset only (`src/styles/fonts.css`), each with a metric-matched fallback.
-
-| Role | Face | Used for |
-| --- | --- | --- |
-| Display and HUD | Big Shoulders Display (variable) | Headlines (weight 700, tight, capitals), labels, buttons, numerals, small headings |
-| Text | Barlow (400, 500, 600, 700) | Reading, lesson copy, objectives, controls |
-
-Static (no JavaScript) pages keep headings in mixed case; the smoke test asserts the exact heading text.
-
-## Which picture is built from which state
-
-| Picture | Where | Reads |
-| --- | --- | --- |
-| Hero art (`HeroArt`) | Home | Three screens side by side. The label gives lessons opened and overall progress as text |
-| Lattice (`Lattice`) | Foundations banner, title screen, catalog, medal | The swarm's real layer sizes and positions, projected in perspective. Nodes light from the output layer back as the module's percentage grows; lit nodes are joined by lit links |
-| Console (`Console`) | Synthesis | Four faders at the mean of the presets you have applied (halfway if none), a lamp above each dial lit once its preset has been applied |
-| Lens (`Lens`) | Ethics | A bracket per vulnerability; an inspected one is lit and crossed |
-| Medals (`src/assets/badges/*.svg`) | Overview, Achievements | A shield with the module's motif, generated by a script and committed as plain SVG; locked is grey |
-| Curriculum map (`ui/CurriculumMap.tsx`) | Home, Progress | Per lesson mastery, check and challenge done, badge earned. State is shape and fill, never colour alone; every node is a link with a full label |
-| Record, bars, XP history, calendar, heatmap | Home, Progress | `progress`, `xpByDay`, `activeDays`, `streak`, per-lesson mastery. Calendar cells are an empty box, a third, two thirds and a full block: the fill, not the hue, says which |
-
-The key art (`ui/KeyArt.tsx`) is a seeded render: a faceted surface graded to the hue and lit from the upper right, light shafts, haze, a vignette, scanlines, a dotted graticule, rulers with numbered ticks, readout columns, corner brackets, then the subject. It is generated, not hand-drawn. Each picture has a text label; the text inside it is decorative.
-
-## 3D scenes
-
-The swarm is flat discs on point sprites (opaque, depth-tested, alpha to coverage on an MSAA canvas) in teal, joined by thin teal links; touched or displaced discs turn red. The Ethics sphere is three flat dark-red bands with a pale-red rim under a pale-red wireframe; marker deformations and the warning colour (pale gold) come from the vertex shader. The stage is flat `#0b131b`. There is no bloom, aberration or grain.
-
-## Motion
-
-Everything below is an enhancement, started by `ui/fx.ts` only when motion is welcome (`html[data-fx='on']`). With reduced motion the page is complete and still.
-
-| Effect | How | Limits |
-| --- | --- | --- |
-| Reveals | `data-reveal` elements slide up 28px on the snap curve | CSS hides them only while `data-fx='on'`; print shows everything |
-| Page changes | A quick wipe from the left (clip-path on the new page); header and hub keep their own transition names | When the browser has `startViewTransition` |
-| Headline | Each line rises out of a mask | On load only |
-| Controls | Lift 2px when reached, sink onto the edge when pressed | Transform only |
-| Banner art | Scales 5% when its card is reached | |
-| Loading | A red square turning a quarter at a time | The pre-rendered page replaces it after 1.4 seconds at the latest |
-
-## Layout
-
-- The header, hero art, module banners, record band, maps and footer run the full width. Running text is held to about 64 characters.
-- Each module title screen is its picture across the window, the title over it, the stepper as keys under the title. Below it the overview is composed differently for each module (Foundations: reading left, swarm right and held in view; Synthesis: objective, the wide console, then sequence and badge; Ethics: the sphere left, reading right).
-- Lessons: a light reading plate on the left, the instrument on the right and held in view. Below 1180px everything is one column and the instrument comes first.
-- The DOM is in reading order. Nothing scrolls sideways at 320px or at 400% zoom.
-
-## Failure states
-
-- If WebGL or WebGPU cannot start, or a scene neither starts nor fails within 15 seconds, `SceneCanvas` shows an explanation, the reason, and the text alternative of the centerpiece. It never sits on a permanent loading state.
-- If a lazy module chunk stalls for 15 seconds, `StageLoading` shows a message with a reload action.
-- A render error is caught by the error boundary and shows a recovery page.
-- Empty states state the fact plainly and the next-step recommendation always links to a concrete place.
-
-## Accessibility notes
-
-- Landmarks: skip link, `header`, `nav` (with `aria-current` on the active section), `main`, `footer`. One `h1` per page; focus moves to it on every route change.
-- The five sections are always in the top bar on wide screens; below 880px they are a disclosure button with `aria-expanded`; Escape closes it and returns focus.
-- State is never carried by colour alone: shape, word, tally, stamp, fill amount or position as well. A wrong answer is hatched and written; a right answer is filled and written.
-- Every picture has a text alternative: the key art's label, the record, the map summary, the chart summaries, the centerpiece description and the "Text alternative" disclosure on each stage. Decorative layers are `aria-hidden`.
-
-## Checks
-
-The existing suites (`pnpm test`, `pnpm lint`, `pnpm typecheck`, `scripts/smoke.mjs` including axe on seven routes) and scripted browser probes: the rendered-pixel contrast probe (text inside labelled pictures excluded, as above), an overflow and target-size audit at 1440, 390 and 320px, an axe sweep across 17 routes in three saved states, reflow at six widths, quiz and challenge flows, persistence, and the WebGL-failure fallback. Real screen-reader and physical-device testing have not been done and remain on the team's checklist.
+- Motion is small and purposeful: button press, panel lift, toast slide-in, a pop on badge reveal. Nothing moves on scroll and no content is hidden until it animates in.
+- `prefers-reduced-motion` reduces all animation and transition durations to near zero.
+- **Sound** is synthesized with the Web Audio API: a plucked, bell-like pentatonic palette. Off by default, one clear button in the header, volume in the Logbook, no autoplay (the audio context is only created after the click), and every sound is paired with a visible change.

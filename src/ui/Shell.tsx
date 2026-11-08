@@ -72,9 +72,9 @@ export function Header() {
           </ul>
         </nav>
         <div className="site-header__tools">
-          <Link to="/logbook" className="xp-chip" aria-label={`Level ${lv.level}, ${lv.name}, ${xp} XP. Open your logbook.`}>
-            <span className="xp-chip__lv">Lv {lv.level}</span>
-            <span className="xp-chip__xp">{xp} XP</span>
+          <Link to="/logbook" className="xp-chip">
+            <span className="xp-chip__lv">Lv {lv.level}</span> <span className="xp-chip__xp">{xp} XP</span>
+            <span className="visually-hidden">, {lv.name}. Open your logbook.</span>
           </Link>
           <button
             type="button"

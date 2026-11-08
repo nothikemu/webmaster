@@ -110,7 +110,7 @@ export default function Logbook() {
 
       <section aria-labelledby="lessons-h" className="lb-sec">
         <h2 id="lessons-h">Every lesson</h2>
-        <div className="table-wrap">
+        <div className="table-wrap" tabIndex={0} role="region" aria-label="Every lesson and its progress">
           <table>
             <thead><tr><th scope="col">Lesson</th><th scope="col">Learn</th><th scope="col">Try</th><th scope="col">Check</th><th scope="col">Status</th></tr></thead>
             <tbody>

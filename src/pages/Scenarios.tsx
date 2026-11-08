@@ -112,6 +112,8 @@ function Play({ scenario, onExit }: { scenario: Scenario; onExit: () => void }) 
                 <label key={n} className={`option${state ? ` option--${state}` : ''}`}>
                   <input type="radio" name={`sc-${step}`} checked={chosen === n} disabled={chosen !== null} onChange={() => lock(n)} />
                   <span>{c.text}</span>
+                  {state === 'right' ? <span className="option__mark"><Icon name="check" /> Good call</span> : null}
+                  {state === 'wrong' ? <span className="option__mark"><Icon name="x" /> Costly</span> : null}
                 </label>
               );
             })}

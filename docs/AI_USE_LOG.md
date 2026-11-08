@@ -12,6 +12,11 @@ Policy source: https://texastsa.org/wp-content/uploads/2026/10/Copyright-AI-and-
 | --- | --- | --- | --- |
 | 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Imported the existing "Parameter" portal from `nothikemu/tsa-webmaster@3c3e399` into this repository unchanged. **Who or what wrote that baseline is not recorded in that repository; the team must confirm and log it.** | all baseline files |
 | 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Research support: fetched and summarized official TSA, Texas TSA, AI4K12, CSTA, Common Sense, UNESCO and NIST pages; found the Texas AI policy; wrote the research report. | `docs/RESEARCH_2026-27.md` |
+| 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Audited the imported baseline and replaced it: removed the 3D/WASM/obfuscation stack and old docs; wrote the new app architecture. | `package.json`, `vite.config.ts`, `src/engine/*`, `docs/AUDIT_BASELINE.md` |
+| 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Wrote all lesson text, experiment code, codex, scenarios, certification questions and Tool Atlas entries. Tool facts came from the vendor pages and search summaries listed in the research report. **Facts have not been human-verified.** | `src/content/*`, `src/widgets/*` |
+| 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Wrote the illustration code (scenes, the character Kernel, badge emblems, icons), the design system CSS and the synthesized sound code. | `src/art/*`, `src/styles/*`, `src/audio/*` |
+| 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Wrote the tests, the contrast checker and the browser smoke test, ran them, and fixed the problems they found. | `tests/*`, `scripts/*` |
+| 2026-11-08 | Claude Code (Claude Sonnet 5.5) | Wrote the README and the docs. The team log (`DEV_LOG.md`) was left blank for the team. | `README.md`, `docs/*` |
 
 ## How to keep this log honest
 

@@ -25,13 +25,13 @@ export function About() {
       </section>
       <section className="prose" aria-labelledby="research">
         <h2 id="research">How the content was researched</h2>
-        <p>The lessons follow published AI education guidance, and every lesson names the idea it serves.</p>
-        <ul>
-          <li>{ext('https://ai4k12.org/', 'AI4K12: Five Big Ideas in AI')}: perception, representation and reasoning, learning, natural interaction, societal impact.</li>
-          <li>{ext('https://csteachers.org/ai-learning-priorities-for-all-k-12-students-about/', 'CSTA and AI4K12: AI learning priorities for all K-12 students')}: Humans and AI, Representation and Reasoning, Machine Learning, Ethical AI System Design and Programming, Societal Impacts of AI.</li>
-          <li>{ext('https://www.commonsense.org/education/digital-literacy/grades-9-12/ai-literacy', 'Common Sense Education: AI literacy, grades 9-12')}: checking whether information is true, and creative work with AI.</li>
-          <li>{ext('https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research', 'UNESCO: guidance for generative AI in education and research')}: human-centred use, data privacy, age-appropriate use.</li>
-          <li>{ext('https://www.nist.gov/itl/ai-risk-management-framework', 'NIST AI Risk Management Framework')}: reliability, trustworthiness and accountability.</li>
+        <p>The lessons follow published AI education guidance, and every lesson names the idea it serves. References are in APA style. “n.d.” means the page shows no date.</p>
+        <ul className="refs">
+          <li>AI4K12. (n.d.). <em>Five big ideas in AI</em>. {ext('https://ai4k12.org/', 'https://ai4k12.org/')}</li>
+          <li>Computer Science Teachers Association &amp; AI4K12. (n.d.). <em>Identifying AI priorities for all K-12 students</em>. {ext('https://csteachers.org/ai-learning-priorities-for-all-k-12-students-about/', 'https://csteachers.org/ai-learning-priorities-for-all-k-12-students-about/')}</li>
+          <li>Common Sense Education. (n.d.). <em>AI literacy: Digital literacy and well-being curriculum, grades 9-12</em>. {ext('https://www.commonsense.org/education/digital-literacy/grades-9-12/ai-literacy', 'https://www.commonsense.org/education/digital-literacy/grades-9-12/ai-literacy')}</li>
+          <li>UNESCO. (n.d.). <em>Guidance for generative AI in education and research</em>. {ext('https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research', 'https://www.unesco.org/en/articles/guidance-generative-ai-education-and-research')}</li>
+          <li>National Institute of Standards and Technology. (2023, January 26). <em>Artificial intelligence risk management framework (AI RMF 1.0)</em>. {ext('https://www.nist.gov/itl/ai-risk-management-framework', 'https://www.nist.gov/itl/ai-risk-management-framework')}</li>
         </ul>
         <h3>Real cases used in lessons</h3>
         <ul>

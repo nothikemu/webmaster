@@ -1030,3 +1030,30 @@
     opacity: 0;
   }
 }
+
+/* Space before the footer, and a few small composition fixes. */
+.page,
+.lesson-body {
+  padding-bottom: var(--s-8);
+}
+.lab-compare {
+  align-items: start;
+}
+.play__set {
+  margin-top: var(--s-3);
+}
+.play__head h2 {
+  margin-bottom: 0;
+}
+
+/* Reference lists: hanging indent, as citation styles expect. */
+.refs {
+  list-style: none;
+  padding: 0;
+}
+.refs li {
+  padding-left: 2rem;
+  text-indent: -2rem;
+  max-width: var(--measure);
+  overflow-wrap: anywhere;
+}

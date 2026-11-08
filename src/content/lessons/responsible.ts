@@ -92,6 +92,7 @@ export const responsibleLessons: Lesson[] = [
           'Be extra careful when you see exact page numbers, quotations, statistics or legal and scientific citations you cannot find, claims that contradict each other, or confident answers about very obscure topics.',
           'Asking the same question a different way and comparing answers can expose a shaky claim. So can asking where a claim came from, then checking.',
         ],
+        visual: { kind: 'compare', caption: 'What to notice, and what to do about it.', left: { title: 'Warning signs', items: ['A citation you cannot find', 'An exact number with no source', 'A quotation with no origin', 'Confidence about a very obscure topic'] }, right: { title: 'Your response', items: ['Search for the source', 'Check a reliable reference', 'Find where it was really said', 'Ask a teacher or expert'] } },
       },
       {
         heading: 'What to do instead of trusting',
@@ -240,6 +241,7 @@ export const responsibleLessons: Lesson[] = [
         paragraphs: [
           'Names with details, addresses, phone numbers, ID numbers, health information, photos of people, passwords and API keys, and anything private about someone else are personal or sensitive. School records are protected for a reason.',
         ],
+        visual: { kind: 'compare', caption: 'A quick test before you paste.', left: { title: 'Fine to share', items: ['A general question', 'Public text you will cite', 'Your own draft, with identifying details removed'] }, right: { title: 'Keep out', items: ['Passwords and API keys', 'Addresses and phone numbers', 'Student IDs and records', 'Other people\'s private messages'] } },
       },
       {
         heading: 'Safer habits',
@@ -327,6 +329,7 @@ export const responsibleLessons: Lesson[] = [
         paragraphs: [
           'If an AI error ends up in your work, it is still your error. For decisions that affect people, such as grades, health, safety or money, a person who can explain the decision should be accountable for it. Keeping a human in the loop is how trustworthy systems are built.',
         ],
+        visual: { kind: 'flow', caption: 'Responsible use, start to finish.', steps: [{ label: 'Use the tool' }, { label: 'Check the facts' }, { label: 'Credit sources and say what you used' }, { label: 'You decide and answer for it' }] },
       },
     ],
     example: {

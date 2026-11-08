@@ -74,7 +74,7 @@ export function SpamLearner({ onScore }: WidgetProps) {
         </div>
       ) : (
         <div className="stack" role="status">
-          <div className="table-wrap">
+          <div className="table-wrap" tabIndex={0} role="region" aria-label="Results on eight new messages">
             <table>
               <caption className="visually-hidden">Results on eight new messages</caption>
               <thead>
@@ -296,11 +296,13 @@ export function NetPlayground({ onScore }: WidgetProps) {
           <Btn variant="primary" onClick={() => train(100)}>Train 100 steps</Btn>
           <Btn variant="quiet" icon="reset" onClick={() => reset()}>Reset</Btn>
         </div>
-        <dl className="stats" role="status">
-          <div><dt>Steps trained</dt><dd>{net.epochs}</dd></div>
-          <div><dt>Loss (lower is better)</dt><dd>{net.loss(data).toFixed(3)}</dd></div>
-          <div><dt>Accuracy</dt><dd>{acc}%</dd></div>
-        </dl>
+        <div role="status">
+          <dl className="stats">
+            <div><dt>Steps trained</dt><dd>{net.epochs}</dd></div>
+            <div><dt>Loss (lower is better)</dt><dd>{net.loss(data).toFixed(3)}</dd></div>
+            <div><dt>Accuracy</dt><dd>{acc}%</dd></div>
+          </dl>
+        </div>
         {hard ? (
           <Callout icon="target"><p>Goal: reach <strong>90%</strong>. Try training with 1 hidden unit, then with 4 or 5. Notice what changes.</p></Callout>
         ) : (
@@ -384,10 +386,10 @@ export function NextToken({ onScore }: WidgetProps) {
         <ol className="cands">
           {cands.map((c) => (
             <li key={c.token}>
-              <button type="button" className="cand" onClick={() => choose(c.token)} aria-label={`Add "${c.token}", ${Math.round(c.p * 100)} percent`}>
-                <span className="cand__tok">{c.token}</span>
-                <span className="cand__bar" style={{ width: `${Math.max(4, c.p * 100)}%` }} />
-                <span className="cand__p">{Math.round(c.p * 100)}%</span>
+              <button type="button" className="cand" onClick={() => choose(c.token)}>
+                <span className="visually-hidden">Add </span>
+                <span className="cand__tok">{c.token}</span> <span className="cand__p">{Math.round(c.p * 100)}%</span>
+                <span className="cand__bar" aria-hidden="true" style={{ width: `${Math.max(4, c.p * 100)}%` }} />
               </button>
             </li>
           ))}
@@ -468,12 +470,14 @@ export function BiasAudit({ onScore }: WidgetProps) {
             </label>
           ))}
         </fieldset>
-        <dl className="stats" role="status">
-          <div><dt>Neighborhood A picked</dt><dd>{a.rateA}%</dd></div>
-          <div><dt>Neighborhood B picked</dt><dd>{a.rateB}%</dd></div>
-          <div><dt>Top-skill picked</dt><dd>{a.qualified} of {PICKS}</dd></div>
-          <div><dt>Audit score</dt><dd>{a.score}</dd></div>
-        </dl>
+        <div role="status">
+          <dl className="stats">
+            <div><dt>Neighborhood A picked</dt><dd>{a.rateA}%</dd></div>
+            <div><dt>Neighborhood B picked</dt><dd>{a.rateB}%</dd></div>
+            <div><dt>Top-skill picked</dt><dd>{a.qualified} of {PICKS}</dd></div>
+            <div><dt>Audit score</dt><dd>{a.score}</dd></div>
+          </dl>
+        </div>
         <Callout icon={a.score >= 80 ? 'check' : 'warning'} tone={a.score >= 80 ? 'good' : 'bad'}>
           <p>
             {a.score >= 80
@@ -484,7 +488,7 @@ export function BiasAudit({ onScore }: WidgetProps) {
           </p>
         </Callout>
       </div>
-      <div className="table-wrap">
+      <div className="table-wrap" tabIndex={0} role="region" aria-label="The twelve applicants and who the model picks">
         <table>
           <caption className="visually-hidden">The twelve applicants and who the model picks</caption>
           <thead>
