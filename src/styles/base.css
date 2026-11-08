@@ -119,13 +119,14 @@ a:hover {
   color: var(--paper-hi);
 }
 
-.skip-link {
+.btn.skip-link {
   position: absolute;
   left: var(--s-4);
-  top: -5rem;
+  top: -6rem;
   z-index: 100;
+  margin: 0;
 }
-.skip-link:focus {
+.btn.skip-link:focus {
   top: var(--s-3);
 }
 .visually-hidden {
