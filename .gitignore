@@ -1,0 +1,12 @@
+node_modules/
+dist/
+target/
+Cargo.lock.bak
+apps/portal/src/wasm/pkg/
+apps/portal/src/wasm/pkg-simd/
+apps/portal/test-results/
+*.log
+.DS_Store
+.env
+.env.*
+!.env.example

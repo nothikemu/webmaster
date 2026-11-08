@@ -1,0 +1,96 @@
+/*
+ * Motion. Everything here is an enhancement: with the motion layer off (reduced motion, no script)
+ * the page is complete and still. ui/fx.ts sets html[data-fx='on'] only when motion is welcome.
+ *
+ * The vocabulary is a snap: things slide into place on one fast curve and stop, like a panel in a manga.
+ * A page change is a quick wipe. There is no blur and no glow.
+ */
+
+/* ---- reveals --------------------------------------------------------------------------------------------- */
+html[data-fx='on'] [data-reveal]:not(.in) {
+  opacity: 0;
+}
+html[data-fx='on'] [data-reveal].in {
+  animation: reveal-up 520ms var(--ease-snap) var(--rd, 0ms) backwards;
+}
+html[data-fx='on'] [data-reveal='fade'].in {
+  animation-name: reveal-fade;
+}
+html[data-fx='on'] [data-reveal='scale'].in {
+  animation-name: reveal-scale;
+}
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0);
+  }
+}
+@keyframes reveal-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes reveal-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.94) rotate(-1.5deg);
+  }
+}
+
+/* A headline that drops line by line out of a mask, each line a beat after the last. */
+.hero-line {
+  display: block;
+  overflow: hidden;
+  padding: 0.06em 0.12em 0.1em 0.12em;
+  margin: -0.06em -0.12em -0.1em -0.12em;
+}
+.hero-line > span {
+  display: inline-block;
+}
+html[data-fx='on'][data-boot='ready'] .hero-line > span {
+  animation: line-rise 600ms var(--ease-snap) calc(var(--i, 0) * 90ms + 60ms) backwards;
+}
+@keyframes line-rise {
+  from {
+    transform: translate3d(0, 110%, 0);
+    opacity: 0;
+  }
+}
+
+/* ---- page changes: a wipe from the left ------------------------------------------------------------- */
+.site-header {
+  view-transition-name: site-header;
+}
+.hub {
+  view-transition-name: hub;
+}
+::view-transition-group(site-header),
+::view-transition-group(hub) {
+  animation-duration: 0s;
+}
+::view-transition-image-pair(root) {
+  isolation: isolate;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  animation: vt-out 420ms var(--ease-snap) both;
+}
+::view-transition-new(root) {
+  animation: vt-in 420ms var(--ease-snap) both;
+}
+@keyframes vt-out {
+  to {
+    opacity: 0.4;
+  }
+}
+@keyframes vt-in {
+  from {
+    clip-path: polygon(0 0, 0 0, -20% 100%, 0 100%);
+  }
+  to {
+    clip-path: polygon(0 0, 120% 0, 100% 100%, 0 100%);
+  }
+}

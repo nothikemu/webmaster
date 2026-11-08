@@ -1,0 +1,60 @@
+/* Keyframes that components import by class name. Every transition elsewhere uses var(--ease). */
+.hairline {
+  display: block;
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  transform-origin: left center;
+  animation: sweep 1.6s var(--ease) infinite;
+}
+
+.rise {
+  animation: rise 700ms var(--ease) both;
+}
+
+.pulse {
+  animation: pulse 2.4s var(--ease) infinite;
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-60%) scaleX(0.3);
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) scaleX(1);
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hairline,
+  .rise,
+  .pulse {
+    animation: none;
+  }
+}

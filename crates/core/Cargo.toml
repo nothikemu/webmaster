@@ -1,0 +1,30 @@
+[package]
+name = "tsa-core"
+version = "1.0.0"
+edition = "2021"
+description = "Compute kernels for the Interactive AI Learning Portal: spatial hash, noise, SHA-256/HMAC, ChaCha20, particle integrator."
+license = "MIT"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[features]
+default = []
+# Enables the wasm32 SIMD128 integrator. Build with RUSTFLAGS="-C target-feature=+simd128".
+# The scalar integrator is always compiled and is the reference behaviour.
+simd = []
+
+[dependencies]
+wasm-bindgen = "=0.2.130"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[package.metadata.wasm-pack.profile.release]
+# The portal's build-wasm script runs binaryen's wasm-opt from npm instead, so a machine
+# without access to GitHub release downloads can still build. Kept here as the intended level.
+wasm-opt = ["-O4"]

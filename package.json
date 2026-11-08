@@ -1,0 +1,36 @@
+{
+  "name": "tsa-ai-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TSA Webmaster 2026-2027: Interactive AI Learning Portal (workspace root).",
+  "license": "MIT",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "wasm": "node apps/portal/scripts/build-wasm.mjs",
+    "dev": "pnpm wasm && pnpm --filter portal dev",
+    "build": "pnpm wasm && pnpm --filter portal build",
+    "preview": "pnpm --filter portal preview",
+    "test": "pnpm test:rust && pnpm --filter portal test",
+    "test:rust": "cargo test --manifest-path crates/core/Cargo.toml",
+    "typecheck": "pnpm --filter portal typecheck",
+    "lint": "pnpm --filter portal lint",
+    "format": "prettier --write \"apps/portal/{src,tests,plugins,scripts}/**/*.{ts,tsx,css,mjs}\" \"*.{json,md}\"",
+    "smoke": "pnpm --filter portal smoke"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@swc/core"
+    ],
+    "overrides": {
+      "@swc/core": "1.12.14",
+      "@swc/wasm": "1.12.14"
+    }
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

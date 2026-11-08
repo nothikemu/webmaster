@@ -1,0 +1,222 @@
+@import 'tailwindcss';
+
+/*
+ * Parameter design tokens: the Operator client.
+ *
+ * The product looks like the front end of a competitive game: one dark, full-width screen, art that fills it,
+ * thin lines and small capitals for the interface, a single red for the call to action, and one hue that grades the
+ * whole screen of each module (teal, violet or red). Light plates are used where something is read or pressed.
+ * The sources and what they could and could not show are in docs/DESIGN_RESEARCH.md (Round 4).
+ */
+
+@theme {
+  --color-ink: #0a121a;
+  --color-elev: #15222e;
+  --color-muted: #a0a7b0;
+  --color-hair: #5f6b77;
+  --color-blue: #3aa99f;
+  --color-violet: #7e74d8;
+  --color-cyan: #3aa99f;
+  --color-warn: #ff4655;
+  --font-sans: 'Param Body', 'Param Body Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Param HUD', 'Param HUD Fallback', 'Arial Narrow', ui-sans-serif, sans-serif;
+  --font-mono: 'Param Body', 'Param Body Fallback', ui-monospace, monospace;
+  --ease-portal: cubic-bezier(0.16, 1, 0.3, 1);
+  --radius-tile: 0px;
+  --radius-panel: 0px;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* ---- motion ---------------------------------------------------------------------------- */
+  /* The one easing curve. JavaScript mirrors it in core/spring.ts (EASE_CSS). */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --dur-fast: 110ms;
+  --dur: 240ms;
+  --dur-slow: 560ms;
+
+  /* ---- the palette ---------------------------------------------------------------------------- */
+  --navy-0: #05090e;
+  --navy: #0a121a; /* the screen */
+  --navy-2: #101b26; /* panels */
+  --navy-3: #172636; /* raised */
+  --navy-4: #213349; /* controls */
+  --paper: #ece8e1; /* light plates */
+  --paper-2: #d9d4ca;
+  --white: #f6f3ee;
+  --ink: #0a121a; /* text on light plates and on painted buttons */
+  --ink-2: #2c3947; /* 9.6:1 on paper */
+  --ink-3: #4a5866; /* 5.9:1 on paper */
+
+  --red: #ff4655; /* the call to action */
+  --red-lo: #b3232f; /* its edge, and text on light plates (5.5:1 on paper) */
+  --red-hi: #ff9aa2; /* small red text on the dark screen (9:1) */
+  --teal: #3aa99f;
+  --teal-lo: #1c6b64;
+  --teal-hi: #a9ece3;
+  --violet: #7e74d8;
+  --violet-lo: #3a3390;
+  --violet-hi: #d4cfff;
+  --gold: #ffc23d;
+  --gold-lo: #8a5f00;
+  --gold-hi: #ffe19a;
+  --sea: var(--teal);
+  --sea-lo: var(--teal-lo);
+  --sea-hi: var(--teal-hi);
+  --parch: var(--paper);
+  --parch-2: var(--paper-2);
+  --hud-text: var(--paper);
+  --hud-text-2: #c9c5bd;
+  --hud-text-3: #a0a7b0;
+
+  /* ---- surfaces and text: dark by default; [data-surface='paper'] re-points them ---------------------- */
+  --page: var(--navy);
+  --bg: var(--navy);
+  --bg-elev: var(--navy-2);
+  --fill: var(--navy-2);
+  --fill-2: var(--navy-3);
+  --fill-3: var(--navy-4);
+  --surface: var(--fill);
+  --text: var(--paper); /* 14.5:1 on the screen */
+  --text-2: #c9c5bd; /* 10.3:1 */
+  --text-3: #a0a7b0; /* 7.3:1 on the screen, 6.5:1 on panels */
+  --fg: var(--text);
+  --muted: var(--text-3);
+  --line: #5a6773; /* 4.1:1 on the screen: a line that is itself visible */
+  --line-soft: rgb(236 232 225 / 0.16);
+  --accent: var(--red-hi);
+  --on-accent: var(--ink);
+  --warn: var(--red-hi);
+  --danger: var(--red-hi);
+  --sim: var(--gold);
+
+  /* ---- the hue of the current screen: set by data-module, used by everything inside ----------------- */
+  --m: var(--red);
+  --m-lo: var(--red-lo);
+  --m-hi: var(--red-hi);
+  --m-text: var(--red-hi);
+  --m-ink: #a81f2e; /* the same hue, dark enough to read on a light plate */
+  --m-foundations: #3aa99f;
+  --m-synthesis: #7e74d8;
+  --m-ethics: #ff4655;
+
+  /* ---- type ----------------------------------------------------------------------------------- */
+  --font-sans: 'Param Body', 'Param Body Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-sans);
+  --font-display: 'Param HUD', 'Param HUD Fallback', 'Arial Narrow', ui-sans-serif, sans-serif;
+  --font-hud: var(--font-display);
+  --font-type: var(--font-sans);
+  --font-serif: var(--font-sans);
+  --font-ui: var(--font-hud);
+  --font-num: var(--font-hud);
+  --font-mono: var(--font-sans);
+
+  --fs-label: 0.8125rem;
+  --fs-small: 0.9375rem;
+  --fs-body: 1.0625rem;
+  --fs-lead-sm: 1.1875rem;
+  --t-lead: clamp(1.1875rem, 0.5vw + 1.08rem, 1.5rem);
+  --t-h3: clamp(1.625rem, 1vw + 1.35rem, 2.25rem);
+  --t-h2: clamp(2.75rem, 4.6vw + 0.75rem, 6rem);
+  --t-display: clamp(3.5rem, 8vw, 9rem);
+  --t-hero: clamp(4.5rem, 13vw, 15rem);
+  --lh-body: 1.6;
+  --lh-tight: 0.86;
+  --track-display: 0.01em;
+  --track-hud: 0.08em;
+  --measure: 64ch;
+
+  /* ---- space: a 4px base --------------------------------------------------------------------- */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+  --s-7: 3rem;
+  --s-8: 4rem;
+  --s-9: 6rem;
+  --section: clamp(4rem, 8vw, 8rem);
+  --gutter: clamp(20px, 3.6vw, 72px);
+  --max: none; /* nothing is held in a centred column: bands and art run edge to edge */
+
+  /* ---- shape: angular, one cut corner ------------------------------------------------------------ */
+  --stroke: 2px;
+  --stroke-hero: 3px;
+  --cut: 18px;
+  --edge: 5px; /* the depth of a button: the solid edge under its face */
+  --shadow-off: 6px;
+  --r-sm: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-xl: 0px;
+  --r-pill: 0px;
+  --r-round: 999px;
+
+  /* ---- interaction --------------------------------------------------------------------------- */
+  --tap: 44px;
+  --focus-ring: 3px solid #ffffff;
+  --focus-offset: 3px;
+  --header-h: 68px;
+  --hub-clearance: 6rem;
+
+  /* ---- live values written by the motion layer (ui/fx.ts); at rest they are zero ------------------ */
+  --px: 0;
+  --py: 0;
+  --sy: 0;
+}
+
+/* The hue of a module: teal (Foundations), violet (Synthesis), red (Ethics). */
+[data-module] {
+  --accent: var(--m-text);
+}
+[data-module='foundations'] {
+  --m: var(--teal);
+  --m-lo: var(--teal-lo);
+  --m-hi: var(--teal-hi);
+  --m-text: var(--teal-hi);
+  --m-ink: #0b6355; /* 5.9:1 on paper */
+}
+[data-module='synthesis'] {
+  --m: var(--violet);
+  --m-lo: var(--violet-lo);
+  --m-hi: var(--violet-hi);
+  --m-text: var(--violet-hi);
+  --m-ink: #5a33a3; /* 7.1:1 on paper */
+}
+[data-module='ethics'] {
+  --m: var(--red);
+  --m-lo: var(--red-lo);
+  --m-hi: var(--red-hi);
+  --m-text: var(--red-hi);
+  --m-ink: #a81f2e; /* 5.9:1 on paper */
+}
+
+/* Where the dark screen is the default, 'ink' is a no-op kept for markup that names it. */
+[data-surface='ink'] {
+  color-scheme: dark;
+}
+
+/* A light plate: reading text, forms, the winning results. Dark ink on paper. */
+[data-surface='paper'] {
+  color-scheme: light;
+  --page: var(--paper);
+  --bg: var(--paper);
+  --fill: var(--white);
+  --fill-2: var(--paper);
+  --fill-3: var(--paper-2);
+  --text: var(--ink);
+  --text-2: var(--ink-2);
+  --text-3: var(--ink-3);
+  --line: var(--ink);
+  --line-soft: rgb(15 25 35 / 0.22);
+  --accent: var(--red-lo);
+  --m-text: var(--m-ink);
+  --focus-ring: 3px solid #0f1923;
+  background: var(--fill);
+  color: var(--ink);
+}

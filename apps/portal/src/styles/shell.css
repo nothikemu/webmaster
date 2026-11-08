@@ -1,0 +1,318 @@
+/* ---- shell: the top bar, the compact menu, the footer ---------------------------------------------- */
+
+/* The bar runs the full width of the window. Wordmark left, the five sections as keys in the middle, the rank at the right.
+   The section you are in is a light plate with a red edge, like the PLAY tab of a game client. */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: linear-gradient(to bottom, var(--navy-0), #0b141c);
+  color: var(--text);
+  border-bottom: 1px solid var(--line-soft);
+}
+.site-header::after {
+  /* a short red slash under the wordmark, the only red in the bar */
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: clamp(120px, 14vw, 240px);
+  height: 3px;
+  background: var(--red);
+}
+.site-header-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--s-5);
+  min-height: var(--header-h);
+  padding-inline: var(--gutter);
+}
+.read-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background: var(--teal);
+  transform-origin: left center;
+  transform: scaleX(var(--sp, 0));
+  opacity: 0;
+  transition: opacity var(--dur) var(--ease);
+  pointer-events: none;
+}
+html[data-scrolled='true'] .read-line {
+  opacity: 1;
+}
+
+.wordmark {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.75rem;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: none;
+}
+.glyph {
+  flex: none;
+  transition: transform var(--dur) var(--ease-snap);
+}
+.wordmark:hover .glyph {
+  transform: rotate(-8deg) scale(1.06);
+}
+
+.site-nav {
+  justify-self: center;
+}
+.nav-list {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.nav-list li {
+  display: flex;
+}
+.nav-list a {
+  --edge: 3px;
+  min-height: 44px;
+  padding: 0 1.25rem;
+  font-size: 1.0625rem;
+}
+/* The rank: level and XP, a key that opens the progress page. */
+.site-rank {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: var(--tap);
+  padding: 0 var(--s-4);
+  border: 1px solid var(--line);
+  background: var(--navy-2);
+  color: var(--text);
+  text-decoration: none;
+  font-family: var(--font-hud);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  clip-path: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+  transition: background-color var(--dur-fast) var(--ease);
+}
+.site-rank:hover {
+  background: var(--navy-4);
+}
+.site-rank b {
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--red);
+}
+.site-rank span {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text-2);
+}
+.site-rank:focus-visible {
+  clip-path: none;
+  outline-offset: 2px;
+}
+
+.menu-toggle {
+  display: none;
+}
+.menu-bars {
+  position: relative;
+  width: 20px;
+  height: 14px;
+  border-block: 3px solid currentColor;
+}
+.menu-bars::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  background: currentColor;
+  transition: opacity var(--dur) var(--ease);
+}
+.site-header[data-open='true'] .menu-bars::after {
+  opacity: 0;
+}
+
+@media (max-width: 1080px) {
+  .nav-list a {
+    padding-inline: 0.9rem;
+    font-size: 1.0625rem;
+  }
+  .site-rank span:not(.sr-only) {
+    display: none;
+  }
+}
+@media (max-width: 880px) {
+  .site-header-inner {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+  .menu-toggle {
+    display: inline-flex;
+    min-height: 46px;
+    padding-inline: 1.1rem;
+  }
+  .site-nav {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin: 0;
+    padding: var(--s-4) var(--gutter) var(--s-6);
+    background: var(--navy-0);
+    border-bottom: 3px solid var(--red);
+  }
+  .site-header[data-open='true'] .site-nav {
+    display: block;
+    animation: sheet-in 260ms var(--ease-snap) backwards;
+  }
+  .nav-list {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--s-3);
+  }
+  .nav-list li {
+    display: block;
+  }
+  .nav-list a {
+    display: flex;
+    width: 100%;
+    min-height: 56px;
+    font-size: 1.5rem;
+    justify-content: flex-start;
+    padding-inline: var(--s-4);
+  }
+}
+@media (max-width: 420px) {
+  .site-header-inner {
+    gap: var(--s-3);
+  }
+  .wordmark {
+    font-size: 1.5rem;
+    gap: 8px;
+    letter-spacing: 0.08em;
+  }
+  .wordmark .glyph {
+    width: 28px;
+    height: 28px;
+  }
+  .site-rank {
+    padding-inline: var(--s-3);
+  }
+  .menu-toggle.btn {
+    font-size: 1.0625rem;
+    padding-inline: 1rem;
+  }
+}
+@keyframes sheet-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ---- footer ----------------------------------------------------------------------------------- */
+.site-footer {
+  position: relative;
+  margin-top: var(--section);
+  padding-block: var(--s-8) var(--s-7);
+  background: var(--navy-0);
+  color: var(--text);
+  border-top: 1px solid var(--line-soft);
+}
+.site-footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: -1px;
+  width: clamp(120px, 14vw, 240px);
+  height: 3px;
+  background: var(--red);
+}
+.colophon {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 3fr);
+  gap: var(--s-6);
+  align-items: start;
+}
+.colophon-note {
+  max-width: 42ch;
+  margin-top: var(--s-3);
+  color: var(--text-2);
+  font-size: var(--fs-small);
+}
+.colophon-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1) var(--s-5);
+  list-style: none;
+  padding: 0;
+}
+.colophon-links a {
+  display: inline-flex;
+  align-items: center;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: var(--track-hud);
+  text-transform: uppercase;
+  color: var(--text);
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.2em;
+}
+.colophon-links a:hover,
+.colophon-links a[aria-current] {
+  text-decoration-color: var(--red);
+}
+.colophon-event {
+  justify-self: end;
+  padding: 0.2rem 0.9rem;
+  border: 1px solid var(--line);
+  font-family: var(--font-hud);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 1rem;
+  color: var(--text-2);
+}
+@media (max-width: 880px) {
+  .site-footer {
+    padding-bottom: var(--s-9);
+  }
+  .colophon {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .colophon-event {
+    justify-self: start;
+  }
+}

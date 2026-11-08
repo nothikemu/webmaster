@@ -1,0 +1,43 @@
+import type { GlossaryEntry, Resource } from './types';
+
+export const glossary: readonly GlossaryEntry[] = [
+  { term: 'Adversarial example', module: 'ethics', definition: 'An input altered in a small, deliberate way to make a model produce a wrong output.' },
+  { term: 'Algorithm', module: 'foundations', definition: 'A finite sequence of well-defined steps that turns an input into an output.' },
+  { term: 'Artificial intelligence', module: 'foundations', definition: 'Software that performs tasks usually associated with human judgment, such as recognizing speech or ranking results.' },
+  { term: 'Backpropagation', module: 'foundations', definition: 'The method that computes how much each weight contributed to the error, so gradient descent knows which way to adjust it.' },
+  { term: 'Bias (in AI)', module: 'ethics', definition: 'A systematic difference in how a model treats people or cases, usually inherited from unrepresentative data or past decisions.' },
+  { term: 'Chain-of-thought prompting', module: 'synthesis', definition: 'Asking a model to write out intermediate reasoning steps before its final answer.' },
+  { term: 'Context window', module: 'synthesis', definition: 'The maximum number of tokens a model can consider in a single pass.' },
+  { term: 'Data leakage', module: 'ethics', definition: 'Private or proprietary information escaping through a model, either from memorized training data or from sensitive input sent to an outside tool.' },
+  { term: 'Differential privacy', module: 'ethics', definition: 'A training technique that limits how much any single record can influence the model, and so how much it can reveal.' },
+  { term: 'Feature', module: 'foundations', definition: 'A measurable property of an example that a model takes as input, such as a pixel value or a word count.' },
+  { term: 'Few-shot prompting', module: 'synthesis', definition: 'Including a handful of worked input-output examples in the prompt so the model continues the pattern.' },
+  { term: 'Gradient descent', module: 'foundations', definition: 'An optimization method that repeatedly nudges weights in the direction that reduces the loss.' },
+  { term: 'Hallucination', module: 'synthesis', definition: 'Fluent model output that states something false, such as an invented citation or number.' },
+  { term: 'Inference', module: 'foundations', definition: 'Using a trained model, with frozen weights, to make a prediction on new input.' },
+  { term: 'Loss function', module: 'foundations', definition: 'A formula that scores how far a model\'s predictions are from the correct answers.' },
+  { term: 'Machine learning', module: 'foundations', definition: 'Building a function from labelled examples instead of hand-written rules.' },
+  { term: 'Model card', module: 'ethics', definition: 'A short document describing a model\'s intended use, evaluation results and known limitations.' },
+  { term: 'Neural network', module: 'foundations', definition: 'A model made of layers of simple units that each compute a weighted sum followed by a nonlinear function.' },
+  { term: 'Overfitting', module: 'foundations', definition: 'When a model memorizes its training examples and performs much worse on new data.' },
+  { term: 'Parameter (weight)', module: 'foundations', definition: 'A learned number inside a model. Training adjusts the parameters; inference reads them.' },
+  { term: 'Prompt', module: 'synthesis', definition: 'The text given to a language model that begins the sequence it will continue.' },
+  { term: 'Prompt injection', module: 'ethics', definition: 'Hidden instructions in untrusted content that try to override a model\'s intended behaviour.' },
+  { term: 'Red teaming', module: 'ethics', definition: 'Having testers deliberately attack a system to find failures before release.' },
+  { term: 'Temperature', module: 'synthesis', definition: 'A sampling setting. Low values make a model pick likely tokens almost every time; high values add variety and risk.' },
+  { term: 'Token', module: 'synthesis', definition: 'A chunk of text, often a word or part of a word, that a language model reads and writes.' },
+  { term: 'Training', module: 'foundations', definition: 'The phase where a model\'s weights are adjusted to reduce the loss over many examples.' },
+];
+
+export const resources: readonly Resource[] = [
+  { title: 'Neural networks, a visual series', href: 'https://www.3blue1brown.com/topics/neural-networks', note: 'Four short videos on layers, gradient descent and backpropagation.', module: 'foundations' },
+  { title: 'Machine Learning Crash Course', href: 'https://developers.google.com/machine-learning/crash-course', note: 'Free course with exercises, from Google.', module: 'foundations' },
+  { title: 'Language Models are Few-Shot Learners', href: 'https://arxiv.org/abs/2005.14165', note: 'The 2020 GPT-3 paper behind few-shot prompting.', module: 'synthesis' },
+  { title: 'Chain-of-Thought Prompting Elicits Reasoning in Large Language Models', href: 'https://arxiv.org/abs/2201.11903', note: 'Wei et al., 2022.', module: 'synthesis' },
+  { title: 'Gender Shades', href: 'http://gendershades.org/', note: 'The 2018 audit of commercial face-analysis systems.', module: 'ethics' },
+  { title: 'Extracting Training Data from Large Language Models', href: 'https://arxiv.org/abs/2012.07805', note: 'Carlini et al., 2021.', module: 'ethics' },
+  { title: 'Robust Physical-World Attacks on Deep Learning Models', href: 'https://arxiv.org/abs/1707.08945', note: 'The stop-sign sticker study.', module: 'ethics' },
+  { title: 'Model Cards for Model Reporting', href: 'https://arxiv.org/abs/1810.03993', note: 'Mitchell et al., 2019.', module: 'ethics' },
+  { title: 'AI Risk Management Framework', href: 'https://www.nist.gov/itl/ai-risk-management-framework', note: 'NIST guidance on mapping, measuring and managing AI risk.', module: 'ethics' },
+  { title: 'Regulation (EU) 2024/1689 (AI Act)', href: 'https://eur-lex.europa.eu/eli/reg/2024/1689/oj', note: 'The legal text.', module: 'ethics' },
+];

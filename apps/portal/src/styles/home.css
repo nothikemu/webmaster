@@ -1,0 +1,739 @@
+/* ---- shared vocabulary ------------------------------------------------------------------------------- */
+.section-head {
+  display: grid;
+  gap: var(--s-4);
+  max-width: 62rem;
+  margin-bottom: var(--s-7);
+}
+.section-head .h2 {
+  max-width: 26ch;
+}
+
+/* A track: one square for each lesson, marked by how well it is known. Words sit beside it. */
+.track {
+  display: inline-flex;
+  gap: 5px;
+  vertical-align: middle;
+}
+.track i {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line);
+  background: transparent;
+}
+.track i[data-state='seen'] {
+  background: linear-gradient(var(--line), var(--line)) 50% 50% / 6px 6px no-repeat;
+}
+.track i[data-state='practiced'] {
+  background: linear-gradient(135deg, var(--m) 50%, transparent 50%);
+  border-color: var(--m);
+}
+.track i[data-state='mastered'] {
+  background: var(--m);
+  border-color: var(--m);
+}
+
+/* ---- the curriculum map ------------------------------------------------------------------------------- */
+.cmap {
+  margin: 0;
+  padding: var(--s-6) var(--s-6) var(--s-5);
+  background: var(--navy-2);
+  --fill: var(--navy-2);
+}
+.cmap > svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.cmap > .cmap-tall {
+  display: none;
+  max-width: 440px;
+  margin-inline: auto;
+}
+.mn-node {
+  cursor: pointer;
+  outline: none;
+}
+.mn-shape {
+  fill: var(--navy-3);
+  stroke: var(--paper);
+  stroke-width: 2.5;
+  stroke-linejoin: miter;
+  transition: fill var(--dur-fast) var(--ease);
+}
+.mn-node[data-state='none'] .mn-shape {
+  fill: var(--navy);
+  stroke: var(--line);
+}
+.mn-node:hover .mn-shape {
+  fill: var(--navy-4);
+}
+.mn-fill {
+  fill: var(--m);
+  stroke: none;
+}
+.mn-tick {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3.6;
+  stroke-linecap: square;
+}
+.mn-link {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 2;
+  stroke-dasharray: 2 7;
+  stroke-linecap: square;
+}
+.mn-link[data-lit='true'] {
+  stroke: var(--m);
+  stroke-width: 4;
+  stroke-dasharray: none;
+}
+.mn-halo {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 3;
+  transition: stroke var(--dur-fast) var(--ease);
+}
+.mn-hit {
+  fill: transparent;
+  stroke: none;
+}
+.mn-node:hover .mn-halo {
+  stroke: var(--paper);
+  stroke-dasharray: 4 5;
+}
+.mn-node:focus-visible .mn-halo {
+  stroke: #ffffff;
+  stroke-width: 4.5;
+}
+.mn-numeral {
+  font-size: 0;
+}
+.mn-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 26px;
+  fill: var(--m);
+}
+.mn-n {
+  font-family: var(--font-hud);
+  font-weight: 800;
+  font-size: 16px;
+  fill: var(--text-2);
+}
+.cmap-legend {
+  margin-top: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+}
+.cmap-legend ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-5);
+  list-style: none;
+  padding: 0;
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.cmap-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+.mn-mark,
+.mn-legend-mark {
+  overflow: visible;
+}
+.cmap-compact {
+  padding: var(--s-4);
+}
+.cmap-summary {
+  display: grid;
+  gap: var(--s-3);
+  margin: var(--s-4) 0 0;
+}
+.cmap-summary div {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 1fr) minmax(0, 5fr);
+  gap: var(--s-4);
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+}
+.cmap-summary dt {
+  font-family: var(--font-hud);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: var(--track-hud);
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--m-text);
+}
+.cmap-summary dd {
+  color: var(--text-2);
+  font-size: var(--fs-small);
+  max-width: 70ch;
+}
+@media (max-width: 520px) {
+  /* Narrow screens give the map the room: nodes stay 44px targets at 320px. */
+  .cmap {
+    padding: var(--s-4) var(--s-3) var(--s-3);
+  }
+}
+@media (max-width: 900px) {
+  .cmap > .cmap-wide {
+    display: none;
+  }
+  .cmap > .cmap-tall {
+    display: block;
+  }
+  .cmap-summary div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-1);
+  }
+}
+
+/* ---- the hero: art that fills the window, copy laid over it ------------------------------------------- */
+.home-hero {
+  position: relative;
+  display: grid;
+  align-items: center;
+  min-height: clamp(36rem, calc(100svh - var(--header-h)), 62rem);
+  overflow: clip;
+  isolation: isolate;
+}
+.hero-art {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.hero-art .key-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* The shade: the screen colour from the left edge fading out, so the headline is always on a dark ground. */
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      90deg,
+      var(--navy-0) 0%,
+      rgb(7 13 19 / 0.95) 30%,
+      rgb(7 13 19 / 0.6) 40%,
+      rgb(7 13 19 / 0) 50%
+    ),
+    linear-gradient(0deg, var(--navy) 0%, transparent 22%);
+}
+.hero-copy {
+  display: grid;
+  gap: var(--s-5);
+  justify-items: start;
+  max-width: min(100%, 64rem);
+  margin-left: 0;
+  padding-block: var(--s-8);
+}
+.tag {
+  display: inline-block;
+  padding: 0.35rem 1.1rem 0.3rem 0.9rem;
+  border-left: 6px solid var(--red);
+  background: rgb(236 232 225 / 0.1);
+  color: var(--text);
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 1.0625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.hero-title {
+  display: grid;
+  font-size: clamp(3.75rem, 9.6vw, 11.5rem);
+  line-height: 0.84;
+  letter-spacing: 0.005em;
+}
+.hero-title .accent-word {
+  padding-inline: 0.16em 0.22em;
+}
+.hero-copy .lead {
+  max-width: 34ch;
+  font-size: clamp(1.25rem, 1vw + 1rem, 1.625rem);
+  color: var(--text);
+}
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-5) var(--s-5);
+  align-items: center;
+  margin-top: var(--s-2);
+}
+.btn-lg {
+  min-height: 64px;
+  padding-inline: 2.25rem;
+  font-size: 1.5rem;
+  --c: 16px;
+}
+
+/* ---- the record: one band under the hero, like the status bar of a client --------------------------------- */
+.record {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.3fr);
+  gap: var(--s-6);
+  align-items: center;
+  padding-block: var(--s-5);
+  background: var(--navy-0);
+  border-block: 1px solid var(--line-soft);
+}
+.record > * {
+  min-width: 0;
+}
+.record-rank {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.rank-n {
+  font-size: clamp(4rem, 6vw, 6rem);
+  font-weight: 900;
+  line-height: 0.8;
+  color: var(--red);
+}
+.rank-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+.record-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.6rem;
+  margin-bottom: var(--s-3);
+  font-family: var(--font-hud);
+  font-weight: 600;
+  font-size: 1.125rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.record-line .num {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text);
+}
+.record .dot {
+  width: 6px;
+  height: 6px;
+  align-self: center;
+  background: var(--red);
+  transform: rotate(45deg);
+}
+.xp-meter {
+  display: grid;
+  grid-template-columns: repeat(20, minmax(0, 1fr));
+  gap: 4px;
+  height: 14px;
+}
+.xp-meter i {
+  background: var(--navy-3);
+  clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+}
+.xp-meter i[data-on='true'] {
+  background: var(--red);
+}
+.record-mods {
+  display: grid;
+  gap: var(--s-1);
+  list-style: none;
+  padding: 0;
+}
+.record-mods li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--s-3);
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.swatch {
+  width: 12px;
+  height: 12px;
+  background: var(--m);
+  transform: rotate(45deg);
+}
+.record-next {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: start;
+  padding-left: var(--s-6);
+  border-left: 1px solid var(--line-soft);
+}
+.record-next-title {
+  font-family: var(--font-hud);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+/* ---- the three modules: tall banners, one hue each, like the player cards of a lobby -------------------- */
+.home-mods {
+  padding-top: var(--section);
+}
+.home-mods-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.realm {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  min-height: 48rem;
+  overflow: clip;
+  background: var(--navy-2);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - 56px),
+    calc(100% - 56px) 100%,
+    56px 100%,
+    0 calc(100% - 56px)
+  );
+}
+.realm .realm-art {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  transition: transform 600ms var(--ease);
+}
+.realm:hover .realm-art,
+.realm:focus-within .realm-art {
+  transform: scale(1.05);
+}
+.realm-shade {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    0deg,
+    var(--navy-0) 0%,
+    rgb(7 13 19 / 0.94) 38%,
+    rgb(7 13 19 / 0.35) 72%,
+    transparent 100%
+  );
+}
+/* The frame that closes when the banner is reached. */
+.realm::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 0 solid var(--m);
+  pointer-events: none;
+  transition: border-width var(--dur-fast) var(--ease-snap);
+}
+.realm:hover::after,
+.realm:focus-within::after {
+  border-width: 6px;
+}
+.realm-body {
+  display: grid;
+  align-content: end;
+  gap: var(--s-3);
+  justify-items: start;
+  padding: var(--s-6) var(--s-6) calc(var(--s-6) + 28px);
+}
+.realm-n {
+  position: absolute;
+  top: var(--s-4);
+  left: var(--s-5);
+  font-size: clamp(7rem, 11vw, 12rem);
+  font-weight: 900;
+  line-height: 0.8;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--m);
+}
+.realm-name {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  background: var(--navy-0);
+  color: var(--m-text);
+}
+.mod-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(3rem, 5.4vw, 5.5rem);
+  line-height: 0.86;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.mod-title a {
+  text-decoration: none;
+}
+.mod-title a:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 6px;
+}
+.mod-tagline {
+  color: var(--text);
+  font-size: 1.1875rem;
+  font-weight: 700;
+  max-width: 30ch;
+}
+.mod-objective {
+  color: var(--text-2);
+  font-size: var(--fs-small);
+  max-width: 44ch;
+}
+.mod-facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3) var(--s-5);
+  width: 100%;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--line-soft);
+  margin: 0;
+}
+.mod-facts div {
+  min-width: 0;
+}
+.mod-facts dt {
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.mod-facts dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--fs-small);
+  line-height: 1.3;
+}
+.mod-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+}
+.mod-percent {
+  font-family: var(--font-hud);
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+/* The button on a banner is the card's own link, drawn as a button: it presses when the card does. */
+.mod-cta {
+  margin-top: var(--s-2);
+  pointer-events: none;
+  --face: var(--m);
+  --edge-c: var(--m-lo);
+}
+.realm:hover .mod-cta {
+  translate: 0 -2px;
+  filter: drop-shadow(0 calc(var(--edge) + 2px) 0 var(--edge-c));
+}
+.realm:hover .mod-cta::after {
+  translate: 5px 0;
+}
+.realm:active .mod-cta {
+  translate: 0 var(--edge);
+  filter: drop-shadow(0 0 0 var(--edge-c));
+}
+
+/* ---- how a module works: a light band, four numbered steps ------------------------------------------------ */
+.home-method {
+  margin-top: var(--section);
+  padding-block: var(--section);
+  background: var(--paper);
+  color: var(--ink);
+}
+.home-method .notebook {
+  display: grid;
+  gap: var(--s-7);
+}
+.home-method .h2 {
+  max-width: 14ch;
+}
+.steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--s-6);
+  list-style: none;
+  padding: 0;
+}
+.step {
+  display: grid;
+  align-content: start;
+  gap: var(--s-3);
+  padding-top: var(--s-4);
+  border-top: 6px solid var(--ink);
+}
+.step-n {
+  font-size: clamp(4rem, 6vw, 6.5rem);
+  font-weight: 900;
+  line-height: 0.8;
+  color: var(--red-lo);
+}
+.step h3 {
+  font-size: 2rem;
+}
+.step p {
+  max-width: 34ch;
+  color: var(--text-2);
+}
+
+.home-map {
+  padding-top: var(--section);
+}
+
+/* ---- the XP table --------------------------------------------------------------------------------------- */
+.home-ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--s-8);
+  align-items: start;
+  padding-top: var(--section);
+}
+.ledger-copy {
+  display: grid;
+  gap: var(--s-4);
+}
+.ledger-copy .h2 {
+  max-width: 11ch;
+}
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  padding: 0;
+}
+.ledger caption {
+  padding: var(--s-3) var(--s-5);
+  background: var(--red);
+  color: var(--ink);
+  text-align: left;
+  font-family: var(--font-hud);
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.ledger th,
+.ledger td {
+  padding: var(--s-3) var(--s-5);
+  border-top: 1px solid var(--line-soft);
+  text-align: left;
+  font-weight: 600;
+}
+.ledger td {
+  text-align: right;
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--text);
+}
+.ledger th {
+  color: var(--text-2);
+}
+
+@media (max-width: 1180px) {
+  /* A banner on a narrow screen: the picture is a block of its own and the words sit under it on a solid ground,
+     so text never lands on the art. */
+  .realm {
+    display: block;
+    min-height: 0;
+  }
+  .realm .realm-art {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    display: block;
+    width: 100%;
+    height: clamp(12rem, 42vw, 19rem);
+  }
+  .realm-shade {
+    display: none;
+  }
+  .realm-n {
+    top: var(--s-3);
+    left: var(--s-4);
+    z-index: 1;
+    font-size: 5.5rem;
+  }
+  .realm-body {
+    background: var(--navy-0);
+    padding: var(--s-5) var(--s-5) calc(var(--s-5) + 28px);
+  }
+}
+@media (max-width: 1180px) {
+  .record {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .record-next {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .home-mods-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .realm {
+    min-height: 34rem;
+  }
+  .steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .home-ledger {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-6);
+  }
+}
+@media (max-width: 760px) {
+  .home-hero {
+    min-height: 40rem;
+  }
+  .hero-shade {
+    background: linear-gradient(
+      0deg,
+      var(--navy) 0%,
+      rgb(7 13 19 / 0.9) 40%,
+      rgb(7 13 19 / 0.7) 100%
+    );
+  }
+  .record {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-4);
+  }
+  .steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .realm-body {
+    padding-inline: var(--s-5);
+  }
+}
+
+/* The pictures are static, so each is promoted to its own layer: it is painted once and not again when something
+   beside it (the 3D stage, a hover) changes. Without this, a lesson page dropped from 32 to 6 frames a second. */
+.key-art {
+  will-change: transform;
+  transform: translateZ(0);
+}
