@@ -1,200 +1,213 @@
-import { C } from './palette';
+import { memo } from 'react';
+import { C, INK } from './palette';
+import { Flecks, Hatch, Shape, Stroke, Wash } from './Draw';
+import { box, ell, spline, type Pt } from './ink';
 import { KernelParts } from './Kernel';
+import { Barrel, Boat, Cloud, Crate, Crest, Gull, House, PaperLantern, Pine, Planks, Ripples, Rope, Smoke, TileRoof } from './props';
 
-const OL = { stroke: C.ink, strokeWidth: 3.5, strokeLinejoin: 'round', strokeLinecap: 'round' } as const;
-const OL2 = { stroke: C.ink, strokeWidth: 2.5, strokeLinejoin: 'round', strokeLinecap: 'round' } as const;
-
-/** A curved pagoda-style roof centred on x, sitting on baseline y. */
-function Roof({ x, y, w, h, fill = C.ink3 }: { x: number; y: number; w: number; h: number; fill?: string }) {
-  const l = x - w / 2;
-  const r = x + w / 2;
-  return (
-    <g>
-      <path d={`M${l - 8} ${y} Q${x - w / 4} ${y - h * 0.12} ${x} ${y - h} Q${x + w / 4} ${y - h * 0.12} ${r + 8} ${y} Z`} fill={fill} {...OL} />
-      <path d={`M${l + 6} ${y - 4} Q${x - w / 4} ${y - h * 0.16} ${x - 2} ${y - h + 8}`} fill="none" stroke={C.paperHi} strokeWidth="2" opacity="0.35" strokeLinecap="round" />
-      <rect x={l - 4} y={y} width={w + 8} height="7" fill={C.ink} />
-    </g>
-  );
-}
-
-function House({ x, y, s = 1, lit = true }: { x: number; y: number; s?: number; lit?: boolean }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <rect x="-46" y="-34" width="92" height="64" fill={C.paperLo} {...OL} />
-      <rect x="-46" y="-34" width="92" height="64" fill="url(#tone-fine)" opacity="0.28" />
-      <path d="M-46 -34 H46 M0 -34 V30" stroke={C.ink} strokeWidth="2.5" opacity="0.7" />
-      <rect x="-30" y="-16" width="20" height="22" fill={lit ? C.lantern : C.ink3} {...OL2} />
-      <rect x="12" y="-16" width="20" height="22" fill={lit ? C.lantern : C.ink3} {...OL2} />
-      <rect x="-9" y="8" width="18" height="22" fill={C.woodDeep} {...OL2} />
-      <Roof x={0} y={-34} w={104} h={52} />
-    </g>
-  );
-}
-
-function Pine({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <rect x="-4" y="-4" width="8" height="22" fill={C.woodDeep} stroke={C.ink} strokeWidth="2.5" />
-      <path d="M0 -62 L22 -26 H8 L28 6 H-28 L-8 -26 H-22 Z" fill={C.ink2} {...OL2} />
-    </g>
-  );
-}
-
-function Boat({ x, y, s = 1 }: { x: number; y: number; s?: number }) {
-  return (
-    <g transform={`translate(${x} ${y}) scale(${s})`}>
-      <path d="M-70 0 H70 L50 26 H-48 Z" fill={C.seal} {...OL} />
-      <path d="M-60 8 H62" stroke={C.paperHi} strokeWidth="3" />
-      <path d="M0 0 V-120" stroke={C.ink} strokeWidth="5" strokeLinecap="round" />
-      <path d="M6 -112 Q64 -62 56 -8 H6 Z" fill={C.paperHi} {...OL} />
-      <path d="M-6 -96 Q-42 -56 -48 -8 H-6 Z" fill={C.paperLo} {...OL} />
-      <path d="M6 -112 Q64 -62 56 -8 H6 Z" fill="url(#tone-fine)" opacity="0.25" />
-    </g>
-  );
-}
-
-export function Harbor({ className }: { className?: string }) {
-  const threads = Array.from({ length: 7 }, (_, i) => 292 + i * 44);
-  const wefts = [548, 584, 620];
-  const lerp = (x: number, y: number) => {
-    // x position on a thread that runs from the ridge (430, 470) to (x0, 650), at height y
-    const t = (y - 470) / (650 - 470);
-    return 430 + (x - 430) * t;
-  };
+/**
+ * The hero scene: a harbor town at dusk, three landmarks (one for each learning path) and Kernel on the dock.
+ * Hand-inked: every line is a brush stroke, every shadow is hatched, and the colour sits a little off the line.
+ * The whole drawing is memoised, so it is computed once, not on every change of progress.
+ */
+export const Harbor = memo(function Harbor({ className }: { className?: string }) {
+  const threads = [292, 336, 380, 424, 468, 512, 556];
+  const lerpX = (x: number, y: number) => 430 + (x - 430) * ((y - 470) / 180);
   return (
     <svg
       className={className}
       viewBox="0 0 1600 900"
       preserveAspectRatio="xMaxYMax slice"
       role="img"
-      aria-label="An illustrated harbor town at dusk: a workshop with a tall crane, a weaving hall on a small island with threads strung from its roof, and a lighthouse on a rock. A small round robot in a straw hat holds a lantern on the dock."
+      aria-label="A hand-inked illustration of a harbor town at dusk. A workshop with a tall crane stands on a quay, a weaving hall with threads strung from its roof sits on a small island, and a striped lighthouse stands on a rock. Paper lanterns hang across the sky. A small round robot in a woven hat holds a lantern on the wooden dock."
       focusable="false"
     >
-      {/* sky: three flat bands and a sun */}
-      <rect width="1600" height="900" fill={C.sky1} />
-      <rect y="300" width="1600" height="200" fill={C.sky2} />
-      <rect y="470" width="1600" height="190" fill={C.sky3} />
-      <circle cx="1010" cy="470" r="236" fill={C.sky2} />
-      <circle cx="1010" cy="470" r="200" fill={C.sun} />
-      <path d="M1010 270 a200 200 0 0 0 -178 110 a200 200 0 0 0 -22 90 h200z" fill="url(#tone)" opacity="0.16" />
-      {/* cloud bars */}
-      {[
-        [90, 150, 300],
-        [380, 225, 170],
-        [1150, 130, 380],
-        [1330, 222, 230],
-        [40, 340, 240],
-        [640, 300, 260],
-      ].map(([cx, cy, w], i) => (
-        <rect key={i} x={cx} y={cy} width={w} height="22" rx="11" fill={C.paperHi} opacity="0.9" />
-      ))}
-      {/* gulls */}
-      <path d="M800 150 q14 -16 28 0 q14 -16 28 0 M900 205 q10 -12 20 0 q10 -12 20 0 M730 240 q8 -10 16 0 q8 -10 16 0" fill="none" stroke={C.ink} strokeWidth="3" strokeLinecap="round" />
+      <g filter="url(#rough)">
+        {/* ---- sky ---- */}
+        <rect width="1600" height="900" fill={C.sky1} />
+        <rect y="296" width="1600" height="210" fill={C.sky2} />
+        <rect y="470" width="1600" height="200" fill={C.sky3} />
+        <Flecks marks={[[30, 120, 150, 1], [260, 60, 120, -1], [900, 90, 160, 1], [1250, 40, 140, 0], [1400, 110, 110, 2], [120, 260, 130, 0], [620, 230, 90, 1], [60, 400, 150, 1], [380, 420, 140, 0], [1180, 380, 120, -1]]} w={4} color={C.skyHigh} opacity={0.7} seed={5} />
+        <Flecks marks={[[40, 330, 180, 0], [500, 360, 120, 1], [1300, 330, 200, 0], [800, 540, 150, 1], [100, 560, 180, 0], [1280, 560, 190, -1]]} w={3.4} color={C.sky3} opacity={0.6} seed={9} />
 
-      {/* far mountains */}
-      <path d="M520 660 L610 540 L700 585 L810 455 L910 565 L990 525 L1100 600 L1210 485 L1320 560 L1440 465 L1600 560 V660 Z" fill={C.hillFar} {...OL2} />
-      <path d="M810 455 L910 565 L860 571 Z M1210 485 L1320 560 L1270 566 Z M1440 465 L1600 560 L1530 566 Z" fill="url(#tone)" opacity="0.22" />
-      <path d="M1080 660 L1170 565 L1270 612 L1380 525 L1500 592 L1600 545 V660 Z" fill={C.hillNear} {...OL2} />
+        {/* ---- the sun, with hand-drawn rays ---- */}
+        <Shape pts={ell(1010, 470, 238, 238, 28, 0.01, 21)} smooth fill={C.sky2} w={0} reg={[0, 0]} />
+        <Flecks
+          marks={Array.from({ length: 26 }, (_, i) => {
+            const a = (i / 26) * Math.PI * 2 + 0.07 * Math.sin(i * 2.3);
+            const r0 = 248 + (i % 3) * 8;
+            return [1010 + Math.cos(a) * r0, 470 + Math.sin(a) * r0, 22 + (i % 4) * 7, (a * 180) / Math.PI] as [number, number, number, number];
+          })}
+          w={3.6}
+          color={C.sun}
+          opacity={0.75}
+          seed={31}
+        />
+        <Shape pts={ell(1010, 470, 200, 200, 26, 0.012, 22)} smooth fill={C.sun} w={4.4} hatch={{ angle: -35, gap: 11, w: 1.6, density: 0.8 }} hatchColor={C.roofRed} hatchOpacity={0.6} />
+        <Hatch pts={[[880, 540], [1010, 580], [1130, 540], [1010, 640]]} angle={-30} gap={8} w={1.4} opacity={0.25} smooth />
 
-      {/* sea */}
-      <rect y="640" width="1600" height="260" fill={C.teal} />
-      <rect y="640" width="1600" height="260" fill="url(#waves)" />
-      <rect y="640" width="1600" height="8" fill={C.ink} />
-      <rect y="800" width="1600" height="100" fill={C.tealDeep} />
-      <rect y="800" width="1600" height="100" fill="url(#waves-ink)" opacity="0.5" />
+        {/* ---- clouds ---- */}
+        <Cloud x={150} y={150} w={310} seed={3} />
+        <Cloud x={470} y={228} w={190} seed={8} fill={C.paperHi} />
+        <Cloud x={1170} y={128} w={400} seed={12} />
+        <Cloud x={1400} y={238} w={250} seed={5} fill={C.paperHi} />
+        <Cloud x={90} y={352} w={250} seed={14} fill={C.skyHigh} />
+        <Cloud x={700} y={318} w={250} seed={17} fill={C.skyHigh} />
+        <Gull x={820} y={150} s={1.1} seed={1} />
+        <Gull x={900} y={196} s={0.8} seed={2} />
+        <Gull x={760} y={236} s={0.6} seed={3} />
+        <Gull x={1090} y={240} s={0.7} seed={4} />
 
-      {/* left: the town on its hill */}
-      <path d="M0 520 Q220 452 430 498 Q620 538 770 610 V672 H0 Z" fill={C.hillNear} {...OL} />
-      <path d="M0 560 Q150 520 260 556 Q160 600 0 620 Z" fill="url(#tone)" opacity="0.22" />
-      <Pine x={60} y={560} s={1.3} />
-      <Pine x={118} y={576} s={0.9} />
-      <Pine x={700} y={600} s={1.1} />
-      <House x={198} y={560} s={1} />
-      <House x={330} y={590} s={0.85} lit={false} />
-      <House x={470} y={578} s={0.9} />
-      <House x={640} y={610} s={0.8} lit={false} />
-      <House x={110} y={612} s={0.75} lit={false} />
+        {/* ---- far mountains, faceted and hatched on the shadow side ---- */}
+        <Shape pts={[[520, 664], [612, 540], [706, 586], [812, 452], [912, 566], [992, 524], [1102, 604], [1212, 486], [1322, 562], [1442, 462], [1600, 560], [1600, 664]]} fill={C.hillFar} w={3.2} />
+        <Hatch pts={[[812, 452], [912, 566], [866, 574], [830, 500]]} angle={-60} gap={6} w={1.3} opacity={0.6} />
+        <Hatch pts={[[1212, 486], [1322, 562], [1274, 570], [1240, 520]]} angle={-60} gap={6} w={1.3} opacity={0.6} />
+        <Hatch pts={[[1442, 462], [1600, 560], [1540, 570], [1480, 500]]} angle={-60} gap={6} w={1.3} opacity={0.6} />
+        <Stroke pts={[[812, 452], [830, 500], [826, 540]]} w={2} opacity={0.6} />
+        <Stroke pts={[[1442, 462], [1470, 506], [1466, 548]]} w={2} opacity={0.6} />
+        <Shape pts={[[1080, 664], [1172, 566], [1272, 614], [1384, 526], [1504, 594], [1600, 548], [1600, 664]]} fill={C.hillNear} w={3} hatch={{ angle: -55, gap: 8, w: 1.3, density: 0.7 }} hatchOpacity={0.4} />
 
-      {/* lighthouse on its rock, far right */}
-      <g transform="translate(70 0)">
-        <polygon points="1360,384 880,310 880,440" fill={C.lantern} opacity="0.3" />
-        <path d="M1240 660 Q1290 568 1346 548 L1428 548 Q1484 572 1530 660 Z" fill={C.hillNear} {...OL} />
-        <path d="M1240 660 Q1270 600 1300 576 L1330 660 Z" fill="url(#tone)" opacity="0.3" />
-        <polygon points="1352,548 1408,548 1396,400 1364,400" fill={C.paperHi} {...OL} />
-        <polygon points="1360.7,440 1399.3,440 1402.6,480 1357.4,480" fill={C.seal} stroke={C.ink} strokeWidth="2.5" />
-        <polygon points="1355.7,500 1404.3,500 1407.6,540 1352.4,540" fill={C.seal} stroke={C.ink} strokeWidth="2.5" />
-        <rect x="1346" y="396" width="68" height="10" fill={C.ink} />
-        <rect x="1362" y="366" width="36" height="30" fill={C.lantern} {...OL} />
-        <path d="M1352 366 H1408 L1380 338 Z" fill={C.seal} {...OL} />
-        <path d="M1380 338 V324" stroke={C.ink} strokeWidth="4" strokeLinecap="round" />
-      </g>
+        {/* ---- sea ---- */}
+        <rect y="640" width="1600" height="260" fill={C.teal} />
+        <Flecks marks={[[0, 668, 220, 0], [330, 690, 180, 1], [700, 676, 200, 0], [1100, 690, 220, 0], [1380, 672, 200, 1]]} w={3} color={C.tealLight} opacity={0.6} seed={13} />
+        <rect y="800" width="1600" height="100" fill={C.tealDeep} />
+        <Ripples x0={0} x1={1600} y0={654} y1={790} n={64} seed={4} />
+        <Ripples x0={0} x1={1600} y0={806} y1={896} n={36} seed={7} color={C.tealLight} opacity={0.55} />
+        <Stroke pts={[[0, 642], [400, 644], [800, 641], [1200, 644], [1600, 642]]} w={6} wob={1.2} />
+        <Crest x={250} y={724} s={58} seed={1} />
+        <Crest x={500} y={822} s={78} flip={-1} seed={2} />
+        <Crest x={1160} y={856} s={86} seed={3} />
+        <Crest x={1500} y={760} s={50} flip={-1} seed={4} />
+        <Crest x={800} y={690} s={34} seed={5} />
+        <Crest x={90} y={830} s={64} seed={6} />
 
-      {/* the Loom House on its own small island: threads strung from the ridge into a woven net */}
-      <path d="M970 664 Q1000 638 1050 642 L1190 642 Q1250 642 1274 676 V694 H970 Z" fill={C.hillNear} {...OL} />
-      <path d="M970 664 Q990 650 1020 648 L1040 694 H970 Z" fill="url(#tone)" opacity="0.3" />
-      <g transform="translate(768 135) scale(0.8)">
-        <rect x="300" y="548" width="260" height="84" fill={C.paperLo} {...OL} />
-        <rect x="300" y="548" width="260" height="84" fill="url(#tone-fine)" opacity="0.22" />
-        <Roof x={430} y={548} w={300} h={78} fill={C.indigoLo} />
-        <Roof x={430} y={494} w={150} h={52} fill={C.indigo} />
-        {threads.map((x0, i) => (
-          <path key={i} d={`M430 470 L${x0} 650`} stroke={C.indigo} strokeWidth={i === 3 ? 7 : 5} strokeLinecap="round" opacity="0.95" />
+        {/* ---- left: the town on its hill ---- */}
+        <Shape pts={[[0, 520], [110, 480], [250, 468], [430, 500], [620, 540], [770, 612], [770, 674], [0, 674]]} smooth fill={C.hillNear} w={3.6} hatch={{ angle: -50, gap: 9, w: 1.4, density: 0.7 }} hatchOpacity={0.4} />
+        <Stroke pts={[[60, 560], [200, 528], [340, 566], [470, 540], [610, 588]]} w={2} opacity={0.45} />
+        <Stroke pts={[[110, 640], [260, 606], [410, 628], [560, 600], [690, 640]]} w={2} opacity={0.4} />
+        <Flecks marks={[[40, 610, 9, -80], [48, 618, 8, -100], [190, 588, 9, -80], [310, 612, 8, -95], [500, 596, 9, -85], [650, 628, 8, -90]]} w={2.4} color={C.moss} />
+        <Pine x={60} y={566} s={1.4} seed={11} />
+        <Pine x={118} y={580} s={0.95} seed={12} />
+        <Pine x={706} y={608} s={1.15} seed={13} />
+        <House x={202} y={566} w={100} h={68} seed={21} chimney />
+        <Smoke x={236} y={474} s={0.6} seed={41} />
+        <House x={332} y={598} w={84} h={58} roof={C.roofIndigo} lit={false} seed={22} />
+        <House x={470} y={582} w={92} h={62} seed={23} roof={C.clothTeal} />
+        <House x={632} y={616} w={80} h={56} roof={C.roofRed} lit={false} seed={24} />
+        <House x={112} y={620} w={72} h={50} roof={C.roofIndigo} seed={25} />
+        <Stroke pts={[[150, 548], [300, 562], [390, 548]]} w={1.8} opacity={0.8} />
+        {[[185, 556, C.clothRed], [215, 560, C.clothTeal], [250, 563, C.clothOchre], [290, 562, C.bone], [330, 558, C.clothRed]].map(([x, y, col], i) => (
+          <Shape key={i} pts={[[(x as number) - 8, y as number], [(x as number) + 8, (y as number) - 1], [(x as number) + 7, (y as number) + 20], [(x as number) - 7, (y as number) + 19]]} fill={col as string} w={1.8} seed={60 + i} />
         ))}
-        {wefts.map((y) => (
-          <g key={y}>
-            <path d={`M${lerp(threads[0]!, y)} ${y} L${lerp(threads[6]!, y)} ${y}`} stroke={C.ink} strokeWidth="3" opacity="0.8" />
-            {threads.map((x0, i) => (
-              <circle key={i} cx={lerp(x0, y)} cy={y} r="7.5" fill={i % 2 ? C.lantern : C.paperHi} stroke={C.ink} strokeWidth="3" />
-            ))}
+
+        {/* ---- the lighthouse, far right ---- */}
+        <g transform="translate(70 0)">
+          <Hatch pts={[[1360, 384], [900, 316], [900, 432]]} color={C.lantern} angle={186} gap={7} w={2.6} opacity={0.95} />
+          <Flecks marks={[[1300, 380, 110, 187], [1280, 372, 150, 191], [1300, 392, 120, 175], [1260, 380, 190, 183]]} w={3} color={C.lantern} opacity={0.9} seed={17} />
+          <Shape pts={[[1236, 664], [1290, 574], [1346, 548], [1428, 548], [1484, 574], [1536, 664]]} fill={C.hillNear} w={3.6} hatch={{ angle: -50, gap: 7, w: 1.4 }} hatchOpacity={0.5} />
+          <Stroke pts={[[1280, 620], [1340, 600], [1420, 612], [1490, 600]]} w={2} opacity={0.55} />
+          <Stroke pts={[[1262, 644], [1350, 628], [1450, 640], [1520, 628]]} w={2} opacity={0.55} />
+          <Shape pts={[[1350, 548], [1410, 548], [1397, 400], [1363, 400]]} fill={C.bone} w={3.6} />
+          <Shape pts={[[1361, 440], [1399, 440], [1402, 480], [1358, 480]]} fill={C.seal} w={2.6} />
+          <Shape pts={[[1356, 502], [1404, 502], [1408, 542], [1352, 542]]} fill={C.seal} w={2.6} />
+          <Hatch pts={[[1390, 410], [1398, 410], [1408, 546], [1396, 546]]} angle={-60} gap={5} w={1.2} opacity={0.5} />
+          <Shape pts={box(1344, 394, 72, 11)} fill={INK} w={0} reg={[0, 0]} />
+          <Stroke pts={[[1346, 394], [1380, 388], [1414, 394]]} w={2.4} />
+          <Shape pts={box(1360, 362, 40, 32)} fill={C.lantern} w={3.2} />
+          <Stroke pts={[[1380, 362], [1380, 394]]} w={1.6} opacity={0.8} />
+          <Shape pts={[[1350, 362], [1380, 334], [1410, 362]]} fill={C.seal} w={3.2} />
+          <Stroke pts={[[1380, 334], [1380, 316]]} w={3.4} />
+          <Flecks marks={[[1250, 654, 12, -50], [1280, 662, 10, -30], [1500, 658, 12, -130], [1530, 650, 10, -150], [1300, 668, 14, -80]]} w={3} color={C.seaFoam} />
+        </g>
+
+        {/* ---- the Loom House, on its own small island ---- */}
+        <Shape pts={[[966, 668], [1004, 642], [1060, 640], [1200, 640], [1256, 648], [1280, 680], [1270, 698], [966, 698]]} smooth fill={C.hillNear} w={3.4} hatch={{ angle: -50, gap: 6, w: 1.3 }} hatchOpacity={0.5} />
+        <Flecks marks={[[1010, 650, 8, -80], [1030, 646, 9, -95], [1240, 652, 8, -85], [1260, 660, 7, -100]]} w={2.4} color={C.moss} />
+        <g transform="translate(768 135) scale(0.8)">
+          <Shape pts={box(300, 548, 260, 84)} fill={C.bone} w={3.6} />
+          <Hatch pts={box(470, 552, 86, 76)} angle={-55} gap={6} w={1.3} opacity={0.5} />
+          <Stroke pts={[[302, 590], [430, 594], [558, 590]]} w={2.4} opacity={0.65} />
+          <TileRoof x={430} y={548} w={290} h={80} fill={C.roofIndigo} seed={71} rows={4} />
+          <TileRoof x={430} y={496} w={150} h={52} fill={C.indigo} seed={72} rows={3} />
+          {threads.map((x0, i) => (
+            <Stroke key={i} pts={[[430, 470], [(430 + x0) / 2 + (i % 2 ? 2 : -2), 560], [x0, 650]]} w={i === 3 ? 7 : 5} color={C.indigo} seed={80 + i} wob={0.9} />
+          ))}
+          {[548, 584, 620].map((y, j) => (
+            <g key={y}>
+              <Stroke pts={[[lerpX(292, y), y], [430, y + 2], [lerpX(556, y), y]]} w={3} opacity={0.85} seed={90 + j} />
+              {threads.map((x0, i) => (
+                <Shape key={i} pts={ell(lerpX(x0, y), y, 7.5, 7.5, 7, 0.1, i + j * 7)} smooth fill={(i + j) % 2 ? C.lantern : C.bone} w={2.6} reg={[0.8, 0.8]} />
+              ))}
+            </g>
+          ))}
+          <Shape pts={ell(430, 470, 10, 10, 8, 0.08, 99)} smooth fill={C.seal} w={3} />
+          {[[318, 640, C.clothRed], [346, 646, C.clothOchre], [530, 644, C.clothTeal], [548, 650, C.clothRed]].map(([x, y, col], i) => (
+            <Shape key={i} pts={ell(x as number, y as number, 11, 9, 8, 0.08, 110 + i)} smooth fill={col as string} w={2.4} />
+          ))}
+          <Shape pts={box(415, 596, 30, 36)} fill={C.woodDeep} w={2.6} />
+        </g>
+
+        {/* ---- the Foundry quay ---- */}
+        <g transform="translate(166 141) scale(0.78)">
+          <Planks pts={[[676, 654], [1022, 654], [1022, 678], [676, 678]]} rows={2} seed={120} />
+          <Shape pts={box(704, 588, 200, 66)} fill={C.bone} w={3.6} />
+          <Hatch pts={box(840, 592, 62, 58)} angle={-55} gap={6} w={1.3} opacity={0.5} />
+          <Shape pts={box(722, 606, 64, 48)} fill={C.ink2} w={3} />
+          <Wash pts={box(728, 622, 52, 32)} fill={C.ochre} opacity={0.85} smooth={false} />
+          <Flecks marks={[[732, 618, 8, -60], [750, 614, 8, -90], [768, 618, 8, -120]]} w={2.2} color={C.lantern} />
+          <Shape pts={box(802, 604, 36, 30)} fill={C.lantern} w={2.6} />
+          <Stroke pts={[[820, 604], [820, 634]]} w={1.4} opacity={0.8} />
+          <TileRoof x={804} y={588} w={200} h={52} fill={C.tealDeep} seed={131} rows={3} />
+          <Shape pts={box(864, 500, 30, 92)} fill={C.hillNear} w={3} />
+          <Smoke x={880} y={486} s={1.1} seed={141} />
+          <Stroke pts={[[938, 654], [938, 398]]} w={7} />
+          <Stroke pts={[[966, 654], [966, 398]]} w={7} />
+          {[440, 490, 540, 590, 640].map((y, i) => (
+            <Stroke key={y} pts={[[938, y + 50], [966, y]]} w={4.6} smooth={false} seed={150 + i} />
+          ))}
+          <Stroke pts={[[936, 410], [1030, 428], [1132, 458]]} w={8} seed={160} />
+          <Stroke pts={[[1100, 450], [1098, 548]]} w={3} />
+          <Crate x={1096} y={594} w={56} h={46} seed={161} />
+          <Barrel x={720} y={650} w={44} h={54} seed={162} />
+          <Barrel x={770} y={654} w={40} h={46} seed={163} band={C.seal} />
+          <Shape pts={ell(804, 566, 14, 14, 10, 0.05, 164)} smooth fill={C.lantern} w={2.4} />
+          <Flecks marks={[[804, 548, 6, -90], [818, 553, 6, -50], [790, 553, 6, -130], [804, 584, 6, 90]]} w={2} />
+        </g>
+        <Stroke pts={[[968, 653], [990, 650], [1000, 650]]} w={9} color={C.wood} />
+
+        {/* ---- boats ---- */}
+        <Boat x={560} y={738} s={0.85} seed={5} />
+        <Boat x={880} y={748} s={0.5} seed={8} hull={C.clothTeal} />
+
+        {/* ---- the dock, in the foreground ---- */}
+        <Planks pts={[[730, 772], [1600, 772], [1600, 900], [640, 900]]} rows={6} seed={200} />
+        <Shape pts={[[770, 744], [800, 744], [802, 784], [768, 784]]} smooth fill={C.ink2} w={3.2} />
+        <Rope pts={[[785, 752], [850, 796], [900, 776], [960, 804], [1010, 800]]} seed={211} />
+        <Shape pts={ell(1050, 818, 36, 14, 12, 0.05, 212)} smooth fill={C.straw} w={3} hatch={{ angle: 0, gap: 4, w: 1.2 }} hatchOpacity={0.6} />
+        <Crate x={1180} y={810} w={150} h={84} seed={213} />
+        <Crate x={1150} y={726} w={68} h={54} seed={214} />
+        <Barrel x={1566} y={822} w={64} h={82} seed={215} band={C.seal} />
+
+        {/* ---- festoon: lanterns on a rope across the top right ---- */}
+        <Rope pts={[[640, 26], [900, 80], [1180, 130], [1420, 118], [1600, 90]]} w={5} seed={230} />
+        {[[780, 66, 1], [930, 90, 1.1], [1080, 112, 1], [1240, 132, 1.1], [1400, 124, 1]].map(([x, y, s], i) => (
+          <g key={i}>
+            <Stroke pts={[[x as number, y as number], [x as number, (y as number) + 16]]} w={2.4} />
+            <PaperLantern x={x as number} y={(y as number) + 36} s={(s as number) * 1.15} color={i % 2 ? C.lantern : C.clothRed} seed={240 + i} />
           </g>
         ))}
-        <circle cx="430" cy="470" r="10" fill={C.seal} {...OL2} />
-        <rect x="415" y="598" width="30" height="34" fill={C.woodDeep} {...OL2} />
-      </g>
 
-      {/* Foundry quay: workshop, chimney, crane */}
-      <g transform="translate(166 141) scale(0.78)">
-        <rect x="676" y="654" width="346" height="22" fill={C.wood} {...OL} />
-        <path d="M700 654 V676 M760 654 V676 M820 654 V676 M880 654 V676 M940 654 V676 M1000 654 V676" stroke={C.ink} strokeWidth="2" opacity="0.5" />
-        <rect x="704" y="590" width="200" height="64" fill={C.paperLo} {...OL} />
-        <path d="M704 612 H904 M756 590 V654 M852 590 V654" stroke={C.ink} strokeWidth="2.5" opacity="0.7" />
-        <rect x="718" y="620" width="30" height="34" fill={C.tealDeep} {...OL2} />
-        <rect x="764" y="606" width="36" height="26" fill={C.lantern} {...OL2} />
-        <path d="M690 590 L804 540 L918 590 Z" fill={C.tealDeep} {...OL} />
-        <rect x="866" y="498" width="30" height="86" fill={C.ink2} {...OL} />
-        <circle cx="884" cy="478" r="19" fill={C.paperHi} {...OL2} />
-        <circle cx="902" cy="444" r="26" fill={C.paperHi} {...OL2} />
-        <circle cx="940" cy="404" r="34" fill={C.paperLo} {...OL2} />
-        <path d="M938 654 V398 M966 654 V398 M938 440 L966 398 M938 490 L966 440 M938 540 L966 490 M938 590 L966 540 M938 640 L966 590" stroke={C.ink} strokeWidth="4" fill="none" strokeLinecap="round" />
-        <path d="M936 408 L1130 458" stroke={C.ink} strokeWidth="7" strokeLinecap="round" />
-        <path d="M1096 449 V548" stroke={C.ink} strokeWidth="3" />
-        <rect x="1070" y="548" width="52" height="44" fill={C.wood} {...OL} />
-        <path d="M1070 548 L1122 592 M1122 548 L1070 592" stroke={C.ink} strokeWidth="2.5" opacity="0.6" />
+        {/* ---- Kernel, the guide ---- */}
+        <g transform="translate(1296 560) scale(0.94)">
+          <KernelParts mood="idle" />
+        </g>
       </g>
-
-      {/* boats */}
-      <Boat x={560} y={738} s={0.75} />
-      <Boat x={880} y={745} s={0.5} />
-
-      {/* foreground dock on the right, with the guide */}
-      <path d="M730 772 H1600 V900 H640 Z" fill={C.wood} {...OL} />
-      <path d="M690 806 H1600 M664 840 H1600 M650 872 H1600" stroke={C.ink} strokeWidth="2.5" opacity="0.55" />
-      <path d="M840 772 V900 M990 772 V900 M1140 772 V900 M1290 772 V900 M1440 772 V900" stroke={C.ink} strokeWidth="2" opacity="0.28" />
-      <rect x="730" y="772" width="870" height="10" fill={C.woodDeep} />
-      {/* bollard and rope */}
-      <rect x="770" y="744" width="30" height="40" rx="6" fill={C.ink2} {...OL} />
-      <path d="M785 752 Q850 792 900 774 T1000 802" fill="none" stroke={C.strawDeep} strokeWidth="7" strokeLinecap="round" />
-      <path d="M785 752 Q850 792 900 774 T1000 802" fill="none" stroke={C.straw} strokeWidth="2.5" strokeLinecap="round" strokeDasharray="6 8" />
-      {/* crates */}
-      <rect x="1100" y="724" width="170" height="86" fill={C.wood} {...OL} />
-      <rect x="1126" y="670" width="64" height="54" fill={C.wood} {...OL} />
-      <path d="M1126 670 L1190 724" stroke={C.ink} strokeWidth="3" opacity="0.5" />
-      <path d="M1100 760 H1270 M1150 724 V810 M1220 724 V810" stroke={C.ink} strokeWidth="3" opacity="0.5" />
-      <rect x="1100" y="724" width="170" height="86" fill="url(#tone-fine)" opacity="0.2" />
-      {/* Kernel, the guide */}
-      <g transform="translate(1296 586) scale(0.88)">
-        <KernelParts mood="idle" />
-      </g>
+      {/* printed-paper tooth over everything */}
+      <rect width="1600" height="900" filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>
   );
-}
+});
+
+/** Re-export so other scenes can reuse the spline helper without importing from ink directly. */
+export type { Pt };
+export { spline };

@@ -62,7 +62,7 @@ export function Accessibility() {
         <ul>
           <li><strong>Keyboard.</strong> Every control is a real link, button, input or select, reachable in a sensible order with a clear focus ring. A skip link jumps past the navigation. Nothing needs a mouse or a drag.</li>
           <li><strong>Structure.</strong> One main heading per page, a logical heading order, landmarks, and labels on every form field.</li>
-          <li><strong>Colour.</strong> Text and key interface colours are checked against WCAG AA contrast by a script in the project (<code>pnpm contrast</code>). Meaning is never carried by colour alone. Right and wrong answers also show words and icons, and locked badges are hatched and dashed.</li>
+          <li><strong>Colour.</strong> Text and key interface colours are checked against WCAG AA contrast by a script in the project (<code>pnpm contrast</code>). Meaning is never carried by colour alone. Right and wrong answers also show words and icons, and locked badges are hatched and carry a padlock.</li>
           <li><strong>Targets.</strong> Buttons and options are at least 48 pixels tall.</li>
           <li><strong>Motion and sound.</strong> Animation is small and stops when your device asks for reduced motion. Sound is off by default and optional.</li>
           <li><strong>Text.</strong> Body text uses Atkinson Hyperlegible, a typeface designed for legibility.</li>

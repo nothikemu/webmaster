@@ -28,7 +28,7 @@ The brief prohibits Y2K, Frutiger Aero, acid, vapor and synthwave looks, cyberpu
 | Path 2 | `--teal` | `#1f7c7a` | Use AI |
 | Path 3 | `--ochre` | `#d98a1b` | Use AI Responsibly |
 
-Each hue has text-safe steps (`-lo` for paper, `-hi` for ink). `pnpm contrast` reads the tokens and checks every text and key UI pair against WCAG 2.2 AA. Colour never carries meaning alone: right and wrong show words and icons, locked badges are hatched and dashed, status is written out.
+Each hue has text-safe steps (`-lo` for paper, `-hi` for ink). `pnpm contrast` reads the tokens and checks every text and key UI pair against WCAG 2.2 AA. Colour never carries meaning alone: right and wrong show words and icons, locked badges are hatched and padlocked, status is written out.
 
 ## Type
 
@@ -63,16 +63,38 @@ All three are SIL OFL, self-hosted, Latin subset. Body text is 18px with 1.6 lin
 
 ## Artwork
 
-Everything is hand-authored SVG in `src/art/`, in one language: 3 to 3.5px round ink outlines, flat fills from a fixed palette, hard offset shadows, screentone dots (`#tone`) and wave patterns (`#waves`) defined once in `Defs.tsx`.
+All artwork is original and written as code in `src/art/`. No raster images, no stock, no image generators, no traced or copied characters. It is built to read as ink on paper rather than as vector clip art, and it is one visual language across the hero, the path scenes, the lesson art and the badges.
 
-- `Harbor.tsx`: the hero scene with three landmarks and Kernel.
-- `PathScenes.tsx`: three scenes, one per path (a loom whose threads form a network, a foundry with a PROMPT sign, a lighthouse).
-- `Kernel.tsx`: the guide, in four moods from the same parts.
-- `Medals.tsx`: nine badge emblems, each a different glyph for a real achievement. Locked medals are hatched and dashed.
-- `Icons.tsx`: 32 icons on one pen weight.
-- `Diagram.tsx`: one renderer for every lesson diagram.
+**What "hand-inked" means here.** Nothing is a clean primitive. `ink.ts` is a small brush engine that turns a few control points into a drawn mark:
 
-Every illustration has a text description (`role="img"` with `aria-label`) or is hidden from assistive technology when decorative. **No raster images, no stock, no image generators were used.**
+- `spline`, `densify`, `wobble`: Catmull-Rom curves with a seeded, low-frequency wobble, so no line is perfectly straight and every shape is slightly off.
+- `strokeD`: a variable-width brush polygon. Pressure swells in the middle and tapers at the ends, like a brush pen.
+- `ringD`: closed shapes are drawn as two overlapping strokes that do not quite meet, the way an artist closes a contour.
+- `edgesD`: architecture is drawn one edge at a time with small overshoots at the corners.
+- `hatchD`: scanline-clipped, jittered hatching for shadow, in the manner of woodblock and manga shading.
+- `cumulus`, `crest`: clouds built from unions of ellipses, and a woodblock wave curl.
+- Everything is **seeded** (`rng` from `widgets/logic/random`), so the art is identical on every load. Components are `memo`-ised so the geometry is computed once.
+- **Print misregistration**: fills are offset a pixel or two from their outlines, as in a two-pass print.
+- Two SVG filters in `Defs.tsx`: `#rough` (turbulence plus displacement, to roughen edges) and `#grain` (paper tooth, multiply blend).
+
+**Files**
+
+- `ink.ts`: the brush engine above. `Draw.tsx`: `Shape`, `Wash`, `Stroke`, `Hatch` and `Flecks`, the drawing components built on it.
+- `palette.ts`: the one colour list, including shading steps (light, deep, tan, pale) so form is carried by tone and hatching, not by gradients.
+- `Harbor.tsx`: the 1600 x 900 hero. Sky and clouds, gulls, a lighthouse with a hatched beam, the Loom House on its own island, the Foundry quay, a village of houses and pines, boats, planks, rope, crates and barrels, and Kernel on the quay.
+- `PathScenes.tsx`: one scene per path (a weaving hall, a workshop on the docks, a lighthouse on a cliff), each with its own mentor and Kernel.
+- `Cast.tsx`: three mentors with deliberately different silhouettes, built from shared limb and hand helpers. **Wren** the weaver is short and round under a hat as wide as she is tall. **Brannock** the foundry-master is wide and heavy, mid-swing, with goggles pushed up and a big beard. **Sedge** the beacon-keeper is tall and narrow in a coat the wind has taken hold of, with a lantern on a pole.
+- `Kernel.tsx`: the guide, a small robot in a woven hat and scarf. One set of parts, four moods (`idle`, `think`, `cheer`, `alert`), with its own eyes, brows and mouth for each.
+- `props.tsx`: shared hand-inked props (clouds, gulls, pines, lanterns, crates, barrels, roofs, houses, boats, planks, rope).
+- `LessonArt.tsx`: **fifteen bespoke lesson illustrations**, one per lesson, each a different scene placed on a per-path backdrop whose details vary with the lesson, with Kernel in a mood chosen for it. Each has its own written description (`LESSON_ALT`) for assistive technology.
+- `Medals.tsx`: nine badge emblems, one distinct glyph per real achievement. Locked medals are hatched, faded and padlocked.
+- `Icons.tsx`: 32 icons on one pen weight. `Diagram.tsx`: one renderer for every lesson diagram.
+
+**Influences, not copies.** The reference points are qualities of Samurai Champloo and One Piece illustration: varied line weight, hatching for shadow, exaggerated and distinctive silhouettes, busy lived-in environments, and a restrained warm palette. No character, costume, ship, logo or composition from either work is reproduced. Every character, place and prop here is original to this project.
+
+**The honest caveat.** This is code that simulates hand-inking. It was written by an AI assistant, not drawn by a person, and it reads closer to a printed woodblock or a screen-printed poster than to a freehand pen drawing. If the team or the event requires artwork drawn by a student, replace or redraw these files by hand. See `AI_USE_LOG.md`.
+
+Every illustration has a text description (`role="img"` with `aria-label`) or is hidden from assistive technology when decorative.
 
 ## Motion and sound
 

@@ -1,4 +1,7 @@
-import { C } from './palette';
+import { memo } from 'react';
+import { C, INK } from './palette';
+import { Flecks, Hatch, Shape, Stroke, Wash } from './Draw';
+import { box, ell, type Pt } from './ink';
 
 export type Mood = 'idle' | 'think' | 'cheer' | 'alert';
 
@@ -9,131 +12,218 @@ interface KernelProps {
   className?: string;
 }
 
-const OL = { stroke: C.ink, strokeWidth: 3.5, strokeLinejoin: 'round', strokeLinecap: 'round' } as const;
+/** An arm: a thick inked tube, drawn as a dark stroke with a lighter stroke on top. */
+function Arm({ pts, seed }: { pts: Pt[]; seed: number }) {
+  return (
+    <g>
+      <Stroke pts={pts} w={15} color={INK} seed={seed} taper={0.12} wob={0.6} />
+      <Stroke pts={pts} w={9} color={C.bone} seed={seed + 1} taper={0.1} wob={0.6} />
+    </g>
+  );
+}
+
+function Hand({ x, y, seed }: { x: number; y: number; seed: number }) {
+  return (
+    <g>
+      <Shape pts={ell(x, y, 9.5, 9, 9, 0.07, seed)} smooth fill={C.bone} w={2.8} hatch={{ angle: -50, gap: 4.5, w: 1.1 }} hatchOpacity={0.55} />
+      <Stroke pts={[[x - 3, y + 1], [x, y + 6], [x + 3, y + 1]]} w={1.6} />
+    </g>
+  );
+}
+
+/** A small paper lantern with ribs, caps, a tassel and ink ticks for light. */
+function Lantern({ x, y, lit = true }: { x: number; y: number; lit?: boolean }) {
+  return (
+    <g>
+      <Stroke pts={[[x, y - 28], [x, y - 17]]} w={2.6} />
+      <Shape pts={box(x - 9, y - 19, 18, 6)} fill={INK} w={2} />
+      <Shape pts={ell(x, y, 16, 20, 10, 0.05, 41)} smooth fill={C.lantern} w={3.2} hatch={{ angle: -60, gap: 6, w: 1.3 }} hatchOpacity={0.5} />
+      <Stroke pts={[[x - 15, y - 3], [x, y + 3], [x + 15, y - 3]]} w={1.8} opacity={0.7} />
+      <Stroke pts={[[x - 9, y - 16], [x - 11, y], [x - 8, y + 16]]} w={1.6} opacity={0.7} />
+      <Stroke pts={[[x + 9, y - 16], [x + 11, y], [x + 8, y + 16]]} w={1.6} opacity={0.7} />
+      <Shape pts={box(x - 8, y + 15, 16, 5)} fill={INK} w={2} />
+      <Stroke pts={[[x, y + 20], [x - 2, y + 30]]} w={2.2} color={C.seal} />
+      <Stroke pts={[[x, y + 20], [x + 3, y + 29]]} w={2.2} color={C.seal} />
+      {lit ? <Flecks marks={[[x - 26, y - 8, 7, 200], [x + 26, y - 8, 7, -20], [x - 24, y + 12, 6, 150], [x + 24, y + 12, 6, 30], [x, y - 36, 7, -90]]} w={1.8} /> : null}
+    </g>
+  );
+}
 
 /**
- * Kernel, the guide: a small round automaton in a woven travelling hat, carrying a lantern.
- * One character, four moods, drawn from the same parts so it always looks like the same person.
+ * Kernel, the guide: a small, dented automaton in a woven travelling hat, with a scarf the wind will not leave alone.
+ * One character, four moods, drawn from the same parts so it is always recognisably the same person.
  */
-export function KernelParts({ mood = 'idle' }: { mood?: Mood }) {
+export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?: Mood }) {
   const cheer = mood === 'cheer';
   const think = mood === 'think';
   const alert = mood === 'alert';
   return (
     <g>
-      {/* ground shadow */}
-      <ellipse cx="112" cy="268" rx="64" ry="9" fill={C.ink} opacity="0.2" />
+      <Wash pts={ell(112, 271, 68, 9, 12, 0.04, 3)} fill={INK} opacity={0.22} />
+      <Flecks marks={[[52, 272, 10, 0], [160, 274, 12, 0], [178, 270, 8, 5]]} w={2} opacity={0.5} />
 
-      {/* legs and feet */}
-      <rect x="80" y="216" width="21" height="38" rx="8" fill={C.ink3} {...OL} />
-      <rect x="124" y="216" width="21" height="38" rx="8" fill={C.ink3} {...OL} />
-      <ellipse cx="88" cy="258" rx="19" ry="9" fill={C.wood} {...OL} />
-      <ellipse cx="136" cy="258" rx="19" ry="9" fill={C.wood} {...OL} />
+      {/* the scarf, streaming behind in the wind */}
+      <Shape pts={[[146, 176], [170, 183], [196, 171], [226, 178], [216, 194], [198, 190], [178, 206], [152, 196]]} smooth fill={C.clothRed} w={3} hatch={{ angle: 55, gap: 6, w: 1.3 }} hatchOpacity={0.6} />
+      <Stroke pts={[[168, 188], [190, 180], [214, 184]]} w={1.6} opacity={0.6} />
 
-      {/* torso */}
-      <path d="M64 172 Q58 218 82 226 L144 226 Q168 218 162 172 Z" fill={C.teal} {...OL} />
-      <rect x="94" y="184" width="36" height="26" rx="4" fill={C.paperHi} stroke={C.ink} strokeWidth="2.5" />
-      <path d="M100 192h24M100 199h16" stroke={C.ink} strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="112" cy="217" r="5" fill={C.seal} stroke={C.ink} strokeWidth="2" />
-      {/* screentone on the shadow side */}
-      <path d="M64 172 Q58 218 82 226 L96 226 Q80 210 82 172 Z" fill="url(#tone)" opacity="0.5" />
+      {/* legs and boots */}
+      <Shape pts={[[78, 224], [100, 224], [103, 254], [76, 254]]} fill={C.ink3} w={2.8} />
+      <Shape pts={[[124, 224], [146, 224], [148, 254], [122, 254]]} fill={C.ink3} w={2.8} />
+      <Stroke pts={[[77, 238], [90, 242], [103, 238]]} w={3} color={C.paper} />
+      <Stroke pts={[[123, 238], [136, 242], [148, 238]]} w={3} color={C.paper} />
+      <Shape pts={[[64, 252], [104, 250], [112, 262], [104, 274], [60, 274], [56, 262]]} smooth fill={C.wood} w={3.2} hatch={{ angle: -40, gap: 5, w: 1.3 }} hatchOpacity={0.6} />
+      <Shape pts={[[112, 250], [152, 252], [158, 262], [152, 274], [108, 274], [102, 262]]} smooth fill={C.wood} w={3.2} hatch={{ angle: -40, gap: 5, w: 1.3 }} hatchOpacity={0.6} />
+      <Stroke pts={[[68, 258], [84, 255], [98, 258]]} w={1.8} color={C.woodLight} />
+
+      {/* torso: a barrel with rivets, a chest plate and a mended patch */}
+      <Shape pts={[[62, 172], [53, 198], [61, 224], [88, 235], [136, 235], [163, 224], [171, 198], [162, 172]]} smooth fill={C.teal} w={3.4} />
+      <Hatch pts={[[60, 178], [55, 198], [62, 222], [88, 233], [106, 233], [94, 204], [92, 178]]} angle={-52} gap={5.5} w={1.4} opacity={0.7} smooth />
+      <Stroke pts={[[58, 202], [100, 208], [142, 206], [168, 200]]} w={2.2} opacity={0.75} />
+      {[[70, 205], [92, 209], [118, 209], [146, 206]].map(([x, y], i) => (
+        <Shape key={i} pts={ell(x!, y!, 2.6, 2.6, 6, 0.1, i + 5)} smooth fill={C.bone} w={1.4} reg={[0.5, 0.5]} />
+      ))}
+      <Shape pts={box(92, 182, 40, 28)} fill={C.bone} w={2.8} />
+      <Shape pts={ell(104, 196, 6.5, 6.5, 8, 0.05, 9)} smooth fill={C.ochre} w={2} />
+      <Stroke pts={[[104, 196], [107, 192]]} w={1.8} />
+      <Shape pts={ell(120, 196, 4, 4, 7, 0.08, 4)} smooth fill={C.seal} w={1.8} />
+      <Stroke pts={[[126, 188], [130, 192], [127, 202]]} w={2.2} />
+      <Shape pts={[[139, 212], [156, 210], [158, 226], [140, 228]]} fill={C.paperLo} w={2.2} />
+      <Flecks marks={[[142, 214, 4, 90], [147, 213, 4, 90], [152, 212, 4, 90], [142, 224, 4, 90], [148, 223, 4, 90]]} w={1.3} opacity={0.8} />
 
       {/* arms */}
       {cheer ? (
         <>
-          <path d="M66 184 Q40 170 30 140" fill="none" {...OL} strokeWidth={6} />
-          <path d="M66 184 Q40 170 30 140" fill="none" stroke={C.paperHi} strokeWidth="2" strokeLinecap="round" />
-          <circle cx="29" cy="136" r="10" fill={C.paperHi} {...OL} />
-          <path d="M160 184 Q186 170 196 140" fill="none" {...OL} strokeWidth={6} />
-          <path d="M160 184 Q186 170 196 140" fill="none" stroke={C.paperHi} strokeWidth="2" strokeLinecap="round" />
-          <circle cx="197" cy="136" r="10" fill={C.paperHi} {...OL} />
+          <Arm pts={[[68, 188], [42, 172], [31, 142]]} seed={11} />
+          <Hand x={29} y={134} seed={12} />
+          <Arm pts={[[158, 188], [184, 172], [197, 142]]} seed={13} />
+          <Hand x={199} y={134} seed={14} />
         </>
       ) : (
         <>
-          <path d="M66 186 Q44 204 40 232" fill="none" {...OL} strokeWidth={6} />
-          <path d="M66 186 Q44 204 40 232" fill="none" stroke={C.paperHi} strokeWidth="2" strokeLinecap="round" />
-          <circle cx="40" cy="236" r="10" fill={C.paperHi} {...OL} />
+          <Arm pts={[[68, 190], [50, 208], [45, 232]]} seed={15} />
+          <Hand x={44} y={239} seed={16} />
           {think ? (
             <>
-              <path d="M160 186 Q186 190 164 168" fill="none" {...OL} strokeWidth={6} />
-              <path d="M160 186 Q186 190 164 168" fill="none" stroke={C.paperHi} strokeWidth="2" strokeLinecap="round" />
-              <circle cx="160" cy="166" r="9" fill={C.paperHi} {...OL} />
+              <Arm pts={[[158, 190], [190, 192], [176, 168]]} seed={17} />
+              <Hand x={170} y={160} seed={18} />
             </>
           ) : (
             <>
-              <path d="M160 186 Q190 192 198 214" fill="none" {...OL} strokeWidth={6} />
-              <path d="M160 186 Q190 192 198 214" fill="none" stroke={C.paperHi} strokeWidth="2" strokeLinecap="round" />
-              <circle cx="199" cy="218" r="10" fill={C.paperHi} {...OL} />
-              {/* lantern */}
-              <path d="M199 228 v10" stroke={C.ink} strokeWidth="3" strokeLinecap="round" />
-              <ellipse cx="199" cy="252" rx="15" ry="18" fill={C.lantern} {...OL} />
-              <path d="M184 252 H214 M199 234 V270" stroke={C.ink} strokeWidth="2" opacity="0.55" />
-              <rect x="190" y="231" width="18" height="6" rx="2" fill={C.ink} />
-              <rect x="192" y="267" width="14" height="5" rx="2" fill={C.ink} />
+              <Arm pts={[[158, 190], [186, 198], [199, 218]]} seed={19} />
+              <Hand x={200} y={223} seed={20} />
+              <Lantern x={200} y={256} lit={!alert} />
             </>
           )}
         </>
       )}
 
       {/* head */}
-      <rect x="52" y="94" width="120" height="86" rx="30" fill={C.paperHi} {...OL} />
-      <path d="M52 140 Q52 180 82 180 L100 180 Q70 170 70 126 Z" fill="url(#tone)" opacity="0.45" />
-      <rect x="64" y="109" width="96" height="54" rx="22" fill={C.ink} />
-      {/* ear lugs */}
-      <circle cx="50" cy="136" r="9" fill={C.ochre} {...OL} strokeWidth={3} />
-      <circle cx="174" cy="136" r="9" fill={C.ochre} {...OL} strokeWidth={3} />
-      {/* eyes */}
-      <circle cx="91" cy="134" r={alert ? 12 : 10.5} fill={C.paperHi} />
-      <circle cx="133" cy="134" r={alert ? 12 : 10.5} fill={C.paperHi} />
-      <circle cx={think ? 95 : 91} cy={think ? 130 : 135} r={alert ? 3.5 : 5} fill={C.ink} />
-      <circle cx={think ? 137 : 133} cy={think ? 130 : 135} r={alert ? 3.5 : 5} fill={C.ink} />
-      {alert ? <path d="M78 116 L102 122 M146 116 L122 122" stroke={C.lantern} strokeWidth="3.5" strokeLinecap="round" /> : null}
+      <Shape pts={[[56, 114], [70, 97], [112, 92], [156, 97], [170, 114], [172, 150], [160, 177], [112, 183], [64, 177], [52, 150]]} smooth fill={C.bone} w={3.6} />
+      <Hatch pts={[[150, 100], [168, 114], [171, 150], [160, 176], [138, 181], [150, 142]]} angle={-55} gap={5} w={1.3} opacity={0.65} smooth />
+      <Stroke pts={[[148, 104], [153, 113], [146, 122], [152, 133]]} w={2} opacity={0.8} />
+      <Shape pts={ell(51, 139, 9, 10, 8, 0.06, 21)} smooth fill={C.ochre} w={3} />
+      <Shape pts={ell(173, 139, 9, 10, 8, 0.06, 22)} smooth fill={C.ochre} w={3} />
+      <Stroke pts={[[48, 139], [54, 139]]} w={1.8} />
+      <Stroke pts={[[170, 139], [176, 139]]} w={1.8} />
+      <Shape pts={[[67, 113], [157, 113], [162, 135], [157, 165], [112, 169], [67, 165], [62, 135]]} smooth fill={C.ink} w={2.4} reg={[0, 0]} />
+
+      {/* eyes and brows: this is where the acting happens */}
+      {cheer ? (
+        <>
+          <Stroke pts={[[80, 140], [91, 128], [102, 140]]} w={4.4} color={C.bone} />
+          <Stroke pts={[[122, 140], [133, 128], [144, 140]]} w={4.4} color={C.bone} />
+        </>
+      ) : (
+        <>
+          <Shape pts={ell(91, 136, alert ? 13 : 11, alert ? 14 : 12, 10, 0.05, 31)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+          <Shape pts={ell(133, 136, alert ? 13 : 11, alert ? 14 : 12, 10, 0.05, 32)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+          <Shape pts={ell(think ? 96 : 92, think ? 131 : 138, alert ? 3.6 : 5.4, alert ? 4 : 6.4, 8, 0.05, 33)} smooth fill={C.ink} w={0} reg={[0, 0]} />
+          <Shape pts={ell(think ? 138 : 134, think ? 131 : 138, alert ? 3.6 : 5.4, alert ? 4 : 6.4, 8, 0.05, 34)} smooth fill={C.ink} w={0} reg={[0, 0]} />
+          <Shape pts={ell(think ? 98 : 94, think ? 128 : 135, 1.8, 1.8, 6, 0.1, 35)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+          <Shape pts={ell(think ? 140 : 136, think ? 128 : 135, 1.8, 1.8, 6, 0.1, 36)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+        </>
+      )}
+      {alert ? (
+        <>
+          <Stroke pts={[[76, 114], [102, 122]]} w={3.6} color={C.lantern} />
+          <Stroke pts={[[148, 114], [122, 122]]} w={3.6} color={C.lantern} />
+        </>
+      ) : think ? (
+        <>
+          <Stroke pts={[[78, 118], [90, 116], [102, 119]]} w={3.2} color={C.lantern} />
+          <Stroke pts={[[122, 111], [134, 107], [146, 112]]} w={3.2} color={C.lantern} />
+        </>
+      ) : cheer ? (
+        <>
+          <Stroke pts={[[78, 116], [91, 108], [104, 116]]} w={3.2} color={C.lantern} />
+          <Stroke pts={[[120, 116], [133, 108], [146, 116]]} w={3.2} color={C.lantern} />
+        </>
+      ) : (
+        <>
+          <Stroke pts={[[78, 119], [91, 114], [103, 119]]} w={3.2} color={C.lantern} />
+          <Stroke pts={[[121, 119], [134, 114], [146, 119]]} w={3.2} color={C.lantern} />
+        </>
+      )}
       {/* mouth */}
       {cheer ? (
-        <path d="M100 148 Q112 164 124 148 Z" fill={C.lantern} stroke={C.lantern} strokeWidth="2" strokeLinejoin="round" />
+        <Shape pts={[[98, 148], [112, 164], [126, 148], [112, 152]]} smooth fill={C.lantern} w={0} reg={[0, 0]} />
       ) : alert ? (
-        <ellipse cx="112" cy="153" rx="5" ry="6" fill={C.lantern} />
+        <Shape pts={ell(112, 156, 5.5, 7, 8, 0.05, 37)} smooth fill={C.lantern} w={0} reg={[0, 0]} />
       ) : think ? (
-        <path d="M104 152 H122" stroke={C.lantern} strokeWidth="3.5" strokeLinecap="round" />
+        <Stroke pts={[[103, 155], [112, 153], [122, 156]]} w={3.4} color={C.lantern} />
       ) : (
-        <path d="M101 148 Q112 158 123 148" fill="none" stroke={C.lantern} strokeWidth="3.5" strokeLinecap="round" />
+        <Stroke pts={[[100, 151], [112, 160], [125, 151]]} w={3.6} color={C.lantern} />
       )}
-      <circle cx="74" cy="148" r="4" fill={C.seal} opacity="0.9" />
-      <circle cx="150" cy="148" r="4" fill={C.seal} opacity="0.9" />
+      <Shape pts={ell(75, 152, 4.6, 3.4, 7, 0.1, 38)} smooth fill={C.seal} w={0} reg={[0, 0]} />
+      <Shape pts={ell(149, 152, 4.6, 3.4, 7, 0.1, 39)} smooth fill={C.seal} w={0} reg={[0, 0]} />
 
-      {/* woven travelling hat */}
-      <path d="M113 26 L222 98 Q113 118 4 98 Z" fill={C.straw} {...OL} />
-      <path d="M113 26 L222 98 Q190 104 165 106 Q150 62 113 26 Z" fill={C.strawDeep} opacity="0.55" />
-      <path d="M113 26 L72 100 M113 26 L113 112 M113 26 L154 104 M113 26 L36 99 M113 26 L190 101" stroke={C.ink} strokeWidth="2" opacity="0.55" fill="none" />
-      <path d="M52 78 Q113 94 174 78" fill="none" stroke={C.seal} strokeWidth="5" strokeLinecap="round" />
-      <circle cx="113" cy="26" r="6" fill={C.seal} {...OL} strokeWidth={3} />
-      {/* chin cord */}
-      <path d="M52 101 Q56 150 84 178 M174 101 Q170 150 144 178" fill="none" stroke={C.seal} strokeWidth="3.5" strokeLinecap="round" />
-      <circle cx="113" cy="184" r="7" fill={C.seal} stroke={C.ink} strokeWidth="2.5" />
+      {/* the woven travelling hat, tipped a little to one side */}
+      <g transform="translate(0 -9) rotate(-5 112 104)">
+        <Wash pts={[[60, 110], [112, 118], [164, 110], [158, 124], [112, 128], [66, 124]]} fill={INK} opacity={0.3} />
+        <Shape pts={[[112, 24], [224, 98], [198, 108], [112, 118], [26, 108], [0, 98]]} fill={C.straw} w={3.6} />
+        <Wash pts={[[112, 28], [220, 98], [196, 106], [150, 112], [158, 70]]} fill={C.strawDeep} opacity={0.5} smooth={false} />
+        <Hatch pts={[[126, 40], [214, 98], [190, 104], [146, 110], [150, 66]]} angle={62} gap={5.4} w={1.3} opacity={0.55} />
+        {[[112, 24, 28, 106], [112, 24, 66, 112], [112, 24, 112, 117], [112, 24, 160, 113], [112, 24, 198, 106]].map(([x1, y1, x2, y2], i) => (
+          <Stroke key={i} pts={[[x1!, y1!], [(x1! + x2!) / 2 + (i - 2) * 2, (y1! + y2!) / 2], [x2!, y2!]]} w={1.5} opacity={0.65} seed={50 + i} />
+        ))}
+        <Stroke pts={[[52, 82], [112, 94], [172, 82]]} w={2} opacity={0.6} />
+        <Stroke pts={[[34, 94], [112, 108], [190, 94]]} w={2} opacity={0.6} />
+        <Stroke pts={[[70, 68], [112, 76], [154, 68]]} w={1.8} opacity={0.6} />
+        <Stroke pts={[[40, 86], [112, 100], [186, 86]]} w={4.6} color={C.seal} opacity={0.95} />
+        <Shape pts={ell(112, 24, 6.5, 6.5, 7, 0.1, 61)} smooth fill={C.seal} w={3} />
+        <Stroke pts={[[112, 18], [116, 8], [112, 2]]} w={2.4} />
+      </g>
+      {/* the chin cord, with a knot and a loose end */}
+      <Stroke pts={[[52, 106], [53, 140], [68, 174]]} w={3.4} color={C.seal} />
+      <Stroke pts={[[172, 106], [171, 140], [156, 174]]} w={3.4} color={C.seal} />
+      <Shape pts={ell(112, 186, 8, 7, 7, 0.1, 62)} smooth fill={C.seal} w={2.6} />
+      <Stroke pts={[[108, 190], [103, 204]]} w={2.8} color={C.seal} />
+      <Stroke pts={[[116, 190], [121, 202]]} w={2.8} color={C.seal} />
 
       {think ? (
         <g>
-          <circle cx="196" cy="70" r="6" fill={C.paperHi} {...OL} strokeWidth={3} />
-          <circle cx="210" cy="46" r="9" fill={C.paperHi} {...OL} strokeWidth={3} />
+          <Shape pts={ell(196, 80, 6, 6, 8, 0.05, 71)} smooth fill={C.bone} w={2.6} />
+          <Shape pts={ell(210, 56, 9, 9, 8, 0.05, 72)} smooth fill={C.bone} w={2.8} />
+          <Shape pts={ell(222, 24, 14, 11, 10, 0.06, 73)} smooth fill={C.bone} w={3} />
         </g>
       ) : null}
-      {alert ? <path d="M200 58 v26 M200 96 v.5" stroke={C.seal} strokeWidth="9" strokeLinecap="round" /> : null}
+      {alert ? (
+        <g>
+          <Stroke pts={[[204, 52], [205, 70], [203, 84]]} w={9} color={C.seal} />
+          <Shape pts={ell(203, 98, 5, 5, 7, 0.1, 74)} smooth fill={C.seal} w={0} reg={[0, 0]} />
+          <Flecks marks={[[186, 60, 10, 200], [222, 58, 10, -20], [184, 84, 9, 160], [224, 84, 9, 20]]} w={2.2} />
+        </g>
+      ) : null}
+      {cheer ? <Flecks marks={[[10, 112, 12, 200], [14, 90, 10, 230], [214, 112, 12, -20], [212, 90, 10, -50], [112, -4, 10, -90]]} w={2.6} /> : null}
     </g>
   );
-}
+});
 
 /** Stand-alone Kernel, for use outside another illustration. */
-export function Kernel({ mood = 'idle', label, className }: KernelProps) {
+export const Kernel = memo(function Kernel({ mood = 'idle', label, className }: KernelProps) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 230 285"
-      role={label ? 'img' : undefined}
-      aria-label={label}
-      aria-hidden={label ? undefined : true}
-      focusable="false"
-    >
+    <svg className={className} viewBox="-8 -12 250 300" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
       <KernelParts mood={mood} />
     </svg>
   );
-}
+});

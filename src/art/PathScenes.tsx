@@ -1,172 +1,228 @@
-import { C } from './palette';
+import { memo } from 'react';
+import { C, INK } from './palette';
+import { Flecks, Hatch, Shape, Stroke } from './Draw';
+import { box, ell, type Pt } from './ink';
 import { KernelParts } from './Kernel';
+import { Brannock, Sedge, Wren } from './Cast';
+import { Barrel, Boat, Cloud, Crest, Gull, PaperLantern, Planks, Ripples, Smoke } from './props';
 import type { PathId } from '@/content/types';
 
-const OL = { stroke: C.ink, strokeWidth: 3.5, strokeLinejoin: 'round', strokeLinecap: 'round' } as const;
-const OL2 = { stroke: C.ink, strokeWidth: 2.5, strokeLinejoin: 'round', strokeLinecap: 'round' } as const;
-
-function gearPath(cx: number, cy: number, r: number, teeth: number): string {
-  const pts: string[] = [];
+function gear(cx: number, cy: number, r: number, teeth: number, rot = 0): Pt[] {
+  const pts: Pt[] = [];
   const step = (Math.PI * 2) / (teeth * 2);
   for (let i = 0; i < teeth * 2; i++) {
-    const rad = i % 2 ? r * 0.78 : r;
-    const a0 = i * step - step * 0.32;
-    const a1 = i * step + step * 0.32;
-    pts.push(`${cx + Math.cos(a0) * rad},${cy + Math.sin(a0) * rad}`, `${cx + Math.cos(a1) * rad},${cy + Math.sin(a1) * rad}`);
+    const rad = i % 2 ? r * 0.8 : r;
+    for (const off of [-0.3, 0.3]) {
+      const a = i * step + step * off + rot;
+      pts.push([cx + Math.cos(a) * rad, cy + Math.sin(a) * rad]);
+    }
   }
-  return `M${pts.join('L')}Z`;
+  return pts;
 }
 
+/** The Loom House: a weaving hall where the threads of a loom make a network. */
 function Loom() {
-  const warps = Array.from({ length: 11 }, (_, i) => 210 + i * 24);
+  const warps = Array.from({ length: 13 }, (_, i) => 204 + i * 21);
   return (
-    <>
-      <rect width="640" height="400" fill="#d3d6e4" />
-      <rect y="250" width="640" height="150" fill={C.paperLo} />
-      <path d="M0 250 H640" stroke={C.ink} strokeWidth="3.5" />
-      {/* window onto hills */}
-      <path d="M40 250 V110 a70 70 0 0 1 140 0 V250 Z" fill={C.sky1} {...OL} />
-      <path d="M40 250 V200 L90 168 L130 196 L180 160 V250 Z" fill={C.hillFar} {...OL2} />
-      <circle cx="132" cy="120" r="22" fill={C.sun} />
-      {/* loom frame */}
-      <rect x="176" y="46" width="288" height="22" fill={C.wood} {...OL} />
-      <rect x="176" y="300" width="288" height="22" fill={C.wood} {...OL} />
-      <rect x="168" y="46" width="24" height="300" fill={C.woodDeep} {...OL} />
-      <rect x="448" y="46" width="24" height="300" fill={C.woodDeep} {...OL} />
-      {/* warp threads with a woven band: a network made of cloth */}
+    <g>
+      <rect width="640" height="400" fill="#d9d2c0" />
+      <Flecks marks={[[10, 30, 120, 0], [300, 20, 160, 1], [470, 60, 130, 0], [60, 90, 100, 1]]} w={3.4} color={C.paperHi} opacity={0.6} seed={3} />
+      {/* back wall: timber frame and a window onto the harbor hills */}
+      <Shape pts={box(0, 0, 640, 262)} fill="#d9d2c0" w={0} reg={[0, 0]} />
+      {[60, 180, 330, 470, 600].map((x, i) => (
+        <Stroke key={i} pts={[[x, 0], [x + 1, 130], [x - 1, 262]]} w={8} color={C.woodDeep} seed={300 + i} wob={1.1} />
+      ))}
+      <Stroke pts={[[0, 18], [320, 24], [640, 16]]} w={10} color={C.woodDeep} seed={310} wob={1.2} />
+      <Stroke pts={[[0, 262], [320, 266], [640, 262]]} w={8} color={INK} seed={311} />
+      <Shape pts={[[28, 262], [28, 110], [60, 66], [100, 52], [140, 66], [172, 110], [172, 262]]} smooth fill={C.sky1} w={4} />
+      <Shape pts={[[28, 262], [28, 200], [66, 170], [100, 196], [146, 158], [172, 190], [172, 262]]} fill={C.hillFar} w={2.6} hatch={{ angle: -55, gap: 6, w: 1.2 }} hatchOpacity={0.5} />
+      <Shape pts={ell(104, 120, 22, 22, 14, 0.02, 301)} smooth fill={C.sun} w={2.8} />
+      <Stroke pts={[[100, 52], [100, 262]]} w={3.4} />
+      <Stroke pts={[[28, 160], [172, 160]]} w={3.4} />
+      {/* skeins of dyed thread hanging from the beam */}
+      {[[200, C.clothRed], [226, C.clothOchre], [252, C.clothTeal], [520, C.clothRed], [548, C.indigo], [574, C.clothOchre], [600, C.clothTeal]].map(([x, col], i) => (
+        <g key={i}>
+          <Stroke pts={[[x as number, 26], [x as number, 44]]} w={2.4} />
+          <Shape pts={[[(x as number) - 8, 44], [(x as number) + 8, 44], [(x as number) + 10, 92], [x as number, 104], [(x as number) - 10, 92]]} smooth fill={col as string} w={2.6} hatch={{ angle: 75, gap: 4, w: 1 }} hatchOpacity={0.45} seed={320 + i} />
+        </g>
+      ))}
+      {/* floor */}
+      <Planks pts={[[0, 262], [640, 262], [640, 400], [0, 400]]} rows={4} seed={330} />
+      {/* the loom: a heavy frame, many warp threads, a woven band made of knots */}
+      <Shape pts={box(176, 56, 288, 20)} fill={C.wood} w={3.4} />
+      <Shape pts={box(176, 300, 288, 20)} fill={C.wood} w={3.4} />
+      <Shape pts={box(166, 56, 22, 270)} fill={C.woodDeep} w={3.4} hatch={{ angle: -70, gap: 6, w: 1.1 }} hatchColor={C.woodLight} hatchOpacity={0.5} />
+      <Shape pts={box(452, 56, 22, 270)} fill={C.woodDeep} w={3.4} hatch={{ angle: -70, gap: 6, w: 1.1 }} hatchColor={C.woodLight} hatchOpacity={0.5} />
       {warps.map((x, i) => (
-        <path key={i} d={`M${x} 68 V300`} stroke={C.indigo} strokeWidth={i % 3 === 0 ? 6 : 4} strokeLinecap="round" />
+        <Stroke key={i} pts={[[x, 76], [x + (i % 3) - 1, 190], [x, 300]]} w={i % 4 === 0 ? 5.2 : 3.4} color={C.indigo} seed={340 + i} wob={0.8} />
       ))}
-      {[150, 190, 230].map((y, r) => (
+      {[142, 184, 226, 268].map((y, j) => (
         <g key={y}>
-          <path d={`M200 ${y} H440`} stroke={r === 1 ? C.seal : C.ink} strokeWidth="5" strokeLinecap="round" />
-          {warps.map((x, i) => (i % 2 === r % 2 ? <circle key={i} cx={x} cy={y} r="7" fill={C.paperHi} stroke={C.ink} strokeWidth="2.5" /> : null))}
+          <Stroke pts={[[196, y], [320, y + 2 - j], [446, y]]} w={j === 1 ? 5 : 3.4} color={j === 1 ? C.seal : INK} seed={360 + j} wob={0.7} />
+          {warps.map((x, i) => (i % 2 === j % 2 ? <Shape key={i} pts={ell(x, y, 6.6, 6.6, 7, 0.1, i + j * 13)} smooth fill={(i + j) % 3 ? C.bone : C.lantern} w={2.4} reg={[0.8, 0.8]} /> : null))}
         </g>
       ))}
-      <path d="M200 110 H440" stroke={C.ink} strokeWidth="2.5" strokeDasharray="3 10" strokeLinecap="round" />
-      {/* shuttle */}
-      <g transform="translate(330 262) rotate(-8)">
-        <path d="M-34 0 Q0 -16 34 0 Q0 16 -34 0 Z" fill={C.wood} {...OL} />
-        <path d="M-20 0 H20" stroke={C.lantern} strokeWidth="4" strokeLinecap="round" />
+      <Shape pts={[[286, 226], [322, 216], [356, 226], [322, 238]]} smooth fill={C.wood} w={3} />
+      <Stroke pts={[[298, 227], [346, 227]]} w={3} color={C.lantern} />
+      {/* spools, a basket, and a cat asleep on a cushion */}
+      {[[96, 346, C.clothRed], [128, 358, C.clothOchre], [152, 344, C.clothTeal], [500, 352, C.clothTeal]].map(([x, y, col], i) => (
+        <g key={i}>
+          <Shape pts={box((x as number) - 15, (y as number) - 24, 30, 9)} fill={C.wood} w={2.2} seed={370 + i} />
+          <Shape pts={box((x as number) - 11, (y as number) - 15, 22, 26)} fill={col as string} w={2.2} hatch={{ angle: 80, gap: 3.5, w: 0.9 }} hatchOpacity={0.5} seed={380 + i} />
+          <Shape pts={box((x as number) - 15, (y as number) + 11, 30, 9)} fill={C.wood} w={2.2} seed={390 + i} />
+        </g>
+      ))}
+      <Shape pts={[[516, 340], [560, 332], [600, 340], [592, 362], [524, 364]]} smooth fill={C.clothRed} w={3} hatch={{ angle: 20, gap: 6, w: 1.1 }} hatchOpacity={0.5} />
+      <Shape pts={[[530, 338], [546, 322], [570, 320], [586, 332], [580, 346], [540, 348]]} smooth fill={C.ink3} w={2.8} />
+      <Shape pts={[[576, 326], [584, 312], [590, 328]]} fill={C.ink3} w={2} />
+      <Shape pts={[[560, 322], [568, 310], [572, 324]]} fill={C.ink3} w={2} />
+      <Stroke pts={[[532, 346], [514, 340], [510, 352]]} w={3.4} color={C.ink3} />
+      {/* Wren at her loom, Kernel studying a thread */}
+      <g transform="translate(40 118) scale(0.46)">
+        <Wren />
       </g>
-      {/* spools */}
-      {[
-        [90, 338, C.seal],
-        [134, 352, C.lantern],
-        [520, 346, C.teal],
-      ].map(([x, y, col], i) => (
-        <g key={i} transform={`translate(${x} ${y})`}>
-          <rect x="-18" y="-28" width="36" height="12" fill={C.wood} {...OL2} />
-          <rect x="-14" y="-16" width="28" height="30" fill={col as string} {...OL2} />
-          <rect x="-18" y="14" width="36" height="12" fill={C.wood} {...OL2} />
-          <rect x="-14" y="-16" width="28" height="30" fill="url(#tone-fine)" opacity="0.3" />
-        </g>
-      ))}
-      {/* lantern */}
-      <path d="M560 0 V66" stroke={C.ink} strokeWidth="3" />
-      <ellipse cx="560" cy="92" rx="22" ry="28" fill={C.lantern} {...OL} />
-      <path d="M538 92 H582 M560 64 V120" stroke={C.ink} strokeWidth="2" opacity="0.5" />
-      <g transform="translate(528 196) scale(0.62)">
+      <g transform="translate(318 244) scale(0.5)">
         <KernelParts mood="think" />
       </g>
-    </>
+    </g>
   );
 }
 
+/** The Foundry Docks: a workshop on the quay where prompts are made. */
 function Foundry() {
   return (
-    <>
+    <g>
       <rect width="640" height="400" fill="#cfe0dc" />
-      <rect y="262" width="640" height="138" fill={C.wood} />
-      <path d="M0 262 H640" stroke={C.ink} strokeWidth="3.5" />
-      <path d="M0 300 H640 M0 340 H640 M0 380 H640" stroke={C.ink} strokeWidth="2" opacity="0.4" />
-      {/* hanging sign */}
-      <path d="M280 0 V40 M440 0 V40" stroke={C.ink} strokeWidth="3" />
-      <rect x="236" y="40" width="244" height="66" fill={C.paperHi} {...OL} />
-      <rect x="236" y="40" width="244" height="66" fill="url(#tone-fine)" opacity="0.18" />
-      <text x="358" y="86" textAnchor="middle" fontFamily="'Dela Gothic One', Arial Black, sans-serif" fontSize="34" fill={C.ink} aria-hidden="true">PROMPT</text>
-      {/* big gears */}
-      <path d={gearPath(110, 130, 62, 10)} fill={C.teal} {...OL} />
-      <circle cx="110" cy="130" r="20" fill={C.paperHi} {...OL} />
-      <path d={gearPath(190, 76, 36, 8)} fill={C.lantern} {...OL} />
-      <circle cx="190" cy="76" r="11" fill={C.paperHi} {...OL2} />
-      <path d={gearPath(560, 120, 50, 9)} fill={C.tealDeep} {...OL} />
-      <circle cx="560" cy="120" r="16" fill={C.paperHi} {...OL} />
-      {/* workbench with anvil and tools */}
-      <rect x="170" y="238" width="300" height="26" fill={C.woodDeep} {...OL} />
-      <rect x="190" y="264" width="22" height="92" fill={C.woodDeep} {...OL} />
-      <rect x="428" y="264" width="22" height="92" fill={C.woodDeep} {...OL} />
-      <path d="M262 238 V222 H400 Q420 222 424 206 L444 206 Q438 238 418 238 Z" fill={C.ink2} {...OL} />
-      <path d="M300 222 H372" stroke={C.paperHi} strokeWidth="3" opacity="0.4" strokeLinecap="round" />
-      <g transform="translate(206 206) rotate(-30)">
-        <rect x="0" y="0" width="14" height="52" fill={C.wood} {...OL2} />
-        <rect x="-16" y="-14" width="46" height="22" fill={C.ink3} {...OL2} />
+      <Flecks marks={[[20, 20, 140, 0], [320, 30, 120, 1], [480, 80, 150, 0]]} w={3.4} color={C.paperHi} opacity={0.65} seed={4} />
+      {/* back wall of planks, with a harbor window */}
+      <Shape pts={box(0, 0, 640, 264)} fill="#c9b78f" w={0} reg={[0, 0]} />
+      {Array.from({ length: 16 }, (_, i) => (
+        <Stroke key={i} pts={[[i * 42, 0], [i * 42 + 1, 130], [i * 42 - 1, 264]]} w={2.2} opacity={0.55} seed={400 + i} wob={1} />
+      ))}
+      <Stroke pts={[[0, 264], [320, 268], [640, 264]]} w={8} />
+      <Shape pts={[[470, 40], [600, 40], [600, 170], [470, 170]]} fill={C.sky2} w={4} />
+      <Shape pts={[[470, 130], [520, 106], [560, 124], [600, 100], [600, 170], [470, 170]]} fill={C.teal} w={2.4} />
+      <Stroke pts={[[535, 40], [535, 170]]} w={3.4} />
+      <Stroke pts={[[470, 105], [600, 105]]} w={3.4} />
+      {/* the sign, hung on chains */}
+      <Stroke pts={[[250, 0], [252, 34]]} w={3.4} />
+      <Stroke pts={[[420, 0], [418, 34]]} w={3.4} />
+      <Shape pts={[[222, 34], [450, 32], [452, 100], [224, 102]]} fill={C.bone} w={4.2} hatch={{ angle: -50, gap: 9, w: 1.2, density: 0.6 }} hatchOpacity={0.35} />
+      <text x="338" y="84" textAnchor="middle" fontFamily="'Dela Gothic One', Arial Black, sans-serif" fontSize="42" fill={INK} aria-hidden="true">PROMPT</text>
+      {/* gears working together on the wall */}
+      <Shape pts={gear(96, 130, 64, 11)} fill={C.teal} w={3.8} hatch={{ angle: -50, gap: 7, w: 1.3 }} hatchOpacity={0.4} />
+      <Shape pts={ell(96, 130, 22, 22, 14, 0.02, 410)} smooth fill={C.bone} w={3.2} />
+      <Shape pts={gear(176, 66, 36, 8, 0.2)} fill={C.lantern} w={3.4} />
+      <Shape pts={ell(176, 66, 11, 11, 10, 0.03, 411)} smooth fill={C.bone} w={2.6} />
+      <Shape pts={gear(52, 214, 34, 8, 0.1)} fill={C.tealDeep} w={3.4} />
+      <Shape pts={ell(52, 214, 11, 11, 10, 0.03, 412)} smooth fill={C.bone} w={2.6} />
+      <Shape pts={gear(566, 224, 44, 9)} fill={C.tealDeep} w={3.6} hatch={{ angle: -50, gap: 7, w: 1.2 }} hatchOpacity={0.4} />
+      <Shape pts={ell(566, 224, 14, 14, 10, 0.03, 413)} smooth fill={C.bone} w={2.8} />
+      {/* tools on the wall */}
+      <Stroke pts={[[196, 140], [200, 220]]} w={6} color={C.woodLight} />
+      <Shape pts={[[184, 130], [214, 130], [216, 150], [182, 150]]} fill={C.ink3} w={2.6} />
+      <Stroke pts={[[234, 130], [232, 224]]} w={5} color={C.ink3} />
+      <Shape pts={[[222, 224], [244, 224], [246, 240], [220, 240]]} fill={C.ink3} w={2.4} />
+      <Shape pts={[[266, 138], [350, 138], [354, 152], [264, 152]]} fill={C.bone} w={2.8} hatch={{ angle: 90, gap: 5, w: 1.2 }} hatchOpacity={0.6} />
+      <Stroke pts={[[262, 145], [248, 140]]} w={5} color={C.woodLight} />
+      {/* floor */}
+      <Planks pts={[[0, 264], [640, 264], [640, 400], [0, 400]]} rows={4} seed={420} />
+      {/* the forge-side anvil on a stump, with a hot piece glowing */}
+      <Shape pts={[[236, 330], [226, 270], [330, 270], [322, 330]]} smooth fill={C.wood} w={3.8} hatch={{ angle: -75, gap: 6, w: 1.2 }} hatchColor={C.woodDeep} hatchOpacity={0.7} />
+      <Shape pts={[[216, 270], [226, 252], [306, 250], [352, 238], [348, 256], [310, 264], [326, 270]]} fill={C.ink2} w={3.8} />
+      <Stroke pts={[[238, 256], [300, 254]]} w={3} color={C.paper} opacity={0.5} />
+      <Shape pts={[[252, 250], [282, 244], [298, 250], [270, 254]]} smooth fill={C.ochre} w={2.4} />
+      <Flecks marks={[[266, 232, 12, -90], [284, 234, 10, -60], [250, 236, 10, -120], [300, 238, 9, -40], [236, 242, 8, -150]]} w={2.6} color={C.lantern} />
+      {/* barrels, steam pipe with a valve */}
+      <Barrel x={528} y={352} w={58} h={74} seed={431} band={C.seal} />
+      <Stroke pts={[[612, 264], [612, 150], [576, 130]]} w={11} color={INK} wob={0.6} />
+      <Stroke pts={[[612, 264], [612, 150], [576, 130]]} w={6} color={C.tealLight} wob={0.6} />
+      <Shape pts={ell(612, 190, 14, 14, 10, 0.04, 432)} smooth fill={C.seal} w={3} />
+      <Smoke x={566} y={118} s={0.7} seed={433} />
+      <PaperLantern x={410} y={150} s={1.2} seed={434} />
+      <Stroke pts={[[410, 0], [410, 124]]} w={2.6} />
+      {/* Brannock mid-swing beside the anvil, Kernel cheering on the floor */}
+      <g transform="translate(352 158) scale(0.6)">
+        <Brannock />
       </g>
-      <path d="M440 240 l10 -34 q12 -6 22 4 l-6 8 l-6 22" fill={C.lantern} {...OL2} />
-      {/* steam */}
-      <circle cx="536" cy="232" r="14" fill={C.paperHi} {...OL2} />
-      <circle cx="552" cy="204" r="20" fill={C.paperHi} {...OL2} />
-      <circle cx="580" cy="168" r="26" fill={C.paperLo} {...OL2} />
-      <rect x="520" y="240" width="40" height="110" fill={C.ink3} {...OL} />
-      <g transform="translate(30 168) scale(0.66)">
+      <g transform="translate(26 216) scale(0.52)">
         <KernelParts mood="cheer" />
       </g>
-    </>
+    </g>
   );
 }
 
+/** The Beacon: a lighthouse on a cliff, where you learn to see risk and keep your judgment. */
 function Beacon() {
   return (
-    <>
-      <rect width="640" height="400" fill="#f1dcae" />
-      <rect y="150" width="640" height="130" fill={C.sky2} opacity="0.7" />
-      <circle cx="120" cy="120" r="46" fill={C.sun} />
-      <polygon points="438,118 0,40 0,196" fill={C.lantern} opacity="0.4" />
+    <g>
+      <rect width="640" height="400" fill="#f0d9a8" />
+      <rect y="120" width="640" height="150" fill={C.sky2} opacity="0.8" />
+      <Flecks marks={[[20, 40, 150, 0], [240, 20, 140, 1], [30, 150, 160, 0], [330, 170, 170, 1], [20, 220, 150, 0]]} w={3.8} color={C.skyHigh} opacity={0.7} seed={5} />
+      <Shape pts={ell(120, 110, 52, 52, 18, 0.015, 450)} smooth fill={C.sun} w={3.4} hatch={{ angle: -35, gap: 9, w: 1.4, density: 0.8 }} hatchColor={C.roofRed} hatchOpacity={0.55} />
+      <Flecks marks={Array.from({ length: 14 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return [120 + Math.cos(a) * 66, 110 + Math.sin(a) * 66, 14, (a * 180) / Math.PI] as [number, number, number, number]; })} w={3} color={C.sun} opacity={0.7} seed={7} />
+      <Cloud x={300} y={64} w={200} seed={451} fill={C.paperHi} />
+      <Cloud x={560} y={150} w={150} seed={452} />
+      <Gull x={330} y={140} s={0.8} seed={1} />
+      <Gull x={370} y={166} s={0.6} seed={2} />
+      <Gull x={90} y={236} s={0.5} seed={3} />
+      {/* the beam, drawn as streaks */}
+      <Hatch pts={[[440, 118], [0, 40], [0, 200]]} color={C.lantern} angle={188} gap={8} w={2.6} opacity={0.95} />
       {/* sea */}
       <rect y="262" width="640" height="138" fill={C.teal} />
-      <rect y="262" width="640" height="138" fill="url(#waves)" />
-      <path d="M0 262 H640" stroke={C.ink} strokeWidth="3.5" />
-      <rect y="340" width="640" height="60" fill={C.tealDeep} />
-      <rect y="340" width="640" height="60" fill="url(#waves-ink)" opacity="0.5" />
-      {/* rock and tower */}
-      <path d="M340 300 Q380 232 430 220 L506 220 Q556 240 590 300 V340 H340 Z" fill={C.hillNear} {...OL} />
-      <path d="M340 300 Q360 260 390 244 L410 300 Z" fill="url(#tone)" opacity="0.3" />
-      <polygon points="436,222 500,222 486,70 450,70" fill={C.paperHi} {...OL} />
-      <polygon points="447,120 489,120 493,160 443,160" fill={C.seal} stroke={C.ink} strokeWidth="2.5" />
-      <polygon points="440,176 496,176 499,214 437,214" fill={C.seal} stroke={C.ink} strokeWidth="2.5" />
-      <rect x="440" y="66" width="56" height="10" fill={C.ink} />
-      <rect x="452" y="30" width="32" height="36" fill={C.lantern} {...OL} />
-      <path d="M440 30 H496 L468 4 Z" fill={C.seal} {...OL} />
-      {/* boat in the beam */}
-      <g transform="translate(200 300) scale(0.7)">
-        <path d="M-70 0 H70 L50 26 H-48 Z" fill={C.seal} {...OL} />
-        <path d="M0 0 V-96" stroke={C.ink} strokeWidth="5" strokeLinecap="round" />
-        <path d="M6 -90 Q56 -50 50 -8 H6 Z" fill={C.paperHi} {...OL} />
+      <rect y="338" width="640" height="62" fill={C.tealDeep} />
+      <Ripples x0={0} x1={640} y0={274} y1={332} n={26} seed={9} />
+      <Ripples x0={0} x1={640} y0={346} y1={396} n={14} seed={10} color={C.tealLight} />
+      <Stroke pts={[[0, 263], [200, 265], [440, 262], [640, 264]]} w={5} />
+      <Crest x={150} y={310} s={44} seed={11} />
+      <Crest x={50} y={372} s={52} flip={-1} seed={12} />
+      <Crest x={280} y={360} s={40} seed={13} />
+      <Boat x={196} y={300} s={0.6} seed={14} />
+      {/* the cliff and the tower */}
+      <Shape pts={[[318, 400], [330, 300], [374, 250], [440, 232], [520, 238], [580, 270], [600, 330], [640, 400]]} fill={C.hillNear} w={4} hatch={{ angle: -55, gap: 7, w: 1.4 }} hatchOpacity={0.5} />
+      <Stroke pts={[[340, 320], [420, 300], [500, 314], [600, 302]]} w={2.2} opacity={0.55} />
+      <Stroke pts={[[330, 360], [440, 344], [540, 358], [620, 346]]} w={2.2} opacity={0.55} />
+      <Shape pts={[[430, 238], [506, 238], [490, 66], [446, 66]]} fill={C.bone} w={4.2} />
+      <Shape pts={[[444, 128], [494, 128], [498, 164], [440, 164]]} fill={C.seal} w={2.8} />
+      <Shape pts={[[438, 184], [498, 184], [502, 224], [434, 224]]} fill={C.seal} w={2.8} />
+      <Hatch pts={[[484, 72], [490, 72], [504, 236], [490, 236]]} angle={-60} gap={5} w={1.3} opacity={0.5} />
+      <Shape pts={box(436, 62, 62, 11)} fill={INK} w={0} reg={[0, 0]} />
+      <Stroke pts={[[436, 62], [468, 56], [500, 62]]} w={2.6} />
+      <Shape pts={box(450, 26, 36, 36)} fill={C.lantern} w={3.4} />
+      <Stroke pts={[[468, 26], [468, 62]]} w={1.8} opacity={0.8} />
+      <Shape pts={[[440, 26], [468, -2], [496, 26]]} fill={C.seal} w={3.4} />
+      <Flecks marks={[[350, 316, 12, -50], [376, 308, 10, -30], [330, 336, 11, -70], [610, 340, 11, -120]]} w={3} color={C.seaFoam} />
+      {/* the bell on its post, out on the cliff edge */}
+      <Stroke pts={[[566, 262], [568, 196]]} w={8} color={C.woodDeep} seed={460} />
+      <Stroke pts={[[568, 198], [604, 198]]} w={6} color={C.woodDeep} seed={461} />
+      <Shape pts={[[594, 202], [614, 202], [622, 230], [586, 230]]} smooth fill={C.lantern} w={3.2} />
+      <Shape pts={ell(604, 234, 4, 4, 6, 0.1, 462)} smooth fill={INK} w={0} reg={[0, 0]} />
+      {/* Sedge on watch on the cliff top, Kernel alert beside him */}
+      <g transform="translate(318 96) scale(0.5)">
+        <Sedge />
       </g>
-      {/* bell post */}
-      <rect x="30" y="226" width="10" height="110" fill={C.woodDeep} {...OL2} />
-      <path d="M35 230 H92" stroke={C.ink} strokeWidth="6" strokeLinecap="round" />
-      <path d="M92 232 V244 Q70 246 70 270 H114 Q114 246 92 244" fill={C.lantern} {...OL} />
-      <circle cx="92" cy="274" r="5" fill={C.ink} />
-      <g transform="translate(96 214) scale(0.56)">
+      <g transform="translate(364 214) scale(0.4)">
         <KernelParts mood="alert" />
       </g>
-    </>
+    </g>
   );
 }
 
 const SCENES: Record<PathId, () => JSX.Element> = { understand: Loom, use: Foundry, responsible: Beacon };
 const LABELS: Record<PathId, string> = {
-  understand: 'An illustration of a weaving hall. Threads on a wooden loom form a net of knots, and a small robot studies them.',
-  use: 'An illustration of a workshop on the docks with gears, an anvil, a sign reading PROMPT, and a cheering robot.',
-  responsible: 'An illustration of a lighthouse on a rock sending a beam over the sea, with a small robot on watch beside a bell.',
+  understand: 'A hand-inked illustration of a weaving hall. Wren the weaver stands by a big wooden loom whose threads and knots form a network, with skeins of dyed thread above, a cat asleep on a cushion, and Kernel the robot studying a thread.',
+  use: 'A hand-inked illustration of a workshop on the docks. Brannock the foundry-master swings a hammer beside an anvil under a sign reading PROMPT, with gears on the wall, crates and barrels, and Kernel cheering on a crate.',
+  responsible: 'A hand-inked illustration of a lighthouse on a cliff at dusk. Sedge the keeper stands watch with a lantern on a pole beside a bell, with Kernel alert at his side, a boat in the beam, and waves breaking below.',
 };
 
-export function PathScene({ path, className }: { path: PathId; className?: string }) {
+export const PathScene = memo(function PathScene({ path, className }: { path: PathId; className?: string }) {
   const Scene = SCENES[path];
   return (
     <svg className={className} viewBox="0 0 640 400" preserveAspectRatio="xMidYMid slice" role="img" aria-label={LABELS[path]} focusable="false">
-      <Scene />
+      <g filter="url(#rough)">
+        <Scene />
+      </g>
+      <rect width="640" height="400" filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>
   );
-}
+});

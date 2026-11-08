@@ -79,7 +79,7 @@ SMOKE_BASE=/webmaster/ pnpm smoke
 | `src/content/` | All teaching content as plain data: lessons, glossary, tools, scenarios, certification questions |
 | `src/engine/` | The rules of XP, levels and badges (`progress.ts`, pure and tested), saving (`persistence.ts`), the store |
 | `src/widgets/` | The interactive experiments. The maths lives in `widgets/logic/` with no React in it |
-| `src/art/` | Original SVG illustration: scenes, the character Kernel, badge emblems, icons |
+| `src/art/` | Original artwork as code: an ink-brush engine, the hero harbor, path scenes, 15 lesson illustrations, the cast (Kernel and three mentors), badge emblems, icons |
 | `src/ui/`, `src/pages/` | Components and pages |
 | `src/styles/` | Design tokens and CSS |
 | `src/audio/` | Synthesized interface sounds (Web Audio, off by default) |

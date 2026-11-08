@@ -47,6 +47,16 @@ export function ArtDefs() {
             <path d="M46 15 a14 14 0 0 1 28 0" />
           </g>
         </pattern>
+        {/* dry, uneven edges on colour and line, like ink and colour absorbed into paper */}
+        <filter id="rough" x="-2%" y="-2%" width="104%" height="104%" colorInterpolationFilters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        {/* printed-paper tooth, laid over a whole scene */}
+        <filter id="grain" x="0" y="0" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />
+          <feColorMatrix values="0 0 0 0 0.25  0 0 0 0 0.17  0 0 0 0 0.1  0 0 0 0.9 -0.28" />
+        </filter>
       </defs>
     </svg>
   );

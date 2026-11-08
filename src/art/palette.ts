@@ -2,6 +2,9 @@
  * Illustration colours. These mirror the tokens in styles/tokens.css (SVG presentation attributes cannot read CSS variables
  * in every browser). Illustration only: text colours always come from the CSS tokens, which are contrast-checked.
  */
+/** The warm ink used for every line drawing. Slightly browner than the interface black. */
+export const INK = '#231913';
+
 export const C = {
   ink: '#1b1612',
   ink2: '#271f18',
@@ -27,6 +30,21 @@ export const C = {
   straw: '#e3b04e',
   strawDeep: '#b9862c',
   moss: '#5d7a45',
+  // shading steps for the illustrations (flat, never gradients)
+  skyHigh: '#f7e3bd',
+  tealLight: '#58b0a8',
+  seaFoam: '#e9f1e4',
+  woodLight: '#a8714a',
+  roofRed: '#a8372a',
+  roofIndigo: '#34406d',
+  clothTeal: '#2d8f87',
+  clothOchre: '#e0a02e',
+  clothRed: '#cf4a33',
+  skinDeep: '#9a5f3c',
+  skinTan: '#d9a066',
+  skinPale: '#f0d2b0',
+  hairGrey: '#cfc8bb',
+  bone: '#efe6d0',
 } as const;
 
 export type PathHueName = 'understand' | 'use' | 'responsible';

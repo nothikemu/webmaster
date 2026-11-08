@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { Link } from '@/router';
 import { Icon } from '@/art/Icons';
-import { PathScene } from '@/art/PathScenes';
+import { LESSON_ALT, LessonArt } from '@/art/LessonArt';
 import { Diagram } from '@/art/Diagram';
 import { Kernel } from '@/art/Kernel';
 import { CHECK_PASS, XP, lessonSteps } from '@/engine/progress';
@@ -36,7 +36,7 @@ function LessonView({ lessonId }: { lessonId: string }) {
   return (
     <div className="lesson" data-path={path.id}>
       <header className="lesson-hero" data-surface="ink">
-        <PathScene path={path.id} className="lesson-hero__art" />
+        <LessonArt lessonId={lesson.id} path={path.id} index={n - 1} className="lesson-hero__art" label={LESSON_ALT[lesson.id] ?? lesson.title} />
         <div className="wrap lesson-hero__copy">
           <nav aria-label="Breadcrumb" className="crumbs">
             <Link to="/learn">Learn</Link> <span aria-hidden="true">/</span> <Link to={`/learn/${path.id}`}>{path.title}</Link>
