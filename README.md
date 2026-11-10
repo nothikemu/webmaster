@@ -2,13 +2,14 @@
 
 A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA Webmaster 2026-27** challenge: *design and develop an interactive Artificial Intelligence (AI) learning portal*.
 
-- **Three learning paths** (fundamental concepts, practical tools and techniques, ethical use), 15 lessons.
+- **Three learning paths** (fundamental concepts, practical tools and techniques, ethical use), 15 lessons, each opened by one of three mentors.
 - **Real experiments**: train a neural network, teach a classifier, watch a language model predict words, audit a biased screener.
-- **Gamification that tracks real work**: XP, 10 levels, 9 badges, a progress dashboard, a final certification.
-- **Extras**: Prompt Lab, Tool Atlas (dated, sourced), Scenario simulator, Codex, optional synthesized sound.
+- **Gamification that tracks real work**: XP, ten ranks with their own insignia, nine badges, a day streak, a progress dashboard, a final certification with a printable certificate.
+- **A world that fills in as you learn**: a lantern lights over the harbor for every finished lesson, the sea chart inks in your route, and the Codex cabinet gains a scroll for every term.
+- **Extras**: Prompt Lab, Tool Atlas (dated, sourced), six scenarios, a Codex with a drill, a daily myth-or-fact card, optional synthesized sound.
 - All progress stays in the browser. No accounts, no server, no tracking.
 
-> **Read before submitting:** [`docs/COMPLIANCE_CHECKLIST.md`](docs/COMPLIANCE_CHECKLIST.md). The Texas TSA generative-AI policy and the Webmaster event rules need your advisor's confirmation. Details are in [`docs/RESEARCH_2026-27.md`](docs/RESEARCH_2026-27.md), section C.
+> **Read before submitting:** [`docs/COMPLIANCE_CHECKLIST.md`](docs/COMPLIANCE_CHECKLIST.md) lists what is met, what is still open and what your advisor has to confirm. The sources are in [`docs/RESEARCH_2026-27.md`](docs/RESEARCH_2026-27.md).
 
 ## Run it
 
@@ -76,10 +77,10 @@ SMOKE_BASE=/webmaster/ pnpm smoke
 
 | Path | What lives there |
 | --- | --- |
-| `src/content/` | All teaching content as plain data: lessons, glossary, tools, scenarios, certification questions |
-| `src/engine/` | The rules of XP, levels and badges (`progress.ts`, pure and tested), saving (`persistence.ts`), the store |
+| `src/content/` | All teaching content as plain data: lessons, glossary, tools, scenarios, certification questions, the mentors' lines, the myth-or-fact set and the codex drill builder |
+| `src/engine/` | The rules of XP, ranks, badges and streaks (`progress.ts`, pure and tested), saving (`persistence.ts`), the store |
 | `src/widgets/` | The interactive experiments. The maths lives in `widgets/logic/` with no React in it |
-| `src/art/` | Original artwork as code: an ink-brush engine, the hero harbor, path scenes, 15 lesson illustrations, the cast (Kernel and three mentors), badge emblems, icons |
+| `src/art/` | Original artwork as code: an ink-brush engine, a prop kit, the two-layer harbor, the sea chart, a scene for every page, 15 lesson illustrations, the cast (Kernel and three mentors), badge emblems, rank crests, icons |
 | `src/ui/`, `src/pages/` | Components and pages |
 | `src/styles/` | Design tokens and CSS |
 | `src/audio/` | Synthesized interface sounds (Web Audio, off by default) |

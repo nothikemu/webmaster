@@ -38,7 +38,6 @@ import {
   SealStamp,
   Shelf,
   Signpost,
-  Stool,
   Sun,
   Table,
   Telescope,
@@ -408,80 +407,72 @@ export const Crossroads = memo(function Crossroads({ className }: { className?: 
 
 // ------------------------------------------------------------------------------------------------ Codex
 
-export interface CodexRow {
+export interface CodexSlot {
   hue: PathHueName;
-  /** One entry for each term on this shelf, true when the player has collected it. */
-  slots: boolean[];
+  /** true when the player has collected this term. */
+  got: boolean;
 }
 
 /**
- * Codex: the scroll cabinet in the Loom House. One pigeonhole for each term, one shelf for each path.
- * A scroll appears in its hole when the term is collected, so the picture is also the progress meter.
+ * Codex: the scroll cabinet in the Loom House. One pigeonhole for each term, ten to a shelf, in course order.
+ * A scroll appears in its hole when the term is collected, tagged in the colour of its path,
+ * so the picture is also the progress meter.
  */
-export const ScrollCabinet = memo(function ScrollCabinet({ rows, className, label }: { rows: CodexRow[]; className?: string; label: string }) {
-  const cols = Math.max(1, ...rows.map((r) => r.slots.length));
-  const cw = Math.min(38, 470 / cols);
-  const ch = 50;
+export const ScrollCabinet = memo(function ScrollCabinet({ slots, className, label }: { slots: CodexSlot[]; className?: string; label: string }) {
+  const cols = 10;
+  const rows = Math.max(1, Math.ceil(slots.length / cols));
+  const cw = 46;
+  const ch = Math.min(46, 184 / rows);
   const x0 = 44;
   const y0 = 62;
   const w = cols * cw;
-  const h = rows.length * ch;
+  const h = rows * ch;
   return (
     <Scene w={640} h={380} className={className} label={label}>
       <WallPlanks x={0} y={0} w={640} h={324} fill={WALL_LOOM} seed={4} every={52} />
-      <Stroke pts={[[568, 0], [568, 24]]} w={2.2} />
-      <PaperLantern x={568} y={46} s={1.05} seed={3} />
+      <Stroke pts={[[572, 0], [572, 24]]} w={2.2} />
+      <PaperLantern x={572} y={46} s={1.05} seed={3} />
       <Planks pts={[[0, 324], [640, 324], [640, 380], [0, 380]]} rows={2} seed={8} />
 
       {/* the carcass of the cabinet */}
       <Wash pts={[[x0 - 6, 318], [x0 + w + 30, 318], [x0 + w + 8, 334], [x0 + 4, 334]]} fill={INK} opacity={0.24} />
-      <Shape pts={box(x0 - 12, y0 - 14, w + 24, h + 96)} fill={C.wood} w={3.6} seed={11} />
-      <Hatch pts={box(x0 + w + 2, y0 - 10, 8, h + 88)} angle={-65} gap={4} w={1} opacity={0.5} />
+      <Shape pts={box(x0 - 12, y0 - 14, w + 24, h + 90)} fill={C.wood} w={3.6} seed={11} />
+      <Hatch pts={box(x0 + w + 2, y0 - 10, 8, h + 82)} angle={-65} gap={4} w={1} opacity={0.5} />
       <Shape pts={box(x0 - 20, y0 - 26, w + 40, 14)} fill={C.woodDeep} w={3} seed={12} />
       <Shape pts={box(x0, y0, w, h)} fill={C.ink2} w={2.6} seed={13} />
-      {rows.map((row, r) =>
-        Array.from({ length: cols }, (_, c) => {
-          const cx = x0 + c * cw + cw / 2;
-          const cy = y0 + r * ch + ch / 2 - 5;
-          const has = row.slots[c];
-          return (
-            <g key={`${r}-${c}`}>
-              {has === true ? <ScrollEnd x={cx} y={cy} r={Math.min(12, cw * 0.31)} seed={r * 40 + c} tag={HUE[row.hue].main} /> : null}
-              {has === false ? <Shape pts={ell(cx, cy + 3, cw * 0.24, cw * 0.24, 9, 0.06, r * 40 + c)} smooth w={1.2} ink={C.ink3} /> : null}
-            </g>
-          );
-        }),
-      )}
+      {Array.from({ length: rows * cols }, (_, i) => {
+        const slot = slots[i];
+        const cx = x0 + (i % cols) * cw + cw / 2;
+        const cy = y0 + Math.floor(i / cols) * ch + ch / 2 - 5;
+        if (!slot) return null;
+        return slot.got ? <ScrollEnd key={i} x={cx - 3} y={cy} r={12} seed={i * 7 + 3} tag={HUE[slot.hue].main} /> : <Shape key={i} pts={ell(cx, cy + 3, 10, 10, 9, 0.06, i)} smooth w={1.2} ink={C.ink3} />;
+      })}
       {Array.from({ length: cols + 1 }, (_, c) => (
-        <Stroke key={`v${c}`} pts={[[x0 + c * cw, y0], [x0 + c * cw + 0.6, y0 + h]]} w={3.6} color={C.wood} smooth={false} seed={60 + c} />
+        <Stroke key={`v${c}`} pts={[[x0 + c * cw, y0], [x0 + c * cw + 0.6, y0 + h]]} w={3.8} color={C.wood} smooth={false} seed={60 + c} />
       ))}
-      {rows.map((row, r) => (
-        <g key={`h${r}`}>
-          <Shape pts={box(x0 - 2, y0 + (r + 1) * ch - 5, w + 4, 6)} fill={C.woodLight} w={2} seed={80 + r} />
-          <Shape pts={box(x0 - 11, y0 + r * ch + 8, 9, ch - 20)} fill={HUE[row.hue].main} w={1.8} seed={84 + r} />
-        </g>
+      {Array.from({ length: rows }, (_, r) => (
+        <Shape key={`h${r}`} pts={box(x0 - 2, y0 + (r + 1) * ch - 5, w + 4, 6)} fill={C.woodLight} w={2} seed={80 + r} />
       ))}
       {/* drawers */}
       {[0, 1, 2, 3].map((i) => (
         <g key={`d${i}`}>
-          <Shape pts={box(x0 + 4 + (i * (w - 8)) / 4, y0 + h + 12, (w - 8) / 4 - 8, 54)} fill={C.woodLight} w={2.4} seed={90 + i} />
-          <Hatch pts={box(x0 + 8 + (i * (w - 8)) / 4, y0 + h + 44, (w - 8) / 4 - 16, 18)} angle={-65} gap={4.5} w={1} opacity={0.4} seed={94 + i} />
-          <Shape pts={ell(x0 + (w - 8) / 8 + (i * (w - 8)) / 4, y0 + h + 36, 5.5, 5.5, 8, 0.06, 98 + i)} smooth fill={C.lantern} w={2} />
+          <Shape pts={box(x0 + 4 + (i * (w - 8)) / 4, y0 + h + 10, (w - 8) / 4 - 8, 50)} fill={C.woodLight} w={2.4} seed={90 + i} />
+          <Hatch pts={box(x0 + 8 + (i * (w - 8)) / 4, y0 + h + 40, (w - 8) / 4 - 16, 16)} angle={-65} gap={4.5} w={1} opacity={0.4} seed={94 + i} />
+          <Shape pts={ell(x0 + (w - 8) / 8 + (i * (w - 8)) / 4, y0 + h + 32, 5.5, 5.5, 8, 0.06, 98 + i)} smooth fill={C.lantern} w={2} />
         </g>
       ))}
-      <Shape pts={box(x0 - 6, y0 + h + 74, 12, 24)} fill={C.woodDeep} w={2.4} seed={103} />
-      <Shape pts={box(x0 + w - 6, y0 + h + 74, 12, 24)} fill={C.woodDeep} w={2.4} seed={104} />
+      <Shape pts={box(x0 - 6, y0 + h + 68, 12, 26)} fill={C.woodDeep} w={2.4} seed={103} />
+      <Shape pts={box(x0 + w - 6, y0 + h + 68, 12, 26)} fill={C.woodDeep} w={2.4} seed={104} />
       <Cat x={x0 + w * 0.74} y={y0 - 26} pose="loaf" seed={105} />
       <Books x={x0 + 12} y={y0 - 26} n={4} seed={7} h={26} />
       <RolledScroll x={x0 + w * 0.42} y={y0 - 26} seed={106} band={C.indigo} len={50} />
 
-      <Ladder x1={x0 + w * 0.2} y1={326} x2={x0 + w * 0.2 + 34} y2={y0 - 6} seed={110} rungs={7} />
+      <Ladder x1={x0 + w * 0.08} y1={326} x2={x0 + w * 0.08 + 30} y2={y0 - 6} seed={110} rungs={7} />
       {/* Wren keeps the cabinet; Kernel reads */}
-      <At x={506} y={144} s={0.6}>
+      <At x={510} y={146} s={0.6}>
         <Wren />
       </At>
-      <Stool x={318} y={330} s={1.1} seed={112} />
-      <At x={270} y={184} s={0.42}>
+      <At x={338} y={224} s={0.4}>
         <KernelParts mood="read" />
       </At>
     </Scene>

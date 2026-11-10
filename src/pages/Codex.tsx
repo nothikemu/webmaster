@@ -5,7 +5,7 @@ import { buildDrill } from '@/content/drill';
 import { dispatch, useProgress } from '@/engine/store';
 import { Btn, Callout, Chip, Panel } from '@/ui/primitives';
 import { Icon } from '@/art/Icons';
-import { ScrollCabinet, type CodexRow } from '@/art/PageScenes';
+import { ScrollCabinet, type CodexSlot } from '@/art/PageScenes';
 import { Quiz } from '@/widgets/Quiz';
 
 const DRILL_SIZE = 10;
@@ -21,7 +21,8 @@ export default function Codex() {
   const unlocked = useProgress((s) => s.codex);
   const record = useProgress((s) => s.challenges['codex-drill']);
 
-  const rows = useMemo<CodexRow[]>(() => PATHS.map((p) => ({ hue: p.id, slots: GLOSSARY.filter((g) => g.path === p.id).map((g) => unlocked.includes(g.id)) })), [unlocked]);
+  // one pigeonhole per term, in course order, so each path's scrolls sit together
+  const slots = useMemo<CodexSlot[]>(() => PATHS.flatMap((p) => GLOSSARY.filter((g) => g.path === p.id).map((g) => ({ hue: p.id, got: unlocked.includes(g.id) }))), [unlocked]);
   const list = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return GLOSSARY.filter((g) => (path === 'all' || g.path === path) && (!needle || `${g.term} ${g.definition}`.toLowerCase().includes(needle))).sort((a, b) => a.term.localeCompare(b.term));
@@ -51,9 +52,9 @@ export default function Codex() {
           </div>
         </div>
         <ScrollCabinet
-          rows={rows}
+          slots={slots}
           className="plate split-head__art"
-          label={`An illustration of a tall wooden cabinet of pigeonholes, one for each of the ${GLOSSARY.length} codex terms, on three shelves. ${unlocked.length} of them hold a rolled scroll. Wren the weaver stands beside it, Kernel the robot reads on a stool, and a black cat sleeps on top.`}
+          label={`An illustration of a tall wooden cabinet of pigeonholes, one for each of the ${GLOSSARY.length} codex terms. ${unlocked.length} of them hold a rolled scroll. Wren the weaver stands beside it, Kernel the robot reads on a stool, and a black cat sleeps on top.`}
         />
       </header>
 

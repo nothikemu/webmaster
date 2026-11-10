@@ -192,6 +192,66 @@ console.log('\nKeyboard and navigation');
   await ctx.close();
 }
 
+// ---- 4. the pictures that carry progress, and the things added around them ----
+console.log('\nProgress pictures, rank moment, drill and warm-up');
+{
+  const { ctx, page } = await newPage(1280);
+  // One lesson finished and 115 XP: five short of level 2.
+  const seeded = {
+    v: 1, createdAt: 1, xp: 115,
+    lessons: { u1: { learned: true, tryScore: 100, checkBest: 3, done: true, doneAt: 2 } },
+    challenges: {}, badges: {}, pathsDone: {}, codex: ['ai', 'algorithm'], activity: [], xpByDay: {}, lastLesson: null,
+    settings: { sound: false, volume: 0.6, name: '' },
+  };
+  await ctx.addInitScript((v) => { if (!localStorage.getItem('tideweight/v1')) localStorage.setItem('tideweight/v1', v); }, JSON.stringify(seeded));
+
+  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  const lanterns = await page.locator('.festoon__lantern').count();
+  const litText = (await page.locator('.strip__facts').innerText()).replace(/\s+/g, ' ');
+  if (lanterns !== 15 || !/1 of 15/.test(litText)) fail(`harbor should hang 15 lanterns and report 1 lit (found ${lanterns}, "${litText}")`);
+  else ok('harbor hangs 15 lanterns and reports 1 lit');
+  if ((await page.locator('.hero-pin').count()) !== 3) fail('harbor should link to the three places');
+  else ok('harbor links to the three places');
+
+  // myth or fact: answer it, get a reason and a lesson link
+  await page.getByRole('button', { name: 'It is a myth' }).click();
+  if ((await page.locator('.myth__answer a.btn').count()) !== 1) fail('myth card should give a reason and a lesson link');
+  else ok('myth card answers with a reason and a lesson link');
+
+  // the chart: sixteen links, one finished stop, and a stop takes you to its lesson
+  await page.goto(base + '/learn/', { waitUntil: 'networkidle' });
+  const stops = await page.locator('.chart-stop').count();
+  if (stops !== 16) fail(`chart should have 15 stops and the seal (found ${stops})`);
+  const firstName = (await page.locator('.chart-stop').first().textContent()) ?? '';
+  if (!/Finished/.test(firstName)) fail(`first chart stop should read as finished ("${firstName}")`);
+  await page.locator('.chart-stop').nth(1).click();
+  await page.waitForURL('**/learn/understand/u2/');
+  ok('chart has 16 links, shows the finished stop and navigates');
+
+  // crossing a level opens the rank moment
+  await page.getByRole('button', { name: /I have read this lesson/ }).click();
+  await page.waitForSelector('dialog[open]', { timeout: 3000 }).catch(() => {});
+  const rank = await page.locator('dialog[open] h2').innerText().catch(() => '');
+  if (!/Level 2/.test(rank)) fail(`reaching 120 XP should open the rank moment (got "${rank}")`);
+  else ok('reaching level 2 opens the rank moment');
+  await page.getByRole('button', { name: 'Keep going' }).click();
+  if ((await page.locator('dialog[open]').count()) !== 0) fail('rank moment should close');
+
+  // codex: the cabinet reports the collected terms, and the drill runs to a score
+  await page.goto(base + '/codex/', { waitUntil: 'networkidle' });
+  if (!/2 of 37/.test(await page.locator('.split-head .fact').innerText())) fail('codex should report 2 of 37 collected');
+  await page.getByRole('button', { name: /Drill ten terms/ }).click();
+  for (let i = 0; i < 10; i++) {
+    await page.locator('.drill .option').first().click();
+    await page.getByRole('button', { name: 'Check answer' }).click();
+    await page.locator('.drill .btn--primary').last().click();
+  }
+  const drill = await page.getByText(/Drill score: \d+ percent/).count();
+  if (drill !== 1) fail('codex drill should finish with a score');
+  else ok('codex drill runs ten questions and reports a score');
+  await ctx.close();
+}
+
 await browser.close();
 server.close();
 console.log(failures.length ? `\n${failures.length} FAILURE(S)` : '\nAll smoke checks passed');

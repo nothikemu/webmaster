@@ -154,6 +154,9 @@ export function Classifier({ onScore }: WidgetProps) {
       <div>
         <svg ref={svg} viewBox="0 0 100 100" className="plot" onClick={onClick} role="img" aria-label={`Plot of fruit by size (across) and sweetness (up). You have added ${pts.length} labeled examples. Click the plot to add one, or use the controls.`}>
           <rect width="100" height="100" fill="var(--paper-hi)" />
+          {[25, 50, 75].map((g) => (
+            <path key={g} d={`M${g} 0V100M0 ${g}H100`} stroke="var(--paper-line)" strokeWidth="0.4" strokeDasharray="1.2 1.6" />
+          ))}
           {cells.map((c) =>
             c.ripe === null ? null : (
               <g key={`${c.x}-${c.y}`}>
@@ -179,6 +182,16 @@ export function Classifier({ onScore }: WidgetProps) {
               <rect key={i} x={p.x - 2.4} y={100 - p.y - 2.4} width="4.8" height="4.8" fill="var(--ochre)" stroke="var(--ink)" strokeWidth="0.8" />
             ),
           )}
+          {/* where the next example will land, so the sliders and the map are visibly the same thing */}
+          <g transform={`translate(${size} ${100 - sweet})`}>
+            {ripe ? <circle r="3.6" fill="none" stroke="var(--ink)" strokeWidth="0.7" strokeDasharray="1.4 1.2" /> : <rect x="-3.4" y="-3.4" width="6.8" height="6.8" fill="none" stroke="var(--ink)" strokeWidth="0.7" strokeDasharray="1.4 1.2" />}
+            <path d="M-6.4 0H-4.6M4.6 0H6.4M0 -6.4V-4.6M0 4.6V6.4" stroke="var(--ink)" strokeWidth="0.6" />
+          </g>
+          {pts.length === 0 ? (
+            <text x="50" y="22" textAnchor="middle" className="plot__hint">
+              Tap the map or use the sliders to add a fruit
+            </text>
+          ) : null}
           <rect width="100" height="100" fill="none" stroke="var(--ink)" strokeWidth="1.2" />
         </svg>
         <p className="plot-axis"><span>Size →</span><span>↑ Sweetness</span></p>

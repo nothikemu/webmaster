@@ -70,9 +70,19 @@ See `docs/DESIGN_SYSTEM.md`. Short version: one ink-and-paper palette, one seal-
 
 ## Testing and iteration
 
-- `pnpm test`: 81 unit tests over the XP rules, saving and corrupt-save recovery, every lesson's structure and answer key, the experiments' maths, scoring.
+- `pnpm test`: 99 unit tests over the XP rules, ranks and streaks, saving and corrupt-save recovery, every lesson's structure and answer key, the experiments' maths, scoring, the mentors' lines, the myth-or-fact set, the codex drill and the wording of unverified tool facts.
 - `pnpm smoke`: a real browser finishes a lesson (210 XP), reloads (progress persists), resets, checks keyboard behavior, and scans every page for accessibility problems.
-- Real bugs found and fixed by testing: the header overflowed on phones; the selected-answer style hid the right/wrong colours; six lessons were missing diagrams; the XP chip's accessible name did not match its visible text; stats lists broke their semantics.
+- Real bugs found and fixed by testing: the header overflowed on phones; the selected-answer style hid the right/wrong colours; six lessons were missing diagrams; the XP chip's accessible name did not match its visible text; stats lists broke their semantics; a codex definition gave away its own term in the drill ("weights" inside the definition of "Weight"); the links inside the harbor picture and the sea chart had spoken names that left out their visible numbers.
+
+## The picture is also the progress display
+
+Be ready to explain this, because it is the idea that holds the design together.
+
+- **The harbor lights up.** There are fifteen lanterns on the festoon, one per lesson, in three groups for the three paths. `Home.tsx` passes a list of fifteen true-or-false values to `Harbor.tsx`. A finished place flies a pennant, and the lighthouse beam turns on after the certification.
+- **Two layers.** The harbor is two SVG drawings stacked exactly. The base has thousands of points and three texture filters, so it is drawn once and never again. The lanterns, pennants and links live in a second, light drawing on top. Lighting a lantern redraws only that.
+- **The sea chart** (`ChartMap.tsx`) works the same way: paper drawn once, stops drawn on top as real links. A dashed leg becomes a solid line when both of its stops are finished.
+- **The Codex cabinet** gains a scroll per collected term, and **the Logbook cabin** hangs a medal per badge.
+- Every one of these repeats its numbers in text, so the pictures are never the only way to know your progress.
 
 ## Technical challenges worth telling
 

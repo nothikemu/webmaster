@@ -166,8 +166,9 @@ export function Footer() {
 /** Toasts for XP, and a dialog for the moments that deserve a pause: a badge, a level, a finished path. */
 export function RewardHost() {
   const [toasts, setToasts] = useState<{ id: number; text: string; xp: number }[]>([]);
-  const [moment, setMoment] = useState<Reward | null>(null);
-  const queue = useRef<Reward[]>([]);
+  // Moments wait in a queue and are shown one at a time. The queue is plain state, changed only by pure updates.
+  const [queue, setQueue] = useState<Reward[]>([]);
+  const moment = queue[0] ?? null;
   const dialog = useRef<HTMLDialogElement>(null);
   const [live, setLive] = useState('');
   const nextId = useRef(1);
@@ -185,10 +186,7 @@ export function RewardHost() {
           window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4200);
         }
         const specials = rewards.filter((r) => r.kind === 'badge' || r.kind === 'level' || r.kind === 'path');
-        if (specials.length) {
-          queue.current.push(...specials);
-          setMoment((m) => m ?? queue.current.shift() ?? null);
-        }
+        if (specials.length) setQueue((q) => [...q, ...specials]);
         if (rewards.some((r) => r.kind === 'lesson')) play('lesson');
       }),
     [],
@@ -203,10 +201,8 @@ export function RewardHost() {
     }
   }, [moment]);
 
-  const close = () => {
-    dialog.current?.close();
-    setMoment(queue.current.shift() ?? null);
-  };
+  // Closing the dialog (by button, Escape or the backdrop key) fires its close event, which moves the queue on.
+  const close = () => dialog.current?.close();
 
   let body: JSX.Element | null = null;
   if (moment?.kind === 'badge') {
@@ -255,7 +251,7 @@ export function RewardHost() {
         ))}
       </div>
       <div className="visually-hidden" role="status" aria-live="polite">{live}</div>
-      <dialog ref={dialog} className="dialog" aria-labelledby="moment-title" onClose={() => { if (moment) setMoment(queue.current.shift() ?? null); }}>
+      <dialog ref={dialog} className="dialog" aria-labelledby="moment-title" onClose={() => setQueue((q) => q.slice(1))}>
         <div className="panel panel--ink dialog__body" data-surface="ink">
           {body}
           <div className="row">

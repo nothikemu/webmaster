@@ -16,6 +16,25 @@ This replaces any 2025-26 material. The 2025-26 Webmaster theme (Community Resou
 | OpenAI help center | Direct fetch returned HTTP 403. Age rule below is from a search-engine excerpt of the official page. |
 | Design references | VALORANT home and Agents pages viewed as screenshots. Wikipedia text for Samurai Champloo. One Piece, Fireball and Japanese editorial design were **not** studied from primary visuals in this environment. |
 
+## 0b. Re-check on 2026-11-10
+
+A second pass, two days after the first. What was read again, and what changed.
+
+| Source | Result on 2026-11-10 |
+| --- | --- |
+| tsaweb.org Themes and Problems (HS, page 4) | Re-read. The Webmaster theme and challenge text are **unchanged**. |
+| tsaweb.org Competitive Events (HS, page 7) | Re-read. Event description unchanged: build a website for the annual challenge; semifinalists are interviewed. |
+| tsaweb.org Competition Updates | Re-read. **No Webmaster entry.** |
+| Claude minimum age (support.claude.com) | Re-read. 18 or older. Page dated March 16, 2026. |
+| Gemini Apps age and accounts (support.google.com) | Re-read. Unchanged. |
+| GitHub Copilot for students (docs.github.com) | Re-read. Unchanged. |
+| Google's notebook tool (support.google.com/notebooklm) | **Changed.** The help centre now calls the product **Gemini Notebook**. Free sign-up with a Google account; open to "all users above the age of consent (or applicable in your country)"; data "is not used to train Gemini Notebook unless you provide feedback"; school accounts are not human-reviewed or used for training. The Tool Atlas entry was updated and is now marked as read on the vendor page. |
+| ChatGPT age page (help.openai.com) | Direct fetch still returns HTTP 403. The Tool Atlas keeps it as "Reported, confirm". |
+| Microsoft Copilot, Perplexity, Khanmigo | Their help pages are on hosts the build environment cannot reach. Search summaries of the official pages were used to tighten the wording, and all three stay marked "Reported, confirm". |
+| Public copies of earlier Webmaster rules (a chapter reference site, an older rules PDF, a New Jersey TSA reminder sheet) | Found by search, **not readable** from the build environment. What the search summaries say is recorded in `COMPLIANCE_CHECKLIST.md`, section C2, as open questions. None of it is confirmed for the current guide. |
+
+Still not read anywhere: the current national Competitive Events Guide, the HS General Rules and the Webmaster rating form, which are released to affiliated chapters only.
+
 ## A. Verified national requirements (mandatory)
 
 | # | Requirement | Source |
@@ -74,8 +93,9 @@ Lesson-level facts (for example specific statistics) must be re-checked against 
 | Gemini Apps | **13+** (or the applicable age in the country) with a personal or school Google Account; **18+** for a work account. School accounts need administrator enablement. Family Link-managed accounts cannot use the web app. | https://support.google.com/gemini/answer/13278668 |
 | ChatGPT | **13+** with parental consent for ages 13-18 (**search excerpt only; direct fetch blocked**). | https://help.openai.com/en/articles/8313401-is-chatgpt-safe-for-all-ages |
 | GitHub Copilot | Verified GitHub Education students get "Copilot Student" at no cost after verification. | https://docs.github.com/en/copilot/how-tos/copilot-on-github/set-up-copilot/enable-copilot/set-up-for-students |
+| Gemini Notebook (formerly listed here as NotebookLM) | Free sign-up with a Google account; "all users above the age of consent (or applicable in your country)"; not used for training unless feedback is sent. Read 2026-11-10. | https://support.google.com/notebooklm/answer/16213268 |
 
-**Not yet verified, so not listed as fact in the portal:** Perplexity, NotebookLM, Microsoft Copilot, Canva AI, Khanmigo, Grammarly, image tools, data tools. Each needs its official help page read before it appears in the Tool Atlas. The catalog shows a "last checked" date on every entry and teaches students to check the vendor's current terms.
+**Not yet verified, so not listed as fact in the portal:** Perplexity, Microsoft Copilot, Khanmigo and ChatGPT (all four are in the Tool Atlas, marked "Reported, confirm"), and Canva AI, Grammarly, image tools and data tools (not listed). Each needs its official help page read before it appears in the Tool Atlas. The catalog shows a "last checked" date on every entry and teaches students to check the vendor's current terms.
 
 ## F. Visual references and decisions (our recommendations)
 
