@@ -4,6 +4,8 @@ import { Icon } from '@/art/Icons';
 import { LESSON_ALT, LessonArt } from '@/art/LessonArt';
 import { Diagram } from '@/art/Diagram';
 import { Kernel } from '@/art/Kernel';
+import { MentorBust } from '@/art/Cast';
+import { hookFor, mentorFor } from '@/content/cast';
 import { CHECK_PASS, XP, lessonSteps } from '@/engine/progress';
 import { dispatch, useProgress } from '@/engine/store';
 import { lessonById, lessonNumber, neighbours, pathById } from '@/content/paths';
@@ -32,6 +34,8 @@ function LessonView({ lessonId }: { lessonId: string }) {
 
   const onScore = useCallback((score: number) => dispatch({ type: 'tried', lesson: lesson.id, score }), [lesson.id]);
   const best = saved?.tryScore ?? 0;
+  const mentor = mentorFor(path.id);
+  const hook = hookFor(path.id, lesson.id);
 
   return (
     <div className="lesson" data-path={path.id}>
@@ -41,7 +45,7 @@ function LessonView({ lessonId }: { lessonId: string }) {
           <nav aria-label="Breadcrumb" className="crumbs">
             <Link to="/learn">Learn</Link> <span aria-hidden="true">/</span> <Link to={`/learn/${path.id}`}>{path.title}</Link>
           </nav>
-          <p className="label">Lesson {n} of {path.lessons.length} · {lesson.minutes} min</p>
+          <p className="label">Lesson {n} of {path.lessons.length}, about {lesson.minutes} minutes</p>
           <h1>{lesson.title}</h1>
           <p className="lesson-hero__kicker">{lesson.kicker}</p>
         </div>
@@ -75,6 +79,17 @@ function LessonView({ lessonId }: { lessonId: string }) {
         <div className="lesson-main">
           <section id="learn" tabIndex={-1} aria-labelledby="learn-h" className="lesson-sec">
             <h2 id="learn-h" className="sec-title"><span className="sec-title__tag">Learn</span></h2>
+            {hook ? (
+              <figure className="hook">
+                <MentorBust who={path.id} className="hook__bust" />
+                <blockquote className="hook__words">
+                  <p>{hook}</p>
+                </blockquote>
+                <figcaption className="hook__who">
+                  <strong>{mentor.name}</strong>, {mentor.trade}, at {path.place}
+                </figcaption>
+              </figure>
+            ) : null}
             {lesson.beats.map((b, i) => (
               <article key={b.heading} className={`beat${i % 2 ? ' beat--alt' : ''}`}>
                 <h3>{b.heading}</h3>

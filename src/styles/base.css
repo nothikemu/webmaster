@@ -141,6 +141,14 @@ a:hover {
   border: 0;
 }
 
+/* Text inside a drawing that is read out but not shown, the SVG counterpart of .visually-hidden. */
+.svg-sr {
+  font-size: 1px;
+  fill: transparent;
+  stroke: none;
+  pointer-events: none;
+}
+
 .wrap {
   width: 100%;
   max-width: 1440px;

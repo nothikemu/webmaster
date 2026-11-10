@@ -562,7 +562,7 @@ legend {
   font: 700 1.1rem / 1.2 var(--font-ui);
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  animation: toast-in var(--dur-mid) var(--ease-snap);
+  animation: toast-in var(--dur-mid) var(--ease);
 }
 .toast b {
   color: var(--ochre-hi);

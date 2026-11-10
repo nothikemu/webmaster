@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, usePath } from '@/router';
 import { Icon } from '@/art/Icons';
 import { Medal } from '@/art/Medals';
-import { Kernel } from '@/art/Kernel';
+import { RankCrest } from '@/art/Ranks';
+import { MentorBust } from '@/art/Cast';
+import { MENTORS } from '@/content/cast';
 import { BADGES, LEVEL_NAMES, levelInfo, type Reward } from '@/engine/progress';
 import { dispatch, onRewards, useProgress } from '@/engine/store';
 import { configureSound, play } from '@/audio/sfx';
 import { Btn, LinkBtn } from './primitives';
-import { pathById } from '@/content/paths';
+import { PATHS, pathById } from '@/content/paths';
 
 const NAV = [
   { to: '/learn', label: 'Learn' },
@@ -114,18 +116,46 @@ export function Footer() {
         <path d={`M0 28 ${Array.from({ length: 40 }, () => 'a15 15 0 0 1 30 0').join(' ')}`} fill="var(--ink)" stroke="var(--ink-line)" strokeWidth="2" transform="translate(0 -2)" />
       </svg>
       <div className="wrap site-footer__grid">
-        <div>
+        <div className="site-footer__brand">
           <Logo small />
           <p className="site-footer__note">
             A free AI learning portal for grades 9 to 12. There are no accounts. Your progress is saved only in this browser, and nothing you do is sent anywhere.
           </p>
         </div>
-        <nav aria-label="Footer">
-          <ul>
-            <li><Link to="/about">About and sources</Link></li>
-            <li><Link to="/accessibility">Accessibility</Link></li>
-            <li><Link to="/credits">Credits</Link></li>
-          </ul>
+        <nav aria-label="Footer" className="site-footer__nav">
+          <div>
+            <p className="label">Learn</p>
+            <ul>
+              <li><Link to="/learn">The chart</Link></li>
+              {PATHS.map((p) => (
+                <li key={p.id}><Link to={`/learn/${p.id}`}>{p.title}</Link></li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <p className="label">Practice</p>
+            <ul>
+              <li><Link to="/lab">Prompt Lab</Link></li>
+              <li><Link to="/scenarios">Scenarios</Link></li>
+              <li><Link to="/certification">Final certification</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="label">Look up</p>
+            <ul>
+              <li><Link to="/tools">Tool Atlas</Link></li>
+              <li><Link to="/codex">Codex</Link></li>
+              <li><Link to="/logbook">Logbook</Link></li>
+            </ul>
+          </div>
+          <div>
+            <p className="label">About</p>
+            <ul>
+              <li><Link to="/about">About and sources</Link></li>
+              <li><Link to="/accessibility">Accessibility</Link></li>
+              <li><Link to="/credits">Credits</Link></li>
+            </ul>
+          </div>
         </nav>
         <p className="site-footer__tsa">Built for the TSA Webmaster event, 2026-27.</p>
       </div>
@@ -194,20 +224,22 @@ export function RewardHost() {
   } else if (moment?.kind === 'level') {
     body = (
       <>
-        <Kernel mood="cheer" className="moment__medal" />
-        <p className="label">Level up</p>
+        <RankCrest level={moment.to} className="moment__medal" />
+        <p className="label">New rank</p>
         <h2 id="moment-title">Level {moment.to}: {LEVEL_NAMES[moment.to - 1]}</h2>
-        <p>You moved up from level {moment.from}. Keep going, one lesson at a time.</p>
+        <p>You were {LEVEL_NAMES[moment.from - 1]}, level {moment.from}. This rank is yours because of work you finished, and it stays in your logbook.</p>
       </>
     );
   } else if (moment?.kind === 'path') {
     const p = pathById(moment.id);
     body = (
       <>
-        <Kernel mood="cheer" className="moment__medal" />
+        <MentorBust who={moment.id} className="moment__medal moment__medal--bust" />
         <p className="label">Path complete</p>
         <h2 id="moment-title">{p?.title}</h2>
-        <p>Every lesson in this path is finished. That is a real piece of AI literacy, built one experiment at a time.</p>
+        <p>
+          {MENTORS[moment.id].name} raises a pennant over {p?.place}. Every lesson on this path is finished, and all five of its lanterns are lit.
+        </p>
       </>
     );
   }

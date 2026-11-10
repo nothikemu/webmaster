@@ -399,6 +399,7 @@ export const LessonArt = memo(function LessonArt({ lessonId, path, index, classN
           <KernelParts mood={MOODS[lessonId] ?? 'idle'} />
         </g>
       </g>
+      <rect width="640" height="260" filter="url(#paint)" opacity="0.34" style={{ mixBlendMode: 'multiply' }} />
       <rect width="640" height="260" filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>
   );

@@ -749,7 +749,7 @@
   margin-left: -7px;
   background: var(--seal);
   border: 2px solid var(--ink);
-  transition: left var(--dur-mid) var(--ease-snap);
+  transition: left var(--dur-mid) var(--ease);
 }
 @media (max-width: 560px) {
   .meters {
@@ -881,16 +881,21 @@
   }
 }
 
-/* ---------- Moments (badge, level, path) ---------- */
+/* ---------- Moments (badge, rank, path): the emblem lands like a stamp ---------- */
 .moment__medal {
   width: 9rem;
   height: auto;
   margin-bottom: var(--s-4);
-  animation: pop var(--dur-slow) var(--ease-snap);
+  animation: stamp var(--dur-slow) var(--ease) both;
 }
-@keyframes pop {
+.moment__medal--bust {
+  width: 8rem;
+  border: 3px solid var(--ink-line);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+@keyframes stamp {
   from {
-    transform: scale(0.7) rotate(-8deg);
+    transform: scale(1.28) rotate(-5deg);
     opacity: 0;
   }
 }

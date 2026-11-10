@@ -166,3 +166,22 @@ export const Sedge = memo(function Sedge() {
     </g>
   );
 });
+
+const BUST: Record<'understand' | 'use' | 'responsible', { view: string; fill: string }> = {
+  understand: { view: '26 40 156 124', fill: C.indigo },
+  use: { view: '40 30 132 124', fill: C.tealDeep },
+  responsible: { view: '40 22 130 124', fill: C.ochre },
+};
+
+/** Head and shoulders of a mentor on their path's colour, for the places where they speak. Decorative: their name is always in the text beside it. */
+export const MentorBust = memo(function MentorBust({ who, className }: { who: 'understand' | 'use' | 'responsible'; className?: string }) {
+  const b = BUST[who];
+  const [x, y, w, h] = b.view.split(' ').map(Number) as [number, number, number, number];
+  return (
+    <svg className={className} viewBox={b.view} aria-hidden="true" focusable="false">
+      <rect x={x} y={y} width={w} height={h} fill={b.fill} />
+      <Hatch pts={box(x, y + h * 0.55, w, h * 0.45)} angle={-55} gap={7} w={1.3} opacity={0.35} />
+      {who === 'understand' ? <Wren /> : who === 'use' ? <Brannock /> : <Sedge />}
+    </svg>
+  );
+});

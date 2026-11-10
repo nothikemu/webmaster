@@ -2,8 +2,8 @@ import { Suspense, lazy, useEffect, useRef } from 'react';
 import { usePath } from '@/router';
 import { ArtDefs } from '@/art/Defs';
 import { Footer, Header, RewardHost } from '@/ui/Shell';
-import { isPathId } from '@/content/paths';
-import { lessonById } from '@/content/paths';
+import { ErrorBoundary } from '@/ui/ErrorBoundary';
+import { isPathId, lessonById, pathById } from '@/content/paths';
 
 const Home = lazy(() => import('./pages/Home'));
 const LessonPage = lazy(() => import('./pages/Lesson'));
@@ -63,7 +63,10 @@ function titleFor(path: string): string {
     const l = lessonById(parts[2]!);
     if (l) return `${l.title} · Tideweight`;
   }
-  if (parts[0] === 'learn' && parts.length === 2) return `Path · Tideweight`;
+  if (parts[0] === 'learn' && parts.length === 2) {
+    const p = pathById(parts[1]!);
+    if (p) return `${p.title} · Tideweight`;
+  }
   return 'Page not found · Tideweight';
 }
 
@@ -91,9 +94,11 @@ export default function App() {
       </a>
       <Header />
       <main id="main" ref={main} tabIndex={-1}>
-        <Suspense fallback={<div className="wrap page" role="status">Loading…</div>}>
-          <Route path={path} />
-        </Suspense>
+        <ErrorBoundary resetKey={path}>
+          <Suspense fallback={<div className="wrap page loading" role="status">Loading the page…</div>}>
+            <Route path={path} />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <Footer />
       <RewardHost />

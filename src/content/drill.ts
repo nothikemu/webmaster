@@ -1,11 +1,11 @@
 import type { GlossaryEntry, Question } from './types';
 import { rng } from '@/widgets/logic/random';
 
-/** Hide a term inside its own definition, so the definition cannot give its answer away. */
+/** Hide a term inside its own definition, plural or not, so the definition cannot give its answer away. */
 export function maskTerm(entry: GlossaryEntry): string {
   const bare = entry.term.replace(/\s*\(.*\)\s*$/, '');
   const escaped = bare.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return entry.definition.replace(new RegExp(`\\b${escaped}\\b`, 'gi'), 'this');
+  return entry.definition.replace(new RegExp(`(?:\\bthe\\s+)?\\b${escaped}(e?s)?\\b`, 'gi'), (_m, plural: string | undefined) => (plural ? 'these' : 'this'));
 }
 
 function shuffled<T>(items: readonly T[], next: () => number): T[] {

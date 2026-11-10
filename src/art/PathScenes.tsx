@@ -222,6 +222,7 @@ export const PathScene = memo(function PathScene({ path, className }: { path: Pa
       <g filter="url(#rough)">
         <Scene />
       </g>
+      <rect width="640" height="400" filter="url(#paint)" opacity="0.34" style={{ mixBlendMode: 'multiply' }} />
       <rect width="640" height="400" filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>
   );
