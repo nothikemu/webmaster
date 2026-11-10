@@ -101,7 +101,7 @@ export default function Logbook() {
             </>
           )}
         </Panel>
-        <Panel className="lb-stats">
+        <Panel className="lb-stats" lift>
           <dl className="stats">
             <div><dt>Lessons finished</dt><dd>{overall.done} / {overall.total}</dd></div>
             <div><dt>Badges</dt><dd>{earned.length} / {BADGES.length}</dd></div>

@@ -939,3 +939,12 @@
   margin-bottom: var(--s-3);
   font-size: var(--t-3);
 }
+
+/* Logbook: the stats panel stretches to match the next-step panel, so centre its numbers instead of leaving a dead strip. */
+.lb-stats {
+  display: grid;
+  align-content: center;
+}
+.lb-stats .stats {
+  row-gap: var(--s-5);
+}
