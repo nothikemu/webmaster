@@ -1,6 +1,6 @@
 # Team development log (template, to be filled in by the team)
 
-This file is **intentionally blank**. It is for the team's own record of what you did, decided, tested and learned. Do not fill it with anything you did not do. The interview and the AI Reflection both ask about your own understanding and contribution.
+This file is **intentionally blank**. It is for the team's own record of what you did, decided, tested and learned. Do not fill it with anything you did not do. The interview asks about your own understanding and contribution.
 
 ## Team
 
@@ -33,11 +33,3 @@ Facts re-checked against a primary source, with the source and the date. Start w
 | Date | Who | Device, browser, assistive technology | Result | Issues found | Fixed? |
 | --- | --- | --- | --- | --- | --- |
 |  |  |  |  |  |  |
-
-## AI assistance (for the Resources and AI Reflection Form, if required)
-
-See `AI_USE_LOG.md` for what the assistant did. Add here, in your own words: what you asked, what you kept, what you changed or rejected, and how you made sure the final work reflects your own understanding.
-
-| Date | Tool | Task | What you kept | What you changed or rejected |
-| --- | --- | --- | --- | --- |
-|  |  |  |  |  |

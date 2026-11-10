@@ -3,7 +3,7 @@ import { C, INK } from './palette';
 import { Flecks, Hatch, Shape, Stroke } from './Draw';
 import { box, ell, type Pt } from './ink';
 
-/** The emblem inside each medal, hand-inked in a 120 x 120 box. One distinct glyph per real achievement. */
+/** The emblem inside each medal, brush-inked in a 120 x 120 box. One distinct glyph per real achievement. */
 const GLYPHS: Record<string, () => JSX.Element> = {
   'loom-keeper': () => (
     <g>
@@ -113,7 +113,7 @@ interface MedalProps {
   className?: string;
 }
 
-/** A medal: a chamfered, hand-inked frame on a hard offset shadow, with one glyph. Locked medals are hatched, faded and padlocked. */
+/** A medal: a chamfered, brush-inked frame on a hard offset shadow, with one glyph. Locked medals are hatched, faded and padlocked. */
 export const Medal = memo(function Medal({ id, path, earned, className }: MedalProps) {
   const Glyph = GLYPHS[id];
   return (

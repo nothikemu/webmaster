@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { TOOLS, TOOL_CATEGORIES } from '@/content/tools';
-import { Callout, Chip, PageHead, Panel } from '@/ui/primitives';
+import { Btn, Callout, Chip, Panel } from '@/ui/primitives';
 import { Icon } from '@/art/Icons';
+import { AtlasRoom } from '@/art/PageScenes';
 
 export default function Tools() {
   const [cat, setCat] = useState<string>('all');
@@ -13,13 +14,23 @@ export default function Tools() {
 
   return (
     <div className="wrap page" data-path="use">
-      <PageHead title="Tool Atlas" kicker="Field guide" lead="Real AI tools, what they are for, and who may use them. Every entry carries the date it was checked, because age rules, prices and features change often.">
-        <Callout icon="info">
-          <p>
-            <strong>How to read the stamps.</strong> “Read on vendor page” means we read the age and account rules on the company&apos;s own page on the date shown. “Reported, confirm” means we found it described but could not read the vendor page directly, so check it yourself before relying on it. Image, writing and data tools are not listed yet because we have not verified them.
-          </p>
-        </Callout>
-      </PageHead>
+      <header className="split-head">
+        <div className="split-head__copy">
+          <h1>Tool Atlas</h1>
+          <p className="page-head__lead">Real AI tools, what they are for, and who may use them. Every entry carries the date it was checked, because age rules, prices and features change often.</p>
+          <dl className="legend">
+            <div>
+              <dt><Chip tone="hue" icon="check">Read on vendor page</Chip></dt>
+              <dd>We read the age and account rules on the company&apos;s own page on the date shown.</dd>
+            </div>
+            <div>
+              <dt><Chip icon="warning">Reported, confirm</Chip></dt>
+              <dd>We found it described, but could not read the company&apos;s page ourselves. Check it before you rely on it.</dd>
+            </div>
+          </dl>
+        </div>
+        <AtlasRoom className="plate split-head__art" />
+      </header>
 
       <div className="atlas-filters">
         <div className="field atlas-search">
@@ -38,7 +49,11 @@ export default function Tools() {
       <p className="small" role="status">{list.length} of {TOOLS.length} tools shown</p>
 
       {list.length === 0 ? (
-        <Panel tone="shade"><h2>No tool matches that</h2><p>Try a shorter search, or choose “All”.</p></Panel>
+        <Panel tone="shade">
+          <h2>No tool matches that</h2>
+          <p>Try a shorter search, or choose “All”.</p>
+          <Btn variant="quiet" icon="reset" onClick={() => { setQ(''); setCat('all'); }}>Clear the search</Btn>
+        </Panel>
       ) : (
         <ul className="dossiers">
           {list.map((t) => (
@@ -79,6 +94,7 @@ export default function Tools() {
         </ul>
       )}
       <Callout icon="warning"><p>Before using any tool for school, check your teacher&apos;s rules and your school&apos;s approved list. A tool being allowed for you to sign up for does not make it allowed for an assignment.</p></Callout>
+      <p className="small atlas-note">Image, writing and data tools are not listed yet, because we have not been able to check their rules on the companies&apos; own pages.</p>
     </div>
   );
 }

@@ -28,6 +28,8 @@ export const XP = {
 export const CHECK_PASS = 2; // correct answers needed (of 3) to finish a lesson
 
 const LEVELS = [0, 120, 320, 620, 1000, 1500, 2100, 2800, 3600, 4500] as const;
+/** XP needed to reach each level, level 1 first. */
+export const LEVEL_FLOORS: readonly number[] = LEVELS;
 export const LEVEL_NAMES = [
   'Dockhand',
   'Lamplighter',
@@ -128,6 +130,23 @@ export function createState(now: number): PortalState {
 }
 
 export const dayKey = (ms: number): string => new Date(ms).toISOString().slice(0, 10);
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Days in a row on which XP was earned, counting back from today.
+ * If nothing has been earned yet today the count starts from yesterday, so a streak only ends after a full day is missed.
+ */
+export function streak(s: PortalState, now: number): number {
+  let t = Date.parse(`${dayKey(now)}T00:00:00Z`);
+  if (!s.xpByDay[dayKey(t)]) t -= DAY_MS;
+  let n = 0;
+  while ((s.xpByDay[dayKey(t)] ?? 0) > 0) {
+    n += 1;
+    t -= DAY_MS;
+  }
+  return n;
+}
 
 // ---------- Badges ----------
 export interface BadgeDef {

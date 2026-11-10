@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { dispatch, useProgress } from '@/engine/store';
-import { Callout, Chip, PageHead, Panel } from '@/ui/primitives';
+import { Callout, Panel } from '@/ui/primitives';
 import { Icon } from '@/art/Icons';
+import { LabFrieze } from '@/art/PageScenes';
 
 type Tier = 'low' | 'mid' | 'high';
 interface Task {
@@ -82,8 +83,21 @@ export default function Lab() {
   }, [tier, taskId]);
 
   return (
-    <div className="wrap page" data-path="use">
-      <PageHead title="Prompt Lab" kicker="Workbench" lead="Fill in the five parts of a prompt and watch the sample answer change. It is a demonstration with pre-written responses, not a connected AI, so it never sends your words anywhere." />
+    <div data-path="use">
+      <header className="frieze">
+        <LabFrieze className="frieze__art" />
+        <div className="wrap">
+          <Panel lift className="frieze__sign">
+            <h1>Prompt Lab</h1>
+            <p className="page-head__lead">Fill in the five parts of a prompt and watch the sample answer change.</p>
+            <p className="fact">
+              <Icon name="info" />
+              <span>A demonstration with pre-written responses, not a connected AI. Nothing you type is saved or sent.</span>
+            </p>
+          </Panel>
+        </div>
+      </header>
+      <div className="wrap page page--after-head">
       <div className="lab-tasks">
         <p className="label" id="lab-pick">Choose a job</p>
         <div className="tabs" role="group" aria-labelledby="lab-pick">
@@ -108,15 +122,27 @@ export default function Lab() {
           <p className="small">A part counts once it has at least three words. Do not type private details. Nothing here is saved or sent.</p>
         </Panel>
         <div className="lab-out">
+          <ol className="parts" aria-label={`Parts of your prompt filled in: ${filled} of 5`}>
+            {PARTS.map((p) => {
+              const on = words(vals[p.key]) >= 3;
+              return (
+                <li key={p.key} className={on ? 'is-on' : ''} data-part={p.key}>
+                  <span className="parts__mark" aria-hidden="true">{on ? <Icon name="check" /> : null}</span>
+                  {p.label === 'Audience or role' ? 'Audience' : p.label}
+                  <span className="visually-hidden">{on ? ', filled in' : ', empty'}</span>
+                </li>
+              );
+            })}
+          </ol>
           <div className="lab-compare">
             <Panel tone="shade">
-              <Chip>A typical first prompt</Chip>
+              <p className="label">A typical first prompt</p>
               <p className="prompt-sheet__text">{task.weak}</p>
               <p className="label">Sample response</p>
               <p className="response">{task.out.low}</p>
             </Panel>
             <Panel hue>
-              <Chip tone="hue">Your prompt: {filled} of 5 parts</Chip>
+              <p className="label">Your prompt: {filled} of 5 parts</p>
               <p className="prompt-sheet__text">{prompt || 'Your prompt appears here as you type.'}</p>
               <p className="label">Sample response</p>
               <p className="response" aria-live="polite">{task.out[tier]}</p>
@@ -129,6 +155,7 @@ export default function Lab() {
             <Callout icon="info"><p>Fill in at least four parts to see the strongest sample response and clear the Lab challenge.</p></Callout>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

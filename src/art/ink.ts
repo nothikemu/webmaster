@@ -269,3 +269,81 @@ export function crest(x: number, y: number, s: number, flip = 1): Pt[] {
   }
   return pts;
 }
+
+/**
+ * A dry-brush stroke: several thin bristle strokes side by side, each starting and stopping on its own,
+ * so the mark breaks up at the ends like a brush running out of paint.
+ */
+export function dryD(poly: readonly Pt[], w: number, seed: number, bristles = 5, ragged = 0.6): string {
+  const n = poly.length;
+  if (n < 3) return '';
+  const r = rng(seed ^ 0x51ed);
+  const nm = normals(poly, false);
+  let d = '';
+  for (let b = 0; b < bristles; b++) {
+    const off = (bristles === 1 ? 0 : b / (bristles - 1) - 0.5) * w * (0.82 + r() * 0.3);
+    const a = Math.floor(r() * n * 0.3 * ragged);
+    const z = n - Math.floor(r() * n * 0.36 * ragged);
+    if (z - a < 3) continue;
+    const seg: Pt[] = [];
+    for (let i = a; i < z; i++) seg.push([poly[i]![0] + nm[i]![0] * off, poly[i]![1] + nm[i]![1] * off]);
+    d += strokeD(seg, (w / bristles) * (0.7 + r() * 0.9), seed + b * 13, 0.3, 0.45);
+  }
+  return d;
+}
+
+/** Ink spatter: a scatter of small blots, denser near the centre, with a few large ones. */
+export function spatterD(cx: number, cy: number, radius: number, count: number, seed: number): string {
+  const r = rng(seed ^ 0x77aa);
+  let d = '';
+  for (let i = 0; i < count; i++) {
+    const a = r() * TAU;
+    const dist = radius * Math.pow(r(), 1.6);
+    const size = 0.5 + Math.pow(r(), 3.2) * 2.8;
+    const x = cx + Math.cos(a) * dist;
+    const y = cy + Math.sin(a) * dist;
+    const pts: string[] = [];
+    for (let k = 0; k < 6; k++) {
+      const t = (k / 6) * TAU;
+      const q = size * (0.72 + r() * 0.56);
+      pts.push(`${R(x + Math.cos(t) * q)} ${R(y + Math.sin(t) * q * 0.9)}`);
+    }
+    d += `M${pts.join('L')}Z`;
+  }
+  return d;
+}
+
+/** A regular polygon or star as a point list. `inner` below 1 pulls every second point in, making a star. */
+export function star(cx: number, cy: number, radius: number, points: number, inner = 1, rot = -Math.PI / 2): Pt[] {
+  const n = inner === 1 ? points : points * 2;
+  return Array.from({ length: n }, (_, i) => {
+    const a = rot + (i / n) * TAU;
+    const k = inner !== 1 && i % 2 ? radius * inner : radius;
+    return [cx + Math.cos(a) * k, cy + Math.sin(a) * k] as Pt;
+  });
+}
+
+/** A toothed gear outline. */
+export function gear(cx: number, cy: number, radius: number, teeth: number, depth = 0.2, rot = 0): Pt[] {
+  const pts: Pt[] = [];
+  for (let i = 0; i < teeth; i++) {
+    const a0 = rot + (i / teeth) * TAU;
+    const step = TAU / teeth;
+    const ri = radius * (1 - depth);
+    pts.push([cx + Math.cos(a0) * ri, cy + Math.sin(a0) * ri]);
+    pts.push([cx + Math.cos(a0 + step * 0.18) * radius, cy + Math.sin(a0 + step * 0.18) * radius]);
+    pts.push([cx + Math.cos(a0 + step * 0.5) * radius, cy + Math.sin(a0 + step * 0.5) * radius]);
+    pts.push([cx + Math.cos(a0 + step * 0.68) * ri, cy + Math.sin(a0 + step * 0.68) * ri]);
+  }
+  return pts;
+}
+
+/** A circular arc as a polyline, angles in degrees (0 = east, 90 = south). */
+export function arc(cx: number, cy: number, rx: number, ry: number, from: number, to: number, steps = 14): Pt[] {
+  return Array.from({ length: steps + 1 }, (_, i) => {
+    const a = ((from + ((to - from) * i) / steps) * Math.PI) / 180;
+    return [cx + Math.cos(a) * rx, cy + Math.sin(a) * ry] as Pt;
+  });
+}
+
+export const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];

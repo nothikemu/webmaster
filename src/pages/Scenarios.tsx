@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { SCENARIOS, scenarioBounds, scenarioScore } from '@/content/scenarios';
+import { scenarioAverage } from '@/engine/progress';
 import { dispatch, useProgress } from '@/engine/store';
 import { lessonById } from '@/content/paths';
-import { Btn, Callout, Chip, LinkBtn, PageHead, Panel } from '@/ui/primitives';
+import { Btn, Callout, LinkBtn, Panel } from '@/ui/primitives';
 import { Icon } from '@/art/Icons';
+import { Crossroads } from '@/art/PageScenes';
 import { play } from '@/audio/sfx';
 import type { Scenario } from '@/content/types';
 
@@ -16,32 +18,56 @@ const METERS = [
 export default function Scenarios() {
   const [openId, setOpenId] = useState<string | null>(null);
   const challenges = useProgress((s) => s.challenges);
+  const average = useProgress((s) => scenarioAverage(s));
   const scenario = SCENARIOS.find((s) => s.id === openId);
+  const played = SCENARIOS.filter((s) => challenges[s.id]).length;
   return (
-    <div className="wrap page" data-path="responsible">
-      <PageHead title="Scenarios" kicker="Case files" lead="Real situations from school. Each choice moves three meters: honesty, learning and privacy. There is always a best path, but the reasons matter more than the score." />
-      {scenario ? (
-        <Play key={scenario.id} scenario={scenario} onExit={() => setOpenId(null)} />
-      ) : (
-        <ul className="cases">
-          {SCENARIOS.map((s, i) => {
-            const best = challenges[s.id]?.best;
-            return (
-              <li key={s.id} className={`cases__item cases__item--${i % 3}`}>
-                <button type="button" className="panel panel--lift case" onClick={() => { play('press'); setOpenId(s.id); }}>
-                  <span className="label">Case {i + 1}</span>
-                  <span className="case__title">{s.title}</span>
-                  <span className="case__set">{s.setting}</span>
-                  <span className="case__foot">
-                    {best !== undefined ? <Chip tone="hue" icon="check">Best {best}</Chip> : <Chip>Not played</Chip>}
-                    <span className="case__open">Open case <Icon name="arrow-right" /></span>
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+    <div className="wrap page cases-layout" data-path="responsible">
+      <aside className="cases-layout__poster" aria-hidden={scenario ? true : undefined}>
+        <Crossroads className="plate" />
+      </aside>
+      <div className="cases-layout__main">
+        <header className="page-head">
+          <h1>Scenarios</h1>
+          <p className="page-head__lead">Six situations you could meet at school this year. Each choice moves three meters: honesty, learning and privacy. There is a best road through every case, but the reasons matter more than the score.</p>
+          <p className="fact">
+            <Icon name="flag" />
+            <span>
+              <strong>{played} of {SCENARIOS.length}</strong> cases played{average !== null ? `, averaging ${average} out of 100` : ''}. Play all six and average 70 for the Fieldwork badge.
+            </span>
+          </p>
+        </header>
+        {scenario ? (
+          <Play key={scenario.id} scenario={scenario} onExit={() => setOpenId(null)} />
+        ) : (
+          <ol className="files">
+            {SCENARIOS.map((s, i) => {
+              const best = challenges[s.id]?.best;
+              return (
+                <li key={s.id}>
+                  <button type="button" className="file" onClick={() => { play('press'); setOpenId(s.id); }}>
+                    <span className="file__no" aria-hidden="true">{i + 1}</span>
+                    <span className="file__body">
+                      <span className="file__title">{s.title}</span>
+                      <span className="file__set">{s.setting}</span>
+                    </span>
+                    <span className="file__state">
+                      {best !== undefined ? (
+                        <>
+                          <Icon name="check" /> Best {best}
+                        </>
+                      ) : (
+                        'Not played'
+                      )}
+                    </span>
+                    <Icon name="arrow-right" className="file__go" />
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </div>
     </div>
   );
 }
@@ -84,7 +110,6 @@ function Play({ scenario, onExit }: { scenario: Scenario; onExit: () => void }) 
     <Panel lift className="play">
       <div className="play__head">
         <div>
-          <p className="label">Case file</p>
           <h2>{scenario.title}</h2>
         </div>
         <Btn variant="quiet" small onClick={onExit}>Back to all cases</Btn>

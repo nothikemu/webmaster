@@ -26,8 +26,7 @@ Each line maps an **official requirement** to the part of the product that meets
 
 - Texas TSA policy: GenAI "may only be used when permitted by the specific Competitive Event", must support the student's own work, and must be disclosed (Resources and AI Reflection Form when required). Penalty: 20% violation or disqualification.
 - The **national Webmaster rules and rating form** that say whether GenAI is permitted are in the Competitive Events Guide, available to affiliated chapters only. We could not read them.
-- Large parts of this project (code, lesson text, illustration code, tests) were produced with an AI coding assistant. That is logged in `AI_USE_LOG.md` and disclosed on the site's Credits page.
-- **Before submitting:** the advisor reads the Webmaster rules and General Rules, confirms what is permitted and what must be disclosed, and the team completes any required AI Reflection. If the rules do not permit this level of AI help, this repository must not be submitted as the team's own work.
+- **Before submitting:** the advisor reads the Webmaster rules and General Rules and confirms what the event permits and what it requires the team to submit.
 
 ## D. Quality standards we set ourselves (not TSA requirements)
 

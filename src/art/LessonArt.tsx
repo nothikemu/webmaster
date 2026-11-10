@@ -300,21 +300,21 @@ const VIGNETTES: Record<string, () => JSX.Element> = {
 
 
 export const LESSON_ALT: Record<string, string> = {
-  u1: 'A hand-inked balance scale: a scroll of written rules on one pan and a handful of fruit, the examples, on the other. Kernel the robot studies it.',
-  u2: 'Hand-inked crates of round and square fruit beside a chalkboard scattered with dots, as Kernel the robot looks on.',
-  u3: 'A hand-inked wooden frame of knots joined by threads in three columns, a small network, with a crank at the side and Kernel studying it.',
-  u4: 'A hand-inked scroll unrolling with word blocks laid out like a sentence, a quill and an ink pot, with Kernel the robot cheering.',
-  u5: 'A hand-inked string of beads, the tokens, with the earliest beads crossed out and a wooden frame around the last few, and Kernel looking alarmed.',
-  t1: 'A hand-inked pegboard of tools: a wrench, a saw, a brush and a magnifying lens, each with a tag, and Kernel the robot beside it.',
-  t2: 'A hand-inked scroll with five colored ribbons hanging from it, one for each part of a prompt, and Kernel the robot thinking.',
-  t3: 'A hand-inked loop of two arrows chasing each other around a pencil, for refining again and again, with Kernel cheering.',
-  t4: 'A hand-inked document with a green tick and two red crosses, and a large magnifying glass checking it, with Kernel looking alert.',
-  t5: 'A hand-inked stack of colorful books beside a paper lantern, a quill and a small pot, with Kernel the robot at ease.',
-  r1: 'A hand-inked balance scale tipped heavily to one side: a stone on the low pan, an oar on the high pan, with Kernel thinking.',
-  r2: 'A hand-inked open book whose right page is only a dashed outline, with red question marks rising from it and Kernel looking alarmed.',
-  r3: 'A hand-inked hand mirror reflecting a streaked picture, beside a paper lantern and a dashed-outline copy of it, with Kernel alert.',
-  r4: 'A hand-inked wooden chest wrapped in chains with a big padlock, and a small gold key on a string, with Kernel thinking.',
-  r5: 'A hand-inked wax seal stamp pressed on a ledger beside an ink pot and a quill, with Kernel cheering.',
+  u1: 'A balance scale: a scroll of written rules on one pan and a handful of fruit, the examples, on the other. Kernel the robot studies it.',
+  u2: 'Crates of round and square fruit beside a chalkboard scattered with dots, as Kernel the robot looks on.',
+  u3: 'A wooden frame of knots joined by threads in three columns, a small network, with a crank at the side and Kernel studying it.',
+  u4: 'A scroll unrolling with word blocks laid out like a sentence, a quill and an ink pot, with Kernel the robot cheering.',
+  u5: 'A string of beads, the tokens, with the earliest beads crossed out and a wooden frame around the last few, and Kernel looking alarmed.',
+  t1: 'A pegboard of tools: a wrench, a saw, a brush and a magnifying lens, each with a tag, and Kernel the robot beside it.',
+  t2: 'A scroll with five colored ribbons hanging from it, one for each part of a prompt, and Kernel the robot thinking.',
+  t3: 'A loop of two arrows chasing each other around a pencil, for refining again and again, with Kernel cheering.',
+  t4: 'A document with a green tick and two red crosses, and a large magnifying glass checking it, with Kernel looking alert.',
+  t5: 'A stack of colorful books beside a paper lantern, a quill and a small pot, with Kernel the robot at ease.',
+  r1: 'A balance scale tipped heavily to one side: a stone on the low pan, an oar on the high pan, with Kernel thinking.',
+  r2: 'An open book whose right page is only a dashed outline, with red question marks rising from it and Kernel looking alarmed.',
+  r3: 'A hand mirror reflecting a streaked picture, beside a paper lantern and a dashed-outline copy of it, with Kernel alert.',
+  r4: 'A wooden chest wrapped in chains with a big padlock, and a small gold key on a string, with Kernel thinking.',
+  r5: 'A wax seal stamp pressed on a ledger beside an ink pot and a quill, with Kernel cheering.',
 };
 
 const MOODS: Record<string, Mood> = { u1: 'think', u2: 'idle', u3: 'think', u4: 'cheer', u5: 'alert', t1: 'idle', t2: 'think', t3: 'cheer', t4: 'alert', t5: 'idle', r1: 'think', r2: 'alert', r3: 'alert', r4: 'think', r5: 'cheer' };
@@ -385,7 +385,7 @@ function Backdrop({ path, n }: { path: PathId; n: number }) {
   );
 }
 
-/** A bespoke hand-inked illustration for each lesson: its own vignette, its own backdrop composition, and Kernel acting it out. */
+/** A bespoke ink-brush illustration for each lesson: its own vignette, its own backdrop composition, and Kernel acting it out. */
 export const LessonArt = memo(function LessonArt({ lessonId, path, index, className, label }: { lessonId: string; path: PathId; index: number; className?: string; label: string }) {
   const V = VIGNETTES[lessonId];
   return (

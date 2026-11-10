@@ -1,5 +1,6 @@
 import { INK } from './palette';
-import { type HatchOpts, type Pt, densify, edgesD, hash, hatchD, ringD, spline, strokeD, wobble } from './ink';
+import type { ReactNode } from 'react';
+import { type HatchOpts, type Pt, densify, dryD, edgesD, hash, hatchD, ringD, spatterD, spline, strokeD, wobble } from './ink';
 
 const pathOf = (poly: readonly Pt[], closed: boolean) => `M${poly.map((p) => `${Math.round(p[0] * 10) / 10} ${Math.round(p[1] * 10) / 10}`).join('L')}${closed ? 'Z' : ''}`;
 
@@ -22,7 +23,7 @@ export interface ShapeProps {
   ink?: string;
 }
 
-/** A coloured, hatched, hand-inked shape. */
+/** A coloured, hatched, brush-inked shape. */
 export function Shape({ pts, fill, fillOpacity, smooth = false, open = false, w = 3, seed, hatch = false, hatchColor, hatchOpacity, wob = 0.9, reg = [1.5, 1.1], ink = INK }: ShapeProps) {
   const sd = seed ?? hash(pts);
   const closed = !open;
@@ -64,4 +65,41 @@ export function Flecks({ marks, w = 1.8, color = INK, seed = 3, opacity }: { mar
     d += strokeD(spline([[x, y], mid, [x + Math.cos(a) * len, y + Math.sin(a) * len]], false, 4), w, seed + i, 0.4, 0.2);
   });
   return <path d={d} fill={color} fillOpacity={opacity} />;
+}
+
+/** A dry-brush mark: broken bristle lines, for sky streaks, sheen on water, light across a floor. */
+export function Dry({ pts, w = 12, seed, color = INK, opacity, bristles = 5, ragged = 0.6, smooth = true }: { pts: readonly Pt[]; w?: number; seed?: number; color?: string; opacity?: number; bristles?: number; ragged?: number; smooth?: boolean }) {
+  const sd = seed ?? hash(pts);
+  const base = smooth ? spline(pts, false, 7) : densify(pts, 8, false);
+  return <path d={dryD(wobble(base, 0.8, sd), w, sd, bristles, ragged)} fill={color} fillOpacity={opacity} />;
+}
+
+/** Flecks of ink thrown off a loaded brush. */
+export function Spatter({ x, y, r = 30, n = 14, seed = 5, color = INK, opacity }: { x: number; y: number; r?: number; n?: number; seed?: number; color?: string; opacity?: number }) {
+  return <path d={spatterD(x, y, r, n, seed)} fill={color} fillOpacity={opacity} />;
+}
+
+/** Screentone dots laid over a region, the manga way of shading without a gradient. */
+export function Tone({ pts, opacity = 0.35, smooth = false, coarse = false }: { pts: readonly Pt[]; opacity?: number; smooth?: boolean; coarse?: boolean }) {
+  const poly = smooth ? spline(pts, true, 5) : pts;
+  return <path d={pathOf(poly, true)} fill={`url(#${coarse ? 'tone' : 'tone-fine'})`} opacity={opacity} />;
+}
+
+/** Place a drawing at a point, optionally scaled, turned or mirrored. Local coordinates start at that point. */
+export function At({ x = 0, y = 0, s = 1, r = 0, flip = false, children }: { x?: number; y?: number; s?: number; r?: number; flip?: boolean; children: ReactNode }) {
+  return <g transform={`translate(${x} ${y})${r ? ` rotate(${r})` : ''} scale(${flip ? -s : s} ${s})`}>{children}</g>;
+}
+
+/**
+ * The frame every illustration shares: a slightly roughened drawing, then two paper layers over it.
+ * "paint" breaks flat colour into uneven washes; "grain" is the tooth of the paper.
+ */
+export function Scene({ w, h, className, label, fit = 'xMidYMid slice', children }: { w: number; h: number; className?: string; label?: string; fit?: string; children: ReactNode }) {
+  return (
+    <svg className={className} viewBox={`0 0 ${w} ${h}`} preserveAspectRatio={fit} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
+      <g filter="url(#rough)">{children}</g>
+      <rect width={w} height={h} filter="url(#paint)" opacity="0.36" style={{ mixBlendMode: 'multiply' }} />
+      <rect width={w} height={h} filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
+    </svg>
+  );
 }

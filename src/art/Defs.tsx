@@ -52,6 +52,11 @@ export function ArtDefs() {
           <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n" />
           <feDisplacementMap in="SourceGraphic" in2="n" scale="3.2" xChannelSelector="R" yChannelSelector="G" />
         </filter>
+        {/* uneven pigment: broad, soft blotches that stop flat colour from looking like a vector fill */}
+        <filter id="paint" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.011 0.019" numOctaves="3" seed="11" />
+          <feColorMatrix values="0 0 0 0 0.42  0 0 0 0 0.27  0 0 0 0 0.14  1.5 1 0 0 -0.95" />
+        </filter>
         {/* printed-paper tooth, laid over a whole scene */}
         <filter id="grain" x="0" y="0" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />

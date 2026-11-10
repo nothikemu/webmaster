@@ -7,7 +7,7 @@ import { Barrel, Boat, Cloud, Crate, Crest, Gull, House, PaperLantern, Pine, Pla
 
 /**
  * The hero scene: a harbor town at dusk, three landmarks (one for each learning path) and Kernel on the dock.
- * Hand-inked: every line is a brush stroke, every shadow is hatched, and the colour sits a little off the line.
+ * Ink-brush style: every line is a brush stroke, every shadow is hatched, and the colour sits a little off the line.
  * The whole drawing is memoised, so it is computed once, not on every change of progress.
  */
 export const Harbor = memo(function Harbor({ className }: { className?: string }) {
@@ -19,7 +19,7 @@ export const Harbor = memo(function Harbor({ className }: { className?: string }
       viewBox="0 0 1600 900"
       preserveAspectRatio="xMaxYMax slice"
       role="img"
-      aria-label="A hand-inked illustration of a harbor town at dusk. A workshop with a tall crane stands on a quay, a weaving hall with threads strung from its roof sits on a small island, and a striped lighthouse stands on a rock. Paper lanterns hang across the sky. A small round robot in a woven hat holds a lantern on the wooden dock."
+      aria-label="An illustration of a harbor town at dusk. A workshop with a tall crane stands on a quay, a weaving hall with threads strung from its roof sits on a small island, and a striped lighthouse stands on a rock. Paper lanterns hang across the sky. A small round robot in a woven hat holds a lantern on the wooden dock."
       focusable="false"
     >
       <g filter="url(#rough)">
@@ -30,7 +30,7 @@ export const Harbor = memo(function Harbor({ className }: { className?: string }
         <Flecks marks={[[30, 120, 150, 1], [260, 60, 120, -1], [900, 90, 160, 1], [1250, 40, 140, 0], [1400, 110, 110, 2], [120, 260, 130, 0], [620, 230, 90, 1], [60, 400, 150, 1], [380, 420, 140, 0], [1180, 380, 120, -1]]} w={4} color={C.skyHigh} opacity={0.7} seed={5} />
         <Flecks marks={[[40, 330, 180, 0], [500, 360, 120, 1], [1300, 330, 200, 0], [800, 540, 150, 1], [100, 560, 180, 0], [1280, 560, 190, -1]]} w={3.4} color={C.sky3} opacity={0.6} seed={9} />
 
-        {/* ---- the sun, with hand-drawn rays ---- */}
+        {/* ---- the sun, with brushed rays ---- */}
         <Shape pts={ell(1010, 470, 238, 238, 28, 0.01, 21)} smooth fill={C.sky2} w={0} reg={[0, 0]} />
         <Flecks
           marks={Array.from({ length: 26 }, (_, i) => {

@@ -1,5 +1,5 @@
 /**
- * Hand-inked props shared by the scenes. Each is drawn with the ink engine, so they all share one pen.
+ * Brush-inked props shared by the scenes. Each is drawn with the ink engine, so they all share one pen.
  * Coordinates are in the scene's own space; (x, y) is generally the base-centre of the object.
  */
 import { C, INK } from './palette';

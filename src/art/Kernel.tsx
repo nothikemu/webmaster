@@ -3,10 +3,14 @@ import { C, INK } from './palette';
 import { Flecks, Hatch, Shape, Stroke, Wash } from './Draw';
 import { box, ell, type Pt } from './ink';
 
-export type Mood = 'idle' | 'think' | 'cheer' | 'alert';
+/** What Kernel is doing. Each mood changes the arms, the eyes, the brows and the mouth, never the character. */
+export type Mood = 'idle' | 'think' | 'cheer' | 'alert' | 'wave' | 'point' | 'read' | 'look';
+/** What Kernel carries in the lowered hand (idle and alert only). */
+export type Hold = 'lantern' | 'none' | 'scroll' | 'flag' | 'brush' | 'map';
 
 interface KernelProps {
   mood?: Mood;
+  hold?: Hold;
   /** Accessible description. Decorative uses leave it empty. */
   label?: string;
   className?: string;
@@ -49,14 +53,70 @@ function Lantern({ x, y, lit = true }: { x: number; y: number; lit?: boolean }) 
   );
 }
 
+/** The things Kernel can carry instead of the lantern. Drawn at the lowered right hand, (200, 223). */
+function Held({ hold, lit }: { hold: Hold; lit: boolean }) {
+  if (hold === 'lantern') return <Lantern x={200} y={256} lit={lit} />;
+  if (hold === 'scroll') {
+    return (
+      <g>
+        <Shape pts={[[191, 200], [209, 198], [211, 252], [193, 254]]} fill={C.bone} w={2.6} hatch={{ angle: -70, gap: 5, w: 1 }} hatchOpacity={0.35} />
+        <Shape pts={ell(200, 199, 10, 4, 8, 0.05, 301)} smooth fill={C.paperLo} w={2.2} />
+        <Shape pts={ell(202, 253, 10, 4, 8, 0.05, 302)} smooth fill={C.paperLo} w={2.2} />
+        <Stroke pts={[[191, 226], [201, 229], [211, 225]]} w={4.4} color={C.seal} />
+        <Shape pts={ell(201, 228, 4, 4, 6, 0.1, 303)} smooth fill={C.seal} w={1.6} />
+      </g>
+    );
+  }
+  if (hold === 'flag') {
+    return (
+      <g>
+        <Stroke pts={[[201, 262], [202, 200], [205, 132]]} w={6.4} color={INK} taper={0.05} wob={0.5} />
+        <Stroke pts={[[201, 262], [202, 200], [205, 132]]} w={3} color={C.woodLight} taper={0.05} wob={0.5} />
+        <Shape pts={[[206, 134], [244, 142], [230, 156], [246, 170], [205, 172]]} smooth fill={C.seal} w={2.8} hatch={{ angle: 60, gap: 5, w: 1.1 }} hatchOpacity={0.5} />
+        <Shape pts={ell(205, 130, 4.5, 4.5, 6, 0.1, 304)} smooth fill={C.lantern} w={2} />
+      </g>
+    );
+  }
+  if (hold === 'brush') {
+    return (
+      <g>
+        <Stroke pts={[[196, 136], [200, 200], [203, 244]]} w={8} color={INK} taper={0.05} wob={0.5} />
+        <Stroke pts={[[196, 136], [200, 200], [203, 244]]} w={4.4} color={C.woodLight} taper={0.05} wob={0.5} />
+        <Shape pts={box(197, 240, 12, 9)} fill={C.lantern} w={2} />
+        <Shape pts={[[197, 249], [210, 249], [207, 264], [204, 276], [200, 262]]} smooth fill={INK} w={0} reg={[0, 0]} />
+        <Flecks marks={[[204, 280, 5, 90], [198, 284, 3, 90]]} w={2.4} />
+      </g>
+    );
+  }
+  if (hold === 'map') {
+    return (
+      <g>
+        <Shape pts={[[186, 214], [226, 206], [234, 250], [194, 260]]} fill={C.paperHi} w={2.6} />
+        <Stroke pts={[[206, 210], [214, 256]]} w={1.4} opacity={0.6} />
+        <Stroke pts={[[194, 232], [204, 226], [214, 236], [226, 228]]} w={1.8} color={C.teal} />
+        <Flecks marks={[[198, 244, 5, 45], [198, 248, 5, -45]]} w={2} color={C.seal} />
+      </g>
+    );
+  }
+  return null;
+}
+
 /**
  * Kernel, the guide: a small, dented automaton in a woven travelling hat, with a scarf the wind will not leave alone.
- * One character, four moods, drawn from the same parts so it is always recognisably the same person.
+ * One character, eight moods, drawn from the same parts so it is always recognisably the same person.
  */
-export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?: Mood }) {
+export const KernelParts = memo(function KernelParts({ mood = 'idle', hold = 'lantern' }: { mood?: Mood; hold?: Hold }) {
   const cheer = mood === 'cheer';
   const think = mood === 'think';
   const alert = mood === 'alert';
+  const wave = mood === 'wave';
+  const point = mood === 'point';
+  const read = mood === 'read';
+  const look = mood === 'look';
+  const happy = cheer;
+  // where the pupils sit: thinking looks up, pointing and looking glance right, reading looks down
+  const px = think ? 4 : point || look ? 3.5 : read ? -1 : 0;
+  const py = think ? -7 : read ? 5 : 0;
   return (
     <g>
       <Wash pts={ell(112, 271, 68, 9, 12, 0.04, 3)} fill={INK} opacity={0.22} />
@@ -90,32 +150,60 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
       <Shape pts={[[139, 212], [156, 210], [158, 226], [140, 228]]} fill={C.paperLo} w={2.2} />
       <Flecks marks={[[142, 214, 4, 90], [147, 213, 4, 90], [152, 212, 4, 90], [142, 224, 4, 90], [148, 223, 4, 90]]} w={1.3} opacity={0.8} />
 
-      {/* arms */}
+      {/* left arm */}
       {cheer ? (
         <>
           <Arm pts={[[68, 188], [42, 172], [31, 142]]} seed={11} />
           <Hand x={29} y={134} seed={12} />
-          <Arm pts={[[158, 188], [184, 172], [197, 142]]} seed={13} />
-          <Hand x={199} y={134} seed={14} />
         </>
+      ) : read ? (
+        <Arm pts={[[68, 190], [56, 212], [80, 226]]} seed={23} />
       ) : (
         <>
           <Arm pts={[[68, 190], [50, 208], [45, 232]]} seed={15} />
           <Hand x={44} y={239} seed={16} />
-          {think ? (
-            <>
-              <Arm pts={[[158, 190], [190, 192], [176, 168]]} seed={17} />
-              <Hand x={170} y={160} seed={18} />
-            </>
-          ) : (
-            <>
-              <Arm pts={[[158, 190], [186, 198], [199, 218]]} seed={19} />
-              <Hand x={200} y={223} seed={20} />
-              <Lantern x={200} y={256} lit={!alert} />
-            </>
-          )}
         </>
       )}
+
+      {/* right arm */}
+      {cheer || wave ? (
+        <>
+          <Arm pts={[[158, 188], [184, 172], [197, 142]]} seed={13} />
+          <Hand x={199} y={134} seed={14} />
+          {wave ? <Flecks marks={[[214, 122, 9, -30], [218, 136, 9, 0], [184, 118, 8, 210]]} w={2.2} /> : null}
+        </>
+      ) : think ? (
+        <>
+          <Arm pts={[[158, 190], [190, 192], [176, 168]]} seed={17} />
+          <Hand x={170} y={160} seed={18} />
+        </>
+      ) : point ? (
+        <>
+          <Arm pts={[[158, 190], [192, 186], [222, 172]]} seed={25} />
+          <Hand x={228} y={169} seed={26} />
+          <Stroke pts={[[234, 166], [246, 160]]} w={4} />
+        </>
+      ) : read ? (
+        <Arm pts={[[158, 190], [168, 212], [144, 226]]} seed={27} />
+      ) : look ? null : (
+        <>
+          <Arm pts={[[158, 190], [186, 198], [199, 218]]} seed={19} />
+          <Hand x={200} y={223} seed={20} />
+          <Held hold={hold} lit={!alert} />
+        </>
+      )}
+
+      {/* the book Kernel reads from, held open against the chest */}
+      {read ? (
+        <g>
+          <Shape pts={[[70, 208], [112, 214], [154, 208], [156, 240], [112, 246], [68, 240]]} fill={C.clothRed} w={3} />
+          <Shape pts={[[74, 206], [112, 211], [112, 241], [72, 236]]} fill={C.paperHi} w={2.2} />
+          <Shape pts={[[112, 211], [150, 206], [152, 236], [112, 241]]} fill={C.paperHi} w={2.2} />
+          <Flecks marks={[[79, 215, 26, 6], [79, 222, 22, 6], [79, 229, 26, 6], [118, 218, 26, -6], [118, 225, 20, -6], [118, 232, 26, -6]]} w={1.4} opacity={0.7} />
+          <Hand x={72} y={228} seed={28} />
+          <Hand x={152} y={228} seed={29} />
+        </g>
+      ) : null}
 
       {/* head */}
       <Shape pts={[[56, 114], [70, 97], [112, 92], [156, 97], [170, 114], [172, 150], [160, 177], [112, 183], [64, 177], [52, 150]]} smooth fill={C.bone} w={3.6} />
@@ -128,7 +216,7 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
       <Shape pts={[[67, 113], [157, 113], [162, 135], [157, 165], [112, 169], [67, 165], [62, 135]]} smooth fill={C.ink} w={2.4} reg={[0, 0]} />
 
       {/* eyes and brows: this is where the acting happens */}
-      {cheer ? (
+      {happy ? (
         <>
           <Stroke pts={[[80, 140], [91, 128], [102, 140]]} w={4.4} color={C.bone} />
           <Stroke pts={[[122, 140], [133, 128], [144, 140]]} w={4.4} color={C.bone} />
@@ -137,10 +225,16 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
         <>
           <Shape pts={ell(91, 136, alert ? 13 : 11, alert ? 14 : 12, 10, 0.05, 31)} smooth fill={C.bone} w={0} reg={[0, 0]} />
           <Shape pts={ell(133, 136, alert ? 13 : 11, alert ? 14 : 12, 10, 0.05, 32)} smooth fill={C.bone} w={0} reg={[0, 0]} />
-          <Shape pts={ell(think ? 96 : 92, think ? 131 : 138, alert ? 3.6 : 5.4, alert ? 4 : 6.4, 8, 0.05, 33)} smooth fill={C.ink} w={0} reg={[0, 0]} />
-          <Shape pts={ell(think ? 138 : 134, think ? 131 : 138, alert ? 3.6 : 5.4, alert ? 4 : 6.4, 8, 0.05, 34)} smooth fill={C.ink} w={0} reg={[0, 0]} />
-          <Shape pts={ell(think ? 98 : 94, think ? 128 : 135, 1.8, 1.8, 6, 0.1, 35)} smooth fill={C.bone} w={0} reg={[0, 0]} />
-          <Shape pts={ell(think ? 140 : 136, think ? 128 : 135, 1.8, 1.8, 6, 0.1, 36)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+          <Shape pts={ell(92 + px, 138 + py, alert ? 3.6 : 5.4, alert ? 4 : 6.4, 8, 0.05, 33)} smooth fill={C.ink} w={0} reg={[0, 0]} />
+          <Shape pts={ell(134 + px, 138 + py, alert ? 3.6 : 5.4, alert ? 4 : 6.4, 8, 0.05, 34)} smooth fill={C.ink} w={0} reg={[0, 0]} />
+          <Shape pts={ell(94 + px, 135 + py, 1.8, 1.8, 6, 0.1, 35)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+          <Shape pts={ell(136 + px, 135 + py, 1.8, 1.8, 6, 0.1, 36)} smooth fill={C.bone} w={0} reg={[0, 0]} />
+          {read ? (
+            <>
+              <Shape pts={[[79, 124], [103, 124], [103, 134], [79, 133]]} smooth fill={C.ink} w={0} reg={[0, 0]} />
+              <Shape pts={[[121, 124], [145, 124], [145, 133], [121, 134]]} smooth fill={C.ink} w={0} reg={[0, 0]} />
+            </>
+          ) : null}
         </>
       )}
       {alert ? (
@@ -153,11 +247,13 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
           <Stroke pts={[[78, 118], [90, 116], [102, 119]]} w={3.2} color={C.lantern} />
           <Stroke pts={[[122, 111], [134, 107], [146, 112]]} w={3.2} color={C.lantern} />
         </>
-      ) : cheer ? (
+      ) : happy || wave ? (
         <>
           <Stroke pts={[[78, 116], [91, 108], [104, 116]]} w={3.2} color={C.lantern} />
           <Stroke pts={[[120, 116], [133, 108], [146, 116]]} w={3.2} color={C.lantern} />
         </>
+      ) : look ? (
+        <Stroke pts={[[78, 117], [91, 113], [103, 118]]} w={3.2} color={C.lantern} />
       ) : (
         <>
           <Stroke pts={[[78, 119], [91, 114], [103, 119]]} w={3.2} color={C.lantern} />
@@ -165,17 +261,34 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
         </>
       )}
       {/* mouth */}
-      {cheer ? (
+      {happy || wave ? (
         <Shape pts={[[98, 148], [112, 164], [126, 148], [112, 152]]} smooth fill={C.lantern} w={0} reg={[0, 0]} />
       ) : alert ? (
         <Shape pts={ell(112, 156, 5.5, 7, 8, 0.05, 37)} smooth fill={C.lantern} w={0} reg={[0, 0]} />
-      ) : think ? (
+      ) : think || read ? (
         <Stroke pts={[[103, 155], [112, 153], [122, 156]]} w={3.4} color={C.lantern} />
+      ) : look ? (
+        <Shape pts={ell(108, 157, 4.4, 4.8, 7, 0.05, 37)} smooth fill={C.lantern} w={0} reg={[0, 0]} />
       ) : (
         <Stroke pts={[[100, 151], [112, 160], [125, 151]]} w={3.6} color={C.lantern} />
       )}
       <Shape pts={ell(75, 152, 4.6, 3.4, 7, 0.1, 38)} smooth fill={C.seal} w={0} reg={[0, 0]} />
       <Shape pts={ell(149, 152, 4.6, 3.4, 7, 0.1, 39)} smooth fill={C.seal} w={0} reg={[0, 0]} />
+
+      {/* looking: a brass spyglass held up to the right eye, drawn over the face */}
+      {look ? (
+        <g>
+          <Arm pts={[[158, 190], [190, 182], [180, 154]]} seed={31} />
+          <Shape pts={[[122, 126], [160, 121], [162, 147], [124, 150]]} fill={C.strawDeep} w={3} hatch={{ angle: -70, gap: 4.5, w: 1.1 }} hatchOpacity={0.5} />
+          <Shape pts={[[160, 118], [204, 110], [207, 146], [162, 150]]} fill={C.straw} w={3} hatch={{ angle: -70, gap: 5, w: 1.1 }} hatchOpacity={0.4} />
+          <Shape pts={[[204, 106], [240, 98], [244, 146], [207, 150]]} fill={C.lantern} w={3.2} />
+          <Shape pts={ell(242, 122, 5, 24, 10, 0.03, 32)} smooth fill={C.tealLight} w={2.6} />
+          <Stroke pts={[[240, 110], [244, 118]]} w={1.8} color={C.bone} />
+          <Stroke pts={[[160, 119], [162, 149]]} w={3.4} />
+          <Stroke pts={[[204, 108], [207, 148]]} w={3.4} />
+          <Hand x={180} y={150} seed={33} />
+        </g>
+      ) : null}
 
       {/* the woven travelling hat, tipped a little to one side */}
       <g transform="translate(0 -9) rotate(-5 112 104)">
@@ -196,9 +309,13 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
       {/* the chin cord, with a knot and a loose end */}
       <Stroke pts={[[52, 106], [53, 140], [68, 174]]} w={3.4} color={C.seal} />
       <Stroke pts={[[172, 106], [171, 140], [156, 174]]} w={3.4} color={C.seal} />
-      <Shape pts={ell(112, 186, 8, 7, 7, 0.1, 62)} smooth fill={C.seal} w={2.6} />
-      <Stroke pts={[[108, 190], [103, 204]]} w={2.8} color={C.seal} />
-      <Stroke pts={[[116, 190], [121, 202]]} w={2.8} color={C.seal} />
+      {read ? null : (
+        <>
+          <Shape pts={ell(112, 186, 8, 7, 7, 0.1, 62)} smooth fill={C.seal} w={2.6} />
+          <Stroke pts={[[108, 190], [103, 204]]} w={2.8} color={C.seal} />
+          <Stroke pts={[[116, 190], [121, 202]]} w={2.8} color={C.seal} />
+        </>
+      )}
 
       {think ? (
         <g>
@@ -220,10 +337,10 @@ export const KernelParts = memo(function KernelParts({ mood = 'idle' }: { mood?:
 });
 
 /** Stand-alone Kernel, for use outside another illustration. */
-export const Kernel = memo(function Kernel({ mood = 'idle', label, className }: KernelProps) {
+export const Kernel = memo(function Kernel({ mood = 'idle', hold = 'lantern', label, className }: KernelProps) {
   return (
-    <svg className={className} viewBox="-8 -12 250 300" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
-      <KernelParts mood={mood} />
+    <svg className={className} viewBox="-8 -12 262 300" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true} focusable="false">
+      <KernelParts mood={mood} hold={hold} />
     </svg>
   );
 });

@@ -2,11 +2,13 @@ import { useRef, useState } from 'react';
 import { Link } from '@/router';
 import { Medal } from '@/art/Medals';
 import { Icon } from '@/art/Icons';
-import { BADGES, CHECK_PASS, XP, levelInfo, overallProgress, pathProgress, recommendNext, lessonSteps } from '@/engine/progress';
+import { BADGES, CHECK_PASS, LEVEL_FLOORS, LEVEL_NAMES, XP, levelInfo, overallProgress, pathProgress, recommendNext, lessonSteps, streak } from '@/engine/progress';
 import { dispatch, importProgress, resetAll, storageInfo, useProgress, getState } from '@/engine/store';
 import { exportJson } from '@/engine/persistence';
 import { LESSONS, PATHS, lessonById } from '@/content/paths';
-import { Btn, Callout, Chip, LinkBtn, Meter, PageHead, Panel } from '@/ui/primitives';
+import { Btn, Callout, Chip, LinkBtn, Meter, Panel } from '@/ui/primitives';
+import { RankCrest } from '@/art/Ranks';
+import { LogCabin } from '@/art/PageScenes';
 import { configureSound, play } from '@/audio/sfx';
 
 const dayLabel = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -28,6 +30,7 @@ export default function Logbook() {
   });
   const maxXp = Math.max(40, ...days.map((x) => x.xp));
   const earned = BADGES.filter((b) => state.badges[b.id]);
+  const run = streak(state, Date.now());
 
   const download = () => {
     const blob = new Blob([exportJson(getState())], { type: 'application/json' });
@@ -46,20 +49,37 @@ export default function Logbook() {
   };
 
   return (
-    <div className="wrap page logbook">
-      <PageHead title="Logbook" kicker="Your progress" lead="Everything here is stored only in this browser. There are no accounts and nothing is sent to a server." />
+    <div className="logbook">
+      <header className="rankband" data-surface="ink">
+        <div className="wrap rankband__grid">
+          <RankCrest level={lv.level} className="rankband__crest" />
+          <div className="rankband__copy">
+            <h1>Logbook</h1>
+            <p className="rankband__rank">
+              Level {lv.level} <span>{lv.name}</span>
+            </p>
+            <Meter value={lv.pct} label={`Progress to the next level, ${lv.pct} percent`} />
+            <p className="small">
+              <strong>{state.xp} XP.</strong> {lv.next ? `${lv.remaining} more to reach level ${lv.level + 1}, ${LEVEL_NAMES[lv.level]}.` : 'You hold the top rank.'}
+            </p>
+          </div>
+          <LogCabin
+            earned={earned.length}
+            className="rankband__art"
+            label={`An illustration of a ship's cabin. A logbook lies open on the desk beside a quill and ink. ${earned.length} of 9 medals hang from the rail on the wall. Kernel the robot waves from a crate and a black cat sleeps under the desk.`}
+          />
+        </div>
+      </header>
+      <div className="wrap page page--after-head">
+      <p className="fact">
+        <Icon name="shield" />
+        <span>Everything here is stored only in this browser. There are no accounts and nothing is sent to a server.</span>
+      </p>
       {!info.persistent ? <Callout icon="warning" tone="bad"><p><strong>Saving is blocked in this browser window</strong> (private mode or blocked storage). Your progress works now but will be lost when you close the tab. Use “Download progress” below to keep a copy.</p></Callout> : null}
       {info.loadStatus === 'recovered' ? <Callout icon="warning"><p>A saved file could not be read, so you are starting fresh. The unreadable data was kept under a separate key in case it can be recovered.</p></Callout> : null}
 
       <section className="lb-top" aria-label="Level and next step">
-        <Panel tone="ink" className="lb-level">
-          <p className="label">Level</p>
-          <p className="lb-level__num">{lv.level}</p>
-          <p className="lb-level__name">{lv.name}</p>
-          <Meter value={lv.pct} label={`Progress to the next level, ${lv.pct} percent`} />
-          <p className="small">{state.xp} XP{lv.next ? ` · ${lv.remaining} XP to level ${lv.level + 1}` : ' · top level reached'}</p>
-        </Panel>
-        <Panel className="lb-next">
+        <Panel className="lb-next" lift>
           <p className="label">Recommended next</p>
           {recLesson ? (
             <>
@@ -87,8 +107,29 @@ export default function Logbook() {
             <div><dt>Badges</dt><dd>{earned.length} / {BADGES.length}</dd></div>
             <div><dt>Days active</dt><dd>{Object.keys(state.xpByDay).length}</dd></div>
             <div><dt>Terms collected</dt><dd>{state.codex.length}</dd></div>
+            <div><dt>Day streak</dt><dd>{run}</dd></div>
+            <div><dt>Scenarios played</dt><dd>{Object.keys(state.challenges).filter((k) => /^sc\d$/.test(k)).length} / 6</dd></div>
           </dl>
         </Panel>
+      </section>
+
+      <section aria-labelledby="ranks-h" className="lb-sec">
+        <h2 id="ranks-h">Ranks</h2>
+        <p className="prose">Ten ranks, from coiling rope on the dock to keeping the light. XP is the only way up, and XP only comes from finished work.</p>
+        <ol className="ladder">
+          {LEVEL_NAMES.map((name, i) => {
+            const reached = lv.level >= i + 1;
+            const here = lv.level === i + 1;
+            return (
+              <li key={name} className={`ladder__rung${reached ? ' is-reached' : ''}${here ? ' is-here' : ''}`} aria-current={here ? 'true' : undefined}>
+                <RankCrest level={i + 1} dim={!reached} className="ladder__crest" />
+                <span className="ladder__name">{name}</span>
+                <span className="ladder__xp">{LEVEL_FLOORS[i]} XP</span>
+                <span className="ladder__state">{here ? 'You are here' : reached ? 'Reached' : `${LEVEL_FLOORS[i]! - state.xp} XP to go`}</span>
+              </li>
+            );
+          })}
+        </ol>
       </section>
 
       <section aria-labelledby="paths-h" className="lb-sec">
@@ -98,7 +139,7 @@ export default function Logbook() {
             const prog = pathProgress(state, p.id);
             return (
               <Panel key={p.id} className="lb-path" data-path={p.id} hue>
-                <p className="label">Path {p.number}</p>
+                <p className="label">Path {p.number}, {p.place}</p>
                 <h3><Link to={`/learn/${p.id}`}>{p.title}</Link></h3>
                 <Meter value={prog.pct} label={`${p.title}: ${prog.pct} percent`} />
                 <p className="small">{prog.done} of {prog.total} lessons finished{state.pathsDone[p.id] ? ' · path complete' : ''}</p>
@@ -173,7 +214,10 @@ export default function Logbook() {
         <div>
           <h2>Recent activity</h2>
           {state.activity.length === 0 ? (
-            <p>Nothing yet. Finish a step in any lesson to start your log.</p>
+            <div className="empty">
+              <p>Nothing logged yet. Every finished step, score and badge is written here as you earn it.</p>
+              <LinkBtn to="/learn" variant="quiet" go>Open the chart</LinkBtn>
+            </div>
           ) : (
             <ul className="activity">
               {state.activity.slice(0, 8).map((a, i) => (
@@ -245,6 +289,7 @@ export default function Logbook() {
           </div>
         </Panel>
       </section>
+      </div>
     </div>
   );
 }

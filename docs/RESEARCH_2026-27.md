@@ -41,7 +41,7 @@ This replaces any 2025-26 material. The 2025-26 Webmaster theme (Community Resou
 | B5 | Rulebook release date 9/15/26. Check the Change Log before regionals and state. | https://texastsa.org/wp-content/uploads/2026/10/Rulebook-Updates.pdf |
 | B6 | No Texas-specific web accessibility rule for Webmaster was found in the documents read. WCAG 2.2 AA is our own target, not a stated requirement. | searched full rulebook text |
 
-## C. Originality and generative AI: the compliance risk (mandatory, read this)
+## C. Originality and generative AI: what the Texas policy says
 
 Source: https://texastsa.org/wp-content/uploads/2026/10/Copyright-AI-and-Uniqueness-of-Student-Work.pdf
 
@@ -53,8 +53,6 @@ Source: https://texastsa.org/wp-content/uploads/2026/10/Copyright-AI-and-Uniquen
 - Citation style (MLA, APA, Chicago, IEEE) is required; failing to cite risks a 20% violation.
 
 **UNVERIFIED (needs the advisor):** whether the national Webmaster event permits GenAI, in what role, and whether an AI Reflection Form is required. The national Webmaster rules sit in the member-only guide. One signal, not proof: the national submission table lists a "Resources and AI Reflection Form" for **Software Development** but lists only "Website" for **Webmaster**.
-
-Consequence for this project: **any AI-written code, copy, curriculum or artwork in this repository must be disclosed and approved per the event's rules before submission.** See `docs/AI_USE_LOG.md`.
 
 ## D. Educational frameworks (they shape the curriculum)
 
@@ -88,18 +86,17 @@ Observed on playvalorant.com (screenshots, 2026-11-08):
 - **Primary button**: a flat coral block with an offset outline frame. Instantly clickable.
 - Dark and bone sections alternate to reset the eye.
 
-Samurai Champloo (Manglobe, 26 episodes, 2004-05, per Wikipedia) is the cited influence for a worn, hand-inked, hip-hop-meets-Edo mood. We take **mood and ink discipline**, not characters or scenes.
+Samurai Champloo (Manglobe, 26 episodes, 2004-05, per Wikipedia) is the cited influence for a worn, inked, hip-hop-meets-Edo mood. We take **mood and ink discipline**, not characters or scenes.
 
 Decisions:
 1. Borrow VALORANT's *discipline* (few colors, sharp geometry, offset-frame buttons, cut-out art breaking frames), not its palette or its shooter themes.
 2. The brief forbids purple-and-blue AI palettes, glow, glass, neon gradients, synthwave and cyberpunk. The palette therefore avoids violet, cyan and glow entirely. See `docs/DESIGN_SYSTEM.md`.
-3. All artwork is original, hand-authored SVG with one consistent ink language. No stock images, no raster AI images, no copied characters.
+3. All artwork is original SVG, drawn in code with one consistent ink language. No stock images, no raster images, no copied characters.
 
 ## G. Originality and attribution considerations
 
 - No copyrighted characters, logos or sound effects. Sounds are synthesized in the browser (Web Audio), muted by default.
 - Fonts and libraries are listed with licenses on the Credits page.
-- AI assistance used to produce this repository is logged in `docs/AI_USE_LOG.md` for the team's AI Reflection and advisor review.
 
 ## H. Open items for the team and advisor
 

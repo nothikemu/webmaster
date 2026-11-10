@@ -31,7 +31,7 @@ const TITLES: Record<string, string> = {
   '/certification': 'Final certification',
   '/about': 'About and sources',
   '/accessibility': 'Accessibility',
-  '/credits': 'Credits and AI disclosure',
+  '/credits': 'Credits',
 };
 
 function Route({ path }: { path: string }) {

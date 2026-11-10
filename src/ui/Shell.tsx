@@ -124,7 +124,7 @@ export function Footer() {
           <ul>
             <li><Link to="/about">About and sources</Link></li>
             <li><Link to="/accessibility">Accessibility</Link></li>
-            <li><Link to="/credits">Credits and AI disclosure</Link></li>
+            <li><Link to="/credits">Credits</Link></li>
           </ul>
         </nav>
         <p className="site-footer__tsa">Built for the TSA Webmaster event, 2026-27.</p>

@@ -210,9 +210,9 @@ function Beacon() {
 
 const SCENES: Record<PathId, () => JSX.Element> = { understand: Loom, use: Foundry, responsible: Beacon };
 const LABELS: Record<PathId, string> = {
-  understand: 'A hand-inked illustration of a weaving hall. Wren the weaver stands by a big wooden loom whose threads and knots form a network, with skeins of dyed thread above, a cat asleep on a cushion, and Kernel the robot studying a thread.',
-  use: 'A hand-inked illustration of a workshop on the docks. Brannock the foundry-master swings a hammer beside an anvil under a sign reading PROMPT, with gears on the wall, crates and barrels, and Kernel cheering on a crate.',
-  responsible: 'A hand-inked illustration of a lighthouse on a cliff at dusk. Sedge the keeper stands watch with a lantern on a pole beside a bell, with Kernel alert at his side, a boat in the beam, and waves breaking below.',
+  understand: 'An illustration of a weaving hall. Wren the weaver stands by a big wooden loom whose threads and knots form a network, with skeins of dyed thread above, a cat asleep on a cushion, and Kernel the robot studying a thread.',
+  use: 'An illustration of a workshop on the docks. Brannock the foundry-master swings a hammer beside an anvil under a sign reading PROMPT, with gears on the wall, crates and barrels, and Kernel cheering on a crate.',
+  responsible: 'An illustration of a lighthouse on a cliff at dusk. Sedge the keeper stands watch with a lantern on a pole beside a bell, with Kernel alert at his side, a boat in the beam, and waves breaking below.',
 };
 
 export const PathScene = memo(function PathScene({ path, className }: { path: PathId; className?: string }) {

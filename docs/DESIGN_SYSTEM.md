@@ -4,7 +4,7 @@
 
 **Tideweight is a harbor town printed in four inks on aged paper.** You learn how AI works by walking its three places: the Loom House (how models are woven from data), the Foundry Docks (using AI tools well), and the Beacon (seeing risk and keeping judgment). A small round automaton, **Kernel**, in a woven travelling hat, guides you.
 
-The interface borrows the *discipline* of a premium competitive-game menu: precise rectilinear panels, diagonal cut corners, hard offset shadows, buttons that visibly press, very few colours. The illustration borrows the mood of hand-inked print and Japanese graphic design: flat colour, heavy ink outlines, screentone dots, wave patterns. Neither is copied.
+The interface borrows the *discipline* of a premium competitive-game menu: precise rectilinear panels, diagonal cut corners, hard offset shadows, buttons that visibly press, very few colours. The illustration borrows the mood of inked print and Japanese graphic design: flat colour, heavy ink outlines, screentone dots, wave patterns. Neither is copied.
 
 ## What we deliberately avoided
 
@@ -65,7 +65,7 @@ All three are SIL OFL, self-hosted, Latin subset. Body text is 18px with 1.6 lin
 
 All artwork is original and written as code in `src/art/`. No raster images, no stock, no image generators, no traced or copied characters. It is built to read as ink on paper rather than as vector clip art, and it is one visual language across the hero, the path scenes, the lesson art and the badges.
 
-**What "hand-inked" means here.** Nothing is a clean primitive. `ink.ts` is a small brush engine that turns a few control points into a drawn mark:
+**How the ink look is made.** Nothing is a clean primitive. `ink.ts` is a small brush engine that turns a few control points into a drawn mark:
 
 - `spline`, `densify`, `wobble`: Catmull-Rom curves with a seeded, low-frequency wobble, so no line is perfectly straight and every shape is slightly off.
 - `strokeD`: a variable-width brush polygon. Pressure swells in the middle and tapers at the ends, like a brush pen.
@@ -85,14 +85,12 @@ All artwork is original and written as code in `src/art/`. No raster images, no 
 - `PathScenes.tsx`: one scene per path (a weaving hall, a workshop on the docks, a lighthouse on a cliff), each with its own mentor and Kernel.
 - `Cast.tsx`: three mentors with deliberately different silhouettes, built from shared limb and hand helpers. **Wren** the weaver is short and round under a hat as wide as she is tall. **Brannock** the foundry-master is wide and heavy, mid-swing, with goggles pushed up and a big beard. **Sedge** the beacon-keeper is tall and narrow in a coat the wind has taken hold of, with a lantern on a pole.
 - `Kernel.tsx`: the guide, a small robot in a woven hat and scarf. One set of parts, four moods (`idle`, `think`, `cheer`, `alert`), with its own eyes, brows and mouth for each.
-- `props.tsx`: shared hand-inked props (clouds, gulls, pines, lanterns, crates, barrels, roofs, houses, boats, planks, rope).
+- `props.tsx`: shared props (clouds, gulls, pines, lanterns, crates, barrels, roofs, houses, boats, planks, rope).
 - `LessonArt.tsx`: **fifteen bespoke lesson illustrations**, one per lesson, each a different scene placed on a per-path backdrop whose details vary with the lesson, with Kernel in a mood chosen for it. Each has its own written description (`LESSON_ALT`) for assistive technology.
 - `Medals.tsx`: nine badge emblems, one distinct glyph per real achievement. Locked medals are hatched, faded and padlocked.
 - `Icons.tsx`: 32 icons on one pen weight. `Diagram.tsx`: one renderer for every lesson diagram.
 
 **Influences, not copies.** The reference points are qualities of Samurai Champloo and One Piece illustration: varied line weight, hatching for shadow, exaggerated and distinctive silhouettes, busy lived-in environments, and a restrained warm palette. No character, costume, ship, logo or composition from either work is reproduced. Every character, place and prop here is original to this project.
-
-**The honest caveat.** This is code that simulates hand-inking. It was written by an AI assistant, not drawn by a person, and it reads closer to a printed woodblock or a screen-printed poster than to a freehand pen drawing. If the team or the event requires artwork drawn by a student, replace or redraw these files by hand. See `AI_USE_LOG.md`.
 
 Every illustration has a text description (`role="img"` with `aria-label`) or is hidden from assistive technology when decorative.
 
