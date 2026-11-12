@@ -10,6 +10,7 @@
  */
 import { PATHS, LESSONS, lessonById } from '@/content/paths';
 import type { PathId } from '@/content/types';
+import { GAME_XP, LOCATIONS, RELICS, STATIONS, locationById, relicById, stationById, type RoomId } from '@/game/data';
 
 export const STATE_VERSION = 1;
 
@@ -101,6 +102,26 @@ export interface Settings {
   /** The player's name. Optional; shown in the logbook and on the certificate, and never leaves the device. */
   name: string;
 }
+/** The explorable game: which stations are cleared, which relics are found, where the player stands. */
+export interface GameState {
+  /** Rounds cleared per station (1-based round numbers) and how many times it was played. */
+  stations: Record<string, { cleared: number[]; plays: number }>;
+  /** Relics found, with the time each was found. */
+  relics: Record<string, number>;
+  /** First entry into each building. */
+  visited: Record<string, number>;
+  /** The room the player last stood in. */
+  at: RoomId;
+  /** Opens every door, for reviewers and teachers. Rewards are unchanged. */
+  freeRoam: boolean;
+  /** False until the player has pressed Begin on the title screen. */
+  started: boolean;
+  /** True once the closing scene (every station cleared) has been shown. */
+  ended: boolean;
+}
+
+export const emptyGame = (): GameState => ({ stations: {}, relics: {}, visited: {}, at: 'quay', freeRoam: false, started: false, ended: false });
+
 export interface PortalState {
   v: number;
   createdAt: number;
@@ -117,6 +138,7 @@ export interface PortalState {
   xpByDay: Record<string, number>;
   lastLesson: string | null;
   settings: Settings;
+  game: GameState;
 }
 
 export const emptyLesson = (): LessonProgress => ({ learned: false, tryScore: 0, checkBest: 0, done: false });
@@ -136,6 +158,7 @@ export function createState(now: number): PortalState {
     xpByDay: {},
     lastLesson: null,
     settings: { sound: false, music: false, volume: 0.6, sfxVolume: 0.8, musicVolume: 0.5, name: '' },
+    game: emptyGame(),
   };
 }
 
@@ -185,7 +208,7 @@ export const BADGES: readonly BadgeDef[] = [
 ];
 
 // ---------- Missions ----------
-export type MissionCategory = 'Fundamentals' | 'Field work' | 'Integrity' | 'Capstone';
+export type MissionCategory = 'Fundamentals' | 'Field work' | 'Integrity' | 'Exploration' | 'Capstone';
 export interface MissionObjective {
   label: string;
   /** Where to go to do it. */
@@ -200,12 +223,23 @@ export interface MissionDef {
   /** XP, paid once, on top of what the work itself earns. */
   reward: number;
   objectives: MissionObjective[];
+  /** The idea the mission is about, for missions played in the game. */
+  concept?: string;
 }
 
 const lessonTo = (id: string) => `/learn/${lessonById(id)!.path}/${id}`;
 const finish = (id: string): MissionObjective => ({ label: `Finish "${lessonById(id)!.title}"`, to: lessonTo(id), done: (s) => lessonDone(s, id) });
 const score = (id: string, min: number, what: string): MissionObjective => ({ label: `${what} (score ${min} or more)`, to: lessonTo(id), done: (s) => tried(s, id, min) });
 const scenariosPlayed = (s: PortalState) => SCENARIO_IDS.filter((id) => s.challenges[id]).length;
+
+const stationRounds = (id: string) => stationById(id)?.rounds ?? 1;
+/** Rounds of a station cleared so far. */
+export const roundsCleared = (s: PortalState, id: string): number => s.game.stations[id]?.cleared.length ?? 0;
+export const stationDone = (s: PortalState, id: string): boolean => roundsCleared(s, id) >= stationRounds(id);
+const clearStation = (id: string): MissionObjective => ({ label: `Clear ${stationById(id)!.title}`, to: '/play', done: (s) => stationDone(s, id) });
+const relicsFound = (s: PortalState, ids: readonly string[]) => ids.filter((id) => s.game.relics[id]).length;
+const findRelics = (n: number, ids: readonly string[], where: string): MissionObjective => ({ label: `Find ${n} relics ${where}`, to: '/play', done: (s) => relicsFound(s, ids) >= n });
+const relicIdsIn = (room: RoomId) => RELICS.filter((r) => r.room === room).map((r) => r.id);
 
 /**
  * The mission board. Each mission is a short run of real objectives, and every objective is read straight from
@@ -224,8 +258,14 @@ export const MISSIONS: readonly MissionDef[] = [
   { id: 'say-what-you-did', category: 'Integrity', title: 'Say what you did', brief: 'Protect your own data and other people\'s, and be honest about who did the work.', reward: 50, objectives: [finish('r4'), finish('r5')] },
   { id: 'lexicon', category: 'Capstone', title: 'Lexicon', brief: 'Collect twenty terms in the Codex and pass the drill.', reward: 50, objectives: [{ label: 'Collect 20 Codex terms', to: '/learn', done: (s) => s.codex.length >= 20 }, { label: 'Pass the Codex drill', to: '/codex', done: (s) => s.challenges['codex-drill']?.passed === true }] },
   { id: 'the-seal', category: 'Capstone', title: 'The seal', brief: 'Finish all fifteen lessons and pass the final certification.', reward: 100, objectives: [{ label: 'Finish all 15 lessons', to: '/learn', done: (s) => LESSONS.every((l) => lessonDone(s, l.id)) }, { label: 'Pass the final certification', to: '/certification', done: (s) => s.challenges['certification']?.passed === true }] },
+  { id: 'curators-eye', category: 'Exploration', title: "The curator's eye", brief: 'Wren needs the moth cabinet sorted and the weight frame set. Teach the model with a few well-chosen examples, then tune a neuron by hand.', reward: 70, concept: 'Training data, coverage, weights and bias.', objectives: [clearStation('cabinet'), clearStation('frame')] },
+  { id: 'struck-and-tested', category: 'Exploration', title: 'Struck and tested', brief: 'Brannock has orders to fill and an assistant that sounds too sure of itself. Write prompts that work, then test what comes back.', reward: 70, concept: 'Prompt structure, privacy and verification.', objectives: [clearStation('anvil'), clearStation('weld')] },
+  { id: 'honest-lamp', category: 'Exploration', title: 'The honest lamp', brief: 'Sedge suspects the scholarship screener. Prove it, find the proxy, and fix it without breaking it.', reward: 60, concept: 'Algorithmic bias and the trade-offs of fixing it.', objectives: [clearStation('audit'), findRelics(2, relicIdsIn('beacon'), 'in the Beacon')] },
+  { id: 'deep-time', category: 'Exploration', title: 'Deep time', brief: 'Rebuild the Archive timeline and walk through every building in the harbor.', reward: 60, concept: 'The history of AI and how it fits together.', objectives: [clearStation('timeline'), { label: 'Enter all six buildings', to: '/play', done: (s) => LOCATIONS.filter((l) => l.id !== 'quay').every((l) => s.game.visited[l.id]) }] },
+  { id: 'relic-hunter', category: 'Exploration', title: 'Relic hunter', brief: 'Small things are tucked away around the harbor. Each one explains an idea. Find twelve.', reward: 80, concept: 'Every relic is a short explanation of a core idea.', objectives: [findRelics(12, RELICS.map((r) => r.id), 'anywhere in the harbor')] },
+  { id: 'harbor-master', category: 'Capstone', title: 'Harbor master', brief: 'Clear every station in the game and find fifteen relics.', reward: 120, concept: 'All three learning areas, played.', objectives: [...STATIONS.map((st) => clearStation(st.id)), findRelics(15, RELICS.map((r) => r.id), 'anywhere in the harbor')] },
 ];
-export const MISSION_CATEGORIES: readonly MissionCategory[] = ['Fundamentals', 'Field work', 'Integrity', 'Capstone'];
+export const MISSION_CATEGORIES: readonly MissionCategory[] = ['Fundamentals', 'Field work', 'Integrity', 'Exploration', 'Capstone'];
 
 export function missionProgress(s: PortalState, m: MissionDef): { done: number; total: number; complete: boolean } {
   const done = m.objectives.filter((o) => o.done(s)).length;
@@ -247,7 +287,11 @@ export type GameEvent =
   | { type: 'challenge'; id: string; score: number; passMark: number; xp: number; label: string }
   | { type: 'certification'; score: number; passMark: number }
   | { type: 'codex'; terms: string[] }
-  | { type: 'settings'; patch: Partial<Settings> };
+  | { type: 'settings'; patch: Partial<Settings> }
+  | { type: 'round'; station: string; round: number }
+  | { type: 'relic'; id: string }
+  | { type: 'visit'; room: string }
+  | { type: 'game'; patch: Partial<Pick<GameState, 'at' | 'freeRoam' | 'started' | 'ended'>> };
 
 export type Reward =
   | { kind: 'xp'; amount: number; label: string }
@@ -255,7 +299,9 @@ export type Reward =
   | { kind: 'mission'; id: string }
   | { kind: 'path'; id: PathId }
   | { kind: 'lesson'; id: string }
-  | { kind: 'level'; from: number; to: number };
+  | { kind: 'level'; from: number; to: number }
+  | { kind: 'relic'; id: string }
+  | { kind: 'station'; id: string };
 
 export interface ApplyResult {
   state: PortalState;
@@ -366,6 +412,41 @@ export function applyEvent(prev: PortalState, ev: GameEvent, now: number): Apply
       for (const t of ev.terms) if (!s.codex.includes(t)) s.codex.push(t);
       break;
     }
+    case 'round': {
+      const st = stationById(ev.station);
+      if (!st || !Number.isInteger(ev.round) || ev.round < 1 || ev.round > st.rounds) break;
+      const rec = (s.game.stations[st.id] ??= { cleared: [], plays: 0 });
+      rec.plays += 1;
+      if (!rec.cleared.includes(ev.round)) {
+        rec.cleared = [...rec.cleared, ev.round].sort((a, b) => a - b);
+        pay(GAME_XP.round, `${st.title}: round ${ev.round}`);
+        if (rec.cleared.length >= st.rounds) rewards.push({ kind: 'station', id: st.id });
+      }
+      break;
+    }
+    case 'relic': {
+      const r = relicById(ev.id);
+      if (!r || s.game.relics[r.id]) break;
+      s.game.relics[r.id] = now;
+      pay(GAME_XP.relic, `Found: ${r.name}`);
+      rewards.push({ kind: 'relic', id: r.id });
+      break;
+    }
+    case 'visit': {
+      const loc = locationById(ev.room);
+      if (!loc || loc.id === 'quay' || s.game.visited[loc.id]) break;
+      s.game.visited[loc.id] = now;
+      pay(GAME_XP.visit, `First visit: ${loc.name}`);
+      break;
+    }
+    case 'game': {
+      const p = ev.patch;
+      if (p.at && locationById(p.at)) s.game.at = p.at;
+      if (typeof p.freeRoam === 'boolean') s.game.freeRoam = p.freeRoam;
+      if (typeof p.started === 'boolean') s.game.started = p.started;
+      if (typeof p.ended === 'boolean') s.game.ended = p.ended;
+      break;
+    }
     case 'settings': {
       s.settings = { ...s.settings, ...ev.patch };
       for (const k of ['volume', 'sfxVolume', 'musicVolume'] as const) s.settings[k] = Math.min(1, Math.max(0, s.settings[k]));
@@ -397,6 +478,38 @@ export function applyEvent(prev: PortalState, ev: GameEvent, now: number): Apply
   if (after > before) rewards.push({ kind: 'level', from: before, to: after });
 
   return { state: s, rewards };
+}
+
+// ---------- Game ----------
+/** A building is open when the player has reached its level, or has switched on free roam. The Quay and the Office are always open. */
+export function isUnlocked(s: PortalState, room: RoomId): boolean {
+  const loc = locationById(room);
+  if (!loc) return false;
+  if (!loc.unlock || s.game.freeRoam) return true;
+  return levelInfo(s.xp).level >= loc.unlock.level;
+}
+
+/** Where to go next in the game: the first unfinished station in an open building, else the next relic-rich room. */
+export function nextGoal(s: PortalState): { room: RoomId; text: string } {
+  for (const st of STATIONS) {
+    if (!stationDone(s, st.id) && isUnlocked(s, st.room)) return { room: st.room, text: `${st.title}, in ${locationById(st.room)!.name}` };
+  }
+  const missing = RELICS.find((r) => !s.game.relics[r.id] && isUnlocked(s, r.room));
+  if (missing) return { room: missing.room, text: `Something is still hidden in ${locationById(missing.room)!.name}` };
+  const locked = LOCATIONS.find((l) => !isUnlocked(s, l.id));
+  if (locked) return { room: 'quay', text: locked.unlock!.hint };
+  return { room: 'hall', text: 'Take the final examination in the Trial Hall' };
+}
+
+export function gameProgress(s: PortalState): { rounds: number; roundsTotal: number; relics: number; relicsTotal: number; stations: number; stationsTotal: number } {
+  return {
+    rounds: STATIONS.reduce((a, st) => a + Math.min(st.rounds, roundsCleared(s, st.id)), 0),
+    roundsTotal: STATIONS.reduce((a, st) => a + st.rounds, 0),
+    relics: RELICS.filter((r) => s.game.relics[r.id]).length,
+    relicsTotal: RELICS.length,
+    stations: STATIONS.filter((st) => stationDone(s, st.id)).length,
+    stationsTotal: STATIONS.length,
+  };
 }
 
 // ---------- Derived views ----------

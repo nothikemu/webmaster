@@ -51,6 +51,16 @@ On 2026-11-10 a web search surfaced public copies of **earlier** Webmaster rules
 | Privacy | No analytics, no third-party requests, `connect-src 'self'` in `_headers` | Verified: zero failed or external requests in the smoke test |
 | Content accuracy | `tests/content.test.ts` checks structure, answer keys and that every claim appears in its source text. **It cannot check facts.** | Facts need human review, see below |
 
+## D2. The game (added with `/play`)
+
+- [x] The game is an addition, not a replacement: every required lesson, the Codex, the Tool Atlas, the scenarios and the certification stay ordinary pages reachable from the main menu (checked by the smoke test on all 31 routes).
+- [x] The three required learning areas each have stations and relics, mapped in `docs/GAME_DESIGN.md`.
+- [x] No secrets, no accounts, no network requests; progress is saved only in the browser, with an erase button in the pause menu.
+- [x] All artwork is drawn in code and all sound is synthesized in the browser: no stock images, no audio files, nothing copied. (The generative-AI policy question in section C still applies to how the project was produced; it is unresolved.)
+- [x] Simulations are labeled as simulations on the screen they appear on (the forge is not a live AI; the classifier is a one-nearest-neighbor model; the audit's people are invented).
+- [x] Keyboard, touch and mouse play; a non-visual route to every action ("In this room"); sound off by default; reduced motion respected.
+- [ ] Not tested with a screen reader or on a physical phone.
+
 ## E. Known gaps, stated plainly
 
 1. **Not verified:** the Webmaster rating form and criteria (member-only). We did not invent weights or page limits.

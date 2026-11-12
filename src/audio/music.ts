@@ -34,6 +34,14 @@ let step = 0;
 let nextT = 0;
 let notes = 0;
 
+/** The title screen gets a sparser, pulse-free version of the same score; the rest of the site and the game get the full one. */
+export type MusicMood = 'title' | 'world';
+let mood: MusicMood = 'world';
+export function setMusicMood(next: MusicMood): void {
+  mood = next;
+  if (typeof document !== 'undefined') document.documentElement.dataset.musicMood = next;
+}
+
 function noiseBuffer(ctx: AudioContext): AudioBuffer {
   const b = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate);
   const d = b.getChannelData(0);
@@ -193,9 +201,11 @@ function schedule(ctx: AudioContext, t: number, n: number): void {
   const at = n % 16;
   if (at === 0) pad(ctx, t, CHORDS[phrase % CHORDS.length]!);
   // the motif returns every phrase, an octave lower on every fourth, so it is recognisable but not a loop
-  for (const [s, f] of MOTIF) if (at === s && Math.random() < 0.82) pluck(ctx, t, phrase % 4 === 3 ? f / 2 : f, 0.075);
-  // an occasional stray note from the scale
-  if (at % 2 === 1 && Math.random() < 0.07) pluck(ctx, t, [P.d5, P.c5, P.a4, P.g4, P.a3][Math.floor(Math.random() * 5)]!, 0.045);
+  const title = mood === 'title';
+  for (const [s, f] of MOTIF) if (at === s && Math.random() < (title ? 0.6 : 0.82)) pluck(ctx, t, phrase % 4 === 3 ? f / 2 : f, title ? 0.09 : 0.075);
+  // an occasional stray note from the scale (more of them on the title screen, like a music box)
+  if (at % 2 === 1 && Math.random() < (title ? 0.16 : 0.07)) pluck(ctx, t, [P.d5, P.c5, P.a4, P.g4, P.a3][Math.floor(Math.random() * 5)]!, 0.045);
+  if (title) return;
   if (n % 8 === 0 || n % 8 === 4) thump(ctx, t);
   if ((n % 8 === 3 || n % 8 === 7) && Math.random() < 0.5) tick(ctx, t);
 }

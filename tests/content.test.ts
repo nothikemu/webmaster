@@ -151,7 +151,8 @@ describe('routes and badges', () => {
     expect(ROUTES).toContain('/learn/understand/u1');
     expect(ROUTES).toContain('/learn/responsible/r5');
     expect(ROUTES).toContain('/missions');
-    expect(ROUTES.length).toBe(1 + 1 + 3 + 15 + 10);
+    expect(ROUTES).toContain('/play');
+    expect(ROUTES.length).toBe(1 + 1 + 3 + 15 + 11);
   });
   it('has at least eight badges and every badge is reachable in principle', () => {
     expect(BADGES.length).toBeGreaterThanOrEqual(8);

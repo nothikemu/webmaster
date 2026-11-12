@@ -13,6 +13,10 @@ A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA
 
 > **Read before submitting:** [`docs/COMPLIANCE_CHECKLIST.md`](docs/COMPLIANCE_CHECKLIST.md) lists what is met, what is still open and what your advisor has to confirm. The sources are in [`docs/RESEARCH_2026-27.md`](docs/RESEARCH_2026-27.md).
 
+## The game
+
+`/play` is a playable browser game on top of the portal: walk a harbor, enter six buildings, work six small stations (each teaches one idea and pays XP), and find seventeen hidden relics. Arrow keys or A/D walk, E uses, L lifts the lantern, Esc pauses; touch and mouse work too. Design, mapping to the three required learning areas, and accessibility notes are in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). `pnpm playtest` plays the built game in a real browser.
+
 ## Run it
 
 Needs Node 20.19 or newer and pnpm 10.
@@ -47,6 +51,12 @@ End-to-end browser test of the built site (routes, a full lesson, persistence, k
 
 ```bash
 pnpm build && pnpm smoke
+```
+
+The game has its own real-browser playthrough (new game, walking, every station, unlocks, saving, reset, keyboard, sound opt-in, an axe scan and a phone):
+
+```bash
+pnpm playtest
 ```
 
 ## Deploy

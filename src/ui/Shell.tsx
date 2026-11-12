@@ -15,6 +15,7 @@ import { Btn, LinkBtn } from './primitives';
 import { PATHS, pathById } from '@/content/paths';
 
 const NAV = [
+  { to: '/play', label: 'Play' },
   { to: '/learn', label: 'Learn' },
   { to: '/missions', label: 'Missions' },
   { to: '/lab', label: 'Prompt Lab' },
@@ -146,6 +147,7 @@ export function Footer() {
           <div>
             <p className="label">Practice</p>
             <ul>
+              <li><Link to="/play">Play the game</Link></li>
               <li><Link to="/lab">Prompt Lab</Link></li>
               <li><Link to="/scenarios">Scenarios</Link></li>
               <li><Link to="/certification">Final certification</Link></li>

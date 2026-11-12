@@ -8,7 +8,7 @@
  */
 import { sfxHandles } from './engine';
 
-export type Sfx = 'tick' | 'press' | 'nav' | 'select' | 'right' | 'wrong' | 'xp' | 'lesson' | 'badge' | 'mission' | 'level';
+export type Sfx = 'tick' | 'press' | 'nav' | 'select' | 'right' | 'wrong' | 'xp' | 'lesson' | 'badge' | 'mission' | 'level' | 'step' | 'door' | 'relic' | 'start' | 'win' | 'sweep' | 'drop' | 'place';
 
 /** A plucked, bell-ish note: sine body plus a quiet octave, fast attack, exponential decay. */
 function note(h: { ctx: AudioContext; sfx: GainNode }, freq: number, start: number, dur: number, gain = 0.5, type: OscillatorType = 'sine') {
@@ -75,6 +75,36 @@ export function play(name: Sfx): void {
     case 'mission':
       [N.d4, N.a4, N.d5, N.fs5].forEach((f, i) => n(f, i * 0.1, 0.8, 0.34));
       n(N.d4 / 2, 0, 1.1, 0.26, 'triangle');
+      break;
+    case 'step':
+      n(118 + Math.random() * 18, 0, 0.05, 0.09, 'triangle');
+      break;
+    case 'door':
+      n(N.d4 / 2, 0, 0.32, 0.3, 'triangle');
+      n(N.a4 / 2, 0.08, 0.3, 0.22, 'triangle');
+      n(N.d4, 0.2, 0.2, 0.12);
+      break;
+    case 'relic':
+      [N.a5, N.d6, N.a5 * 2, N.d6 * 1.5].forEach((f, i) => n(f, i * 0.07, 0.7, 0.22));
+      break;
+    case 'start':
+      n(N.d4 / 2, 0, 0.6, 0.3, 'triangle');
+      n(N.a4, 0.1, 0.4, 0.25);
+      n(N.d5, 0.22, 0.5, 0.25);
+      break;
+    case 'win':
+      [N.d5, N.fs5, N.a5, N.d6, N.a5 * 2].forEach((f, i) => n(f, i * 0.09, 0.7, 0.34));
+      n(N.d4 / 2, 0, 1, 0.28, 'triangle');
+      break;
+    case 'sweep':
+      [N.a4, N.d5, N.a5].forEach((f, i) => n(f, i * 0.08, 0.5, 0.14));
+      break;
+    case 'drop':
+      n(N.d4, 0, 0.12, 0.2, 'triangle');
+      break;
+    case 'place':
+      n(N.a4, 0, 0.1, 0.2, 'triangle');
+      n(N.d5, 0.05, 0.12, 0.14);
       break;
     case 'level':
       [N.d5, N.e5, N.fs5, N.a5, N.b5, N.d6].forEach((f, i) => n(f, i * 0.085, 0.5, 0.36));

@@ -10,6 +10,7 @@ const Home = lazy(() => import('./pages/Home'));
 const LessonPage = lazy(() => import('./pages/Lesson'));
 const Lab = lazy(() => import('./pages/Lab'));
 const Missions = lazy(() => import('./pages/Missions'));
+const Game = lazy(() => import('./game/Game'));
 const Tools = lazy(() => import('./pages/Tools'));
 const Scenarios = lazy(() => import('./pages/Scenarios'));
 const Codex = lazy(() => import('./pages/Codex'));
@@ -25,6 +26,7 @@ const Credits = lazy(() => import('./pages/Static').then((m) => ({ default: m.Cr
 const TITLES: Record<string, string> = {
   '/': 'Tideweight: Learn how AI works, use it well, and know its limits',
   '/learn': 'The chart',
+  '/play': 'Play the game',
   '/missions': 'Missions',
   '/lab': 'Prompt Lab',
   '/tools': 'Tool Atlas',
@@ -46,6 +48,7 @@ function Route({ path }: { path: string }) {
     if (parts.length === 3) return <LessonPage pathId={parts[1]!} lessonId={parts[2]!} />;
   }
   switch (path) {
+    case '/play': return <Game />;
     case '/missions': return <Missions />;
     case '/lab': return <Lab />;
     case '/tools': return <Tools />;

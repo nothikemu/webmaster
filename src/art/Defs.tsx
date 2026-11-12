@@ -26,6 +26,12 @@ export function ArtDefs() {
           <stop offset="55%" stopColor={C.ink} stopOpacity="0" />
           <stop offset="100%" stopColor={C.ink} stopOpacity="0.5" />
         </radialGradient>
+        {/* a soft light pool, for lamps and windows in the game rooms */}
+        <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor={C.lantern} stopOpacity="0.95" />
+          <stop offset="55%" stopColor={C.lantern} stopOpacity="0.28" />
+          <stop offset="100%" stopColor={C.lantern} stopOpacity="0" />
+        </radialGradient>
         <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="9" height="9" fill="none" />
           <path d="M0 0v9" stroke={C.ink} strokeWidth="2" />

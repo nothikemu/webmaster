@@ -5,6 +5,7 @@
  */
 import { BADGES, MISSIONS, STATE_VERSION, createState, type ActivityItem, type ChallengeResult, type LessonProgress, type PortalState } from './progress';
 import { LESSONS, PATHS } from '@/content/paths';
+import { LOCATIONS, RELIC_IDS, STATIONS, isRoomId } from '@/game/data';
 import { GLOSSARY } from '@/content/glossary';
 
 export const STORAGE_KEY = 'tideweight/v1';
@@ -40,6 +41,8 @@ const BADGE_IDS = new Set(BADGES.map((b) => b.id));
 const MISSION_IDS = new Set(MISSIONS.map((m) => m.id));
 const PATH_IDS = new Set(PATHS.map((p) => p.id as string));
 const TERM_IDS = new Set(GLOSSARY.map((g) => g.id));
+const RELIC_SET = new Set(RELIC_IDS);
+const ROOM_SET = new Set(LOCATIONS.map((l) => l.id as string));
 const CHALLENGE_KEY = /^[a-z0-9-]{1,40}$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -98,6 +101,23 @@ export function sanitize(raw: unknown, now: number): PortalState | null {
       musicVolume: vol(raw.settings.musicVolume, 0.5),
       name: typeof raw.settings.name === 'string' ? raw.settings.name.slice(0, 60) : '',
     };
+  }
+  if (isObj(raw.game)) {
+    const g = raw.game;
+    if (isObj(g.stations)) {
+      for (const st of STATIONS) {
+        const v = g.stations[st.id];
+        if (!isObj(v)) continue;
+        const cleared = Array.isArray(v.cleared) ? [...new Set(v.cleared.filter((n): n is number => Number.isInteger(n) && n >= 1 && n <= st.rounds))].sort((a, b) => a - b) : [];
+        s.game.stations[st.id] = { cleared, plays: num(v.plays, 0, 100000) };
+      }
+    }
+    if (isObj(g.relics)) for (const [id, t] of Object.entries(g.relics)) if (RELIC_SET.has(id) && typeof t === 'number') s.game.relics[id] = t;
+    if (isObj(g.visited)) for (const [id, t] of Object.entries(g.visited)) if (ROOM_SET.has(id) && typeof t === 'number') s.game.visited[id] = t;
+    if (typeof g.at === 'string' && isRoomId(g.at)) s.game.at = g.at;
+    s.game.freeRoam = g.freeRoam === true;
+    s.game.started = g.started === true;
+    s.game.ended = g.ended === true;
   }
   return s;
 }

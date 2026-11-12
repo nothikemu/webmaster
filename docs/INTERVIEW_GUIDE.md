@@ -90,6 +90,17 @@ Be ready to explain this, because it is the idea that holds the design together.
 - **Audio** (`audio/engine.ts`, `music.ts`, `sfx.ts`) is one Web Audio graph with a master volume and two buses. Nothing is created until the player switches sound on. The soundtrack is generated live, so it needs no files and never repeats exactly. Be ready to explain how a browser's autoplay rule shapes the design.
 - **Why the site is monochrome:** the identity is ink on paper, and every value is a gray. The paths are told apart by value and by name, and feedback never relies on value alone.
 
+## The game (`/play`)
+
+Say this: the game is not a gamified skin on the portal. It is six small games, each built around one idea you can explain, in a harbor you walk. Every station teaches something a lesson also teaches, and every lesson, the Codex and the tools stay open from the menu, so judges can read everything without playing.
+
+- **Rooms and movement.** A room is a wide SVG in two layers: the back wall moves at half speed, the furniture at full speed, which is what makes the depth. One animation loop moves the player, the camera and Kernel by writing straight to the DOM, so walking never re-renders React. Be ready to explain why (re-rendering 60 times a second would be slow and is unnecessary).
+- **Accessibility of a game.** The stage is a `role="application"` widget, because a game has to take keys itself. Because that is hard on a screen reader, every hotspot in a room is also a plain button in the "In this room" list. Dialogs are native `<dialog>` elements, so focus is trapped and Escape works without custom code.
+- **The six stations, in one sentence each.** Cabinet: a nearest-neighbor model and a label budget, with a round where the model has only seen the west. Weight Frame: one neuron, turned by hand or by gradient descent. Anvil: a rule-based forge (say plainly it is not an AI) that shows what each part of a prompt does. Weld Test: triage when you cannot check everything. Audit: find the proxy for district and fix it, and notice that fixing it did not cost accuracy because the unfair signal was noise. Timeline: order seven milestones from feedback alone.
+- **Honesty.** Every simulation says what it is on the screen where it appears. Do not describe the forge or the screener as a real model.
+- **What testing found.** The automated playthrough (`pnpm playtest`) found that two moths could overlap so one could not be clicked, and that Escape never opened the pause menu on a real keyboard because the dialog opened during the keydown and the browser's own Escape handling closed it. Both are good stories: they show why you test with real input.
+- **Likely question: "Why a game for a Webmaster entry?"** Because the challenge is to teach, and a station makes a student do the thing (spend a label budget, set a weight, spot an invented source) instead of reading about it. The required content is all still there as ordinary pages.
+
 ## Technical challenges worth telling
 
 - Making the neural network converge reliably in the browser, and proving it with a test.

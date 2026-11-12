@@ -10,9 +10,10 @@ const BLURB: Record<MissionCategory, string> = {
   Fundamentals: 'How AI works, from rules and examples to networks and next-word guessing.',
   'Field work': 'Putting AI to use on real jobs, and checking what comes back.',
   Integrity: 'Spotting the risks and keeping your name on honest work.',
+  Exploration: 'Missions played in the game: walk the harbor, find what is hidden, and work the stations.',
   Capstone: 'Proving the whole course.',
 };
-const DIVIDER: Record<MissionCategory, 'waves' | 'rope' | 'cogs' | 'rigging'> = { Fundamentals: 'rope', 'Field work': 'cogs', Integrity: 'waves', Capstone: 'rigging' };
+const DIVIDER: Record<MissionCategory, 'waves' | 'rope' | 'cogs' | 'chain' | 'rigging'> = { Fundamentals: 'rope', 'Field work': 'cogs', Integrity: 'waves', Exploration: 'chain', Capstone: 'rigging' };
 
 function Mission({ m }: { m: MissionDef }) {
   const state = useProgress((s) => s);
@@ -29,6 +30,7 @@ function Mission({ m }: { m: MissionDef }) {
         <span className="mission__reward">{p.complete ? 'Paid' : `+${m.reward} XP`}</span>
       </div>
       <p className="mission__brief">{m.brief}</p>
+      {m.concept ? <p className="mission__concept"><strong>The idea:</strong> {m.concept}</p> : null}
       <ul className="mission__objs" aria-label={`Objectives for ${m.title}: ${p.done} of ${p.total} done`}>
         {m.objectives.map((o) => {
           const done = o.done(state);

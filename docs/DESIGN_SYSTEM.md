@@ -139,3 +139,11 @@ Everything is synthesized live with the Web Audio API. There are **no audio file
 - **Effects** (`audio/sfx.ts`) use a plucked, bell-like pentatonic palette: press, navigation, selection, right, wrong, XP, lesson, badge, mission and level. No chirps and no coins.
 - **Controls:** a music button and a sound button in the header, and in the Logbook: effects on or off, music on or off, a mute-everything button, and separate master, music and effects volumes. Preferences are saved.
 - Every sound is paired with something visible, and nothing depends on sound.
+
+
+## The game layer
+
+- Same tokens, same strict monochrome. Dialogs over the game are ink (story moments) or paper (work screens).
+- One deliberate exception to "no gradients": soft pools of light (lamps, windows, the lantern) are drawn as a radial wash of paper white on dark. It is light, not colour, and it never changes the value of text.
+- Hatching, ringing and dashed borders mark wrong or unfound things. Value alone never carries meaning.
+- Motion is limited to the walk cycle, a camera that eases, a fade between rooms, and markers that pulse during a lantern sweep. All of it stops under `prefers-reduced-motion`.

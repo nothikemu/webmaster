@@ -15,7 +15,7 @@ module.exports = {
     eqeqeq: ['error', 'always'],
     'prefer-const': 'error',
     // Scrollable regions must be keyboard-focusable (WCAG 2.1.1), so tabIndex is allowed on role="region".
-    'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['tabpanel', 'region'] }],
+    'jsx-a11y/no-noninteractive-tabindex': ['error', { roles: ['tabpanel', 'region', 'application'] }],
   },
   overrides: [{ files: ['vite.config.ts', 'vitest.config.ts'], env: { node: true } }],
 };

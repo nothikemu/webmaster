@@ -47,6 +47,7 @@ export function About() {
       art={<NoticeBoard className="plate" />}
       toc={[
         ['what', 'What it teaches'],
+        ['game', 'The game'],
         ['research', 'How the content was researched'],
         ['built', 'How the site is built'],
         ['limits', 'What we are upfront about'],
@@ -63,6 +64,21 @@ export function About() {
           ))}
         </ul>
         <p>Progress, XP, ten ranks and nine badges track real work: finishing the lessons, solving the experiments, passing the checks and the final certification. Everything is saved only in your browser.</p>
+      </section>
+      <section className="prose" aria-labelledby="game">
+        <h2 id="game">The game</h2>
+        <p>
+          <Link to="/play">Tideweight: the lamplighter&apos;s harbor</Link> is the hands-on side of the same three learning areas. You walk a harbor, step into six buildings, work small games called stations, and find hidden relics that each explain one idea. Every station has an objective, a way to clear it, feedback that says why, and an XP reward, and every one of them is tied to a lesson.
+        </p>
+        <ul>
+          <li><strong>Fundamental AI concepts.</strong> The Loom House: the Curator&apos;s Cabinet (learning from labeled examples, and why coverage matters) and the Weight Frame (weights, bias and training). The Archive: the Timeline of Minds (the history of AI). Lessons: Understand AI.</li>
+          <li><strong>Practical AI tools and techniques.</strong> The Foundry Docks: the Anvil Orders (the five parts of a prompt, and keeping private details out) and the Weld Test (checking AI output when you cannot check everything). Lessons: Use AI.</li>
+          <li><strong>Ethical AI use.</strong> The Beacon: the Fairness Audit (bias, proxy traits, and what fixing it costs). The Trial Hall: six school scenarios and the final examination. Lessons: Use AI Responsibly.</li>
+          <li><strong>Your records.</strong> The Harbor Office: missions, the logbook and the Codex.</li>
+        </ul>
+        <p>
+          Nothing is hidden behind the game. Every lesson, the Codex and the tools stay open from the main menu, and the pause menu has an <em>Open every door</em> switch for anyone who wants to see everything. The stations are teaching simulations: the prompt forge follows fixed rules and is not a live AI, the classifier is a one-nearest-neighbor model, and the people in the audit are invented.
+        </p>
       </section>
       <section className="prose" aria-labelledby="research">
         <h2 id="research">How the content was researched</h2>
@@ -118,6 +134,7 @@ export function Accessibility() {
           <li><strong>Structure.</strong> One main heading per page, a logical heading order, landmarks, and labels on every form field.</li>
           <li><strong>Colour.</strong> Text and key interface colours are checked against WCAG AA contrast by a script in the project (<code>pnpm contrast</code>). Meaning is never carried by colour alone. Right and wrong answers also show words and icons, and locked badges are hatched and carry a padlock.</li>
           <li><strong>Targets.</strong> Buttons and options are at least 48 pixels tall.</li>
+          <li><strong>The game.</strong> It plays from the keyboard (arrow keys or A and D to walk, E to use, Esc to pause), by touch with on-screen buttons or by tapping where to go, and by mouse. Under the picture, an <em>In this room</em> list offers everything in the room as plain buttons, so the game never depends on walking or on seeing the picture. Windows over the game trap focus and give it back. Sound is off until you turn it on and nothing needs it. Walking animation, camera easing, fades and pulsing stop when your system asks for reduced motion.</li>
           <li><strong>Motion and sound.</strong> Movement is short and answers something you did. Nothing loops, and it all stops when your device asks for reduced motion. Sound is off by default and optional.</li>
           <li><strong>Text.</strong> Body text uses Atkinson Hyperlegible, a typeface designed for legibility.</li>
           <li><strong>Pictures.</strong> Every illustration has a text description. Where a picture shows your progress, such as the lanterns over the harbor or the scrolls in the Codex cabinet, the same numbers are written next to it. Diagrams have captions, and each experiment has a written summary of its result.</li>
@@ -149,7 +166,7 @@ export function Credits() {
     >
       <section className="prose" aria-labelledby="art">
         <h2 id="art">Artwork and sound</h2>
-        <p>All illustrations, characters, badges, rank insignia and icons are original artwork drawn in code for this project, in one shared ink-and-print style. No stock images are used. Interface sounds are synthesized in your browser and use no audio files.</p>
+        <p>All illustrations, characters, badges, rank insignia and icons are original artwork drawn in code for this project, in one shared ink-and-print style. No stock images are used. Interface sounds, the game\u2019s footsteps and room ambience, and the optional music are synthesized in your browser and use no audio files.</p>
         <p>The look is influenced by ink illustration, woodblock printing and the menus of competitive games. No characters, scenes, logos or sounds from any other work are copied.</p>
       </section>
       <section className="prose" aria-labelledby="soft">

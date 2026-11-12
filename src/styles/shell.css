@@ -68,6 +68,7 @@
   display: none;
 }
 .xp-chip {
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   min-height: 48px;
@@ -90,7 +91,7 @@
 .xp-chip__lv {
   color: var(--ochre-hi);
 }
-@media (max-width: 1180px) {
+@media (max-width: 1360px) {
   .site-header__menu {
     display: inline-flex;
   }

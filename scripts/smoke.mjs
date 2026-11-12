@@ -46,7 +46,7 @@ await new Promise((r) => server.listen(0, r));
 const base = `http://localhost:${server.address().port}${sub.slice(0, -1)}`;
 console.log(`Testing ${base}/`);
 
-const routes = ['/', '/learn/', '/learn/understand/', '/learn/use/', '/learn/responsible/', ...['u1', 'u2', 'u3', 'u4', 'u5'].map((l) => `/learn/understand/${l}/`), ...['t1', 't2', 't3', 't4', 't5'].map((l) => `/learn/use/${l}/`), ...['r1', 'r2', 'r3', 'r4', 'r5'].map((l) => `/learn/responsible/${l}/`), '/lab/', '/tools/', '/scenarios/', '/codex/', '/logbook/', '/certification/', '/about/', '/accessibility/', '/credits/', '/no-such-page/'];
+const routes = ['/', '/learn/', '/learn/understand/', '/learn/use/', '/learn/responsible/', ...['u1', 'u2', 'u3', 'u4', 'u5'].map((l) => `/learn/understand/${l}/`), ...['t1', 't2', 't3', 't4', 't5'].map((l) => `/learn/use/${l}/`), ...['r1', 'r2', 'r3', 'r4', 'r5'].map((l) => `/learn/responsible/${l}/`), '/play/', '/lab/', '/tools/', '/scenarios/', '/codex/', '/logbook/', '/certification/', '/about/', '/accessibility/', '/credits/', '/no-such-page/'];
 
 const failures = [];
 const fail = (msg) => {
@@ -233,8 +233,8 @@ console.log('\nProgress pictures, rank moment, drill and warm-up');
   // missions
   await page.goto(base + '/missions/', { waitUntil: 'networkidle' });
   const missions = await page.locator('.mission').count();
-  if (missions !== 12) fail(`mission board should list 12 missions (found ${missions})`);
-  else ok('mission board lists 12 missions in four groups');
+  if (missions !== 18) fail(`mission board should list 18 missions (found ${missions})`);
+  else ok('mission board lists 18 missions in five groups');
   await page.goto(base + '/', { waitUntil: 'networkidle' });
 
   // myth or fact: answer it, get a reason and a lesson link

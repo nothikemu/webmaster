@@ -100,17 +100,18 @@ export default function Home() {
             <p className="label">An AI learning portal for grades 9 to 12</p>
             <h1 id="hero-h">Learn how AI works. Use it well. Know when not to.</h1>
             <p className="hero__lead">
-              Fifteen short lessons across three paths. Train a real neural network, catch an AI making things up, and decide what is fair in the situations you will actually face at school.
+              Fifteen short lessons across three paths, and a game to go with them: walk the harbor, work six stations, and find what is hidden. Train a real neural network, catch an AI making things up, and decide what is fair in the situations you will actually face at school.
             </p>
             <div className="row">
+              <LinkBtn to="/play" variant="primary" icon="play" go>Play the game</LinkBtn>
               {recLesson ? (
-                <LinkBtn to={`/learn/${recLesson.path}/${recLesson.id}`} variant="primary" go>
+                <LinkBtn to={`/learn/${recLesson.path}/${recLesson.id}`} variant="secondary" go>
                   {started ? `Continue: ${recLesson.title}` : 'Start with lesson 1'}
                 </LinkBtn>
               ) : (
-                <LinkBtn to="/certification" variant="primary" go>{certified ? 'Retake the certification' : 'Take the final certification'}</LinkBtn>
+                <LinkBtn to="/certification" variant="secondary" go>{certified ? 'Retake the certification' : 'Take the final certification'}</LinkBtn>
               )}
-              <LinkBtn to="/learn" variant="secondary">Open the chart</LinkBtn>
+              <LinkBtn to="/learn" variant="quiet">Open the chart</LinkBtn>
             </div>
           </Panel>
         </div>
