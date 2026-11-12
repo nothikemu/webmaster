@@ -46,5 +46,6 @@ export default defineConfig({
   base: process.env.BASE ?? '/',
   plugins: [react(), staticRoutes()],
   resolve: { alias: { '@': resolve(__dirname, 'src') } },
-  build: { target: 'es2022', sourcemap: false, cssCodeSplit: true },
+  // The 3D engine is its own chunk, fetched only when the 3D game starts, so it is allowed to be large.
+  build: { target: 'es2022', sourcemap: false, cssCodeSplit: true, chunkSizeWarningLimit: 700 },
 });

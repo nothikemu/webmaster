@@ -59,6 +59,7 @@ On 2026-11-10 a web search surfaced public copies of **earlier** Webmaster rules
 - [x] All artwork is drawn in code and all sound is synthesized in the browser: no stock images, no audio files, nothing copied. (The generative-AI policy question in section C still applies to how the project was produced; it is unresolved.)
 - [x] Simulations are labeled as simulations on the screen they appear on (the forge is not a live AI; the classifier is a one-nearest-neighbor model; the audit's people are invented).
 - [x] Keyboard, touch and mouse play; a non-visual route to every action ("In this room"); sound off by default; reduced motion respected.
+- [x] The 3D version uses Three.js (MIT license, credited on the Credits page); everything drawn or heard is generated in code. WebGL2 is required for 3D; without it the 2D version starts automatically.
 - [ ] Not tested with a screen reader or on a physical phone.
 
 ## E. Known gaps, stated plainly

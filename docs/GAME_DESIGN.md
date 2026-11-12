@@ -2,6 +2,10 @@
 
 The game is the hands-on half of the AI Learning Portal. It is not a replacement for the portal: every lesson, the Codex, the Tool Atlas and the final certification remain ordinary pages, reachable from the menu, and nothing in them is locked by the game.
 
+## Two versions of one game
+
+The game is a **3D** third-person game (Three.js, WebGL2) and has a **classic 2D** side-scrolling version of the same content. 3D is the default when the browser can draw it; the 2D version is the automatic fallback and a pause-menu choice. Both share the same world data, stations, relics, progress and dialogues; only the stage differs (`src/game3d` and `src/game/Room.tsx`).
+
 ## Concept
 
 The lanterns along the harbor have gone dark. The player is the new lamplighter and walks the harbor with Kernel, a small lantern-bot. Each building is a place where one idea about AI is worked on by hand. The world was already the portal's world (the three mentors, the lantern-lighting story), so the game extends it instead of replacing it.
@@ -73,3 +77,15 @@ XP is paid for doing the thing, once. Rounds pay 40, relics 12, a first visit to
 
 - Nobody has heard the audio or played on a real phone. See the progress log.
 - The Trial Hall hands off to the existing Scenarios page and certification page instead of re-implementing them inside the stage.
+
+
+## The 3D version
+
+- **Look.** A real-time 3D scene is rendered to an HDR target with depth, then a post-processing pass turns it into an engraving: light level decides how much ink goes on warm paper (bare paper, hatching, cross-hatching, dense lines, solid ink), outlines are drawn where depth jumps or its slope changes, bloom burns the brightest lights white, and paper fibre, grain and a vignette sit on top. Nothing has any colour.
+- **World.** A cobbled plaza with a compass-rose floor, a fountain monument crowned with a lantern cage, fifteen lamp posts that light as lessons are finished, six distinct buildings (a timber Loom House with a slow wheel, a stone Foundry with smoking chimneys and a mouth of fire, a marble Archive with columns and a dome, a brick Trial Hall with a clock tower that tells the real time, a timber Harbor Office with a rippling flag, a banded lighthouse whose beam sweeps the harbor), a quay wall, boats that bob, gulls, hills, pines, a shader-animated sea, a sky with drifting cloud banks and a low sun, motes in the air, smoke and sparks.
+- **Interiors.** Six rooms, each its own set: a warp loom with hanging weights, a forge, a brass balance, marble stacks with a long timeline table, a courtroom, a map office. The entrance wall is one-sided, so the camera can step back outside the room to frame it.
+- **People.** The lamplighter (a walk cycle, a swinging lantern that really lights the ground), Kernel (a floating lantern-bot that follows and watches), and the three mentors, who turn to face you.
+- **Controls.** WASD or up/down to walk, Shift to run, Space to jump, mouse drag or left/right arrows to turn the camera, wheel to zoom, E to use, click the ground or a marker to walk there, a stick and drag on touch screens. The camera is pulled in by walls and buildings and eases behind the player.
+- **Performance.** One draw per object, instanced trees and books, four real lamp lights at a time, shadows only on the high and medium tiers, bloom on high and medium, and a quality tier chosen automatically from the measured frame time (and settable in the pause menu). The 3D engine is a separate chunk (580 kB, 156 kB gzipped) that downloads only when the 3D game starts.
+- **Accessibility.** The same "Places and objects" list as the 2D version (every action as a plain button); the stage is a described `role="application"` widget; labels over the picture are real buttons; camera easing and the speed field-of-view kick stop under reduced motion; nothing flashes.
+- **Honest limits.** It needs WebGL2. It was tested in Chromium with software rendering, which is far slower than a real graphics chip, so frame rates on real devices are unmeasured. Nobody has played it on a phone.

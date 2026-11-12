@@ -6,6 +6,7 @@ import { setAudio } from '@/audio/control';
 import { dispatch, resetAll, useProgress } from '@/engine/store';
 import { gameProgress, isUnlocked, levelInfo, nextGoal, roundsCleared, stationDone, type PortalState } from '@/engine/progress';
 import { Btn, Callout, LinkBtn, Meter } from '@/ui/primitives';
+import { webglSupported, type GfxPref } from '@/game3d/support';
 import { GAME_XP, LOCATIONS, RELICS, STATIONS, locationById, stationById, stationsIn, type Relic, type RoomId, type StationId } from './data';
 import { Cabinet } from './stations/Cabinet';
 import { Frame } from './stations/Frame';
@@ -236,16 +237,27 @@ export function MapDialog({ onGo, onClose, here }: { onGo: (room: RoomId) => voi
 }
 
 // ---------------------------------------------------------------------------------------------- help
-export function HelpDialog({ onClose }: { onClose: () => void }) {
+export function HelpDialog({ onClose, mode = '2d' }: { onClose: () => void; mode?: '2d' | '3d' }) {
   return (
     <GameDialog title="How to play" onClose={onClose} paper className="gdialog--help">
       <ul className="help">
-        <li><kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> walk. Hold <kbd>Shift</kbd> to hurry. Tap or click the floor to walk there.</li>
-        <li><kbd>E</kbd>, <kbd>Enter</kbd> or <kbd>Space</kbd> use whatever is near. Tap an object to walk to it and use it.</li>
-        <li><kbd>L</kbd> lifts your lantern and shows what can be used or found. <kbd>K</kbd> asks Kernel. <kbd>M</kbd> opens the chart. <kbd>J</kbd> opens the journal. <kbd>Esc</kbd> pauses.</li>
+        {mode === '3d' ? (
+          <>
+            <li><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> (or the up and down arrows) walk. Hold <kbd>Shift</kbd> to run and press <kbd>Space</kbd> to jump.</li>
+            <li>Drag with the mouse, or press the left and right arrow keys, to turn the camera. The wheel zooms. Click the ground, or a marker, to walk there.</li>
+            <li>On a touch screen, steer with the stick at the bottom left and drag anywhere else to look.</li>
+            <li><kbd>E</kbd> or <kbd>Enter</kbd> uses whatever is near. <kbd>L</kbd> lifts your lantern and shows what is hidden. <kbd>K</kbd> asks Kernel, <kbd>M</kbd> opens the chart, <kbd>J</kbd> the journal, <kbd>Esc</kbd> pauses.</li>
+          </>
+        ) : (
+          <>
+            <li><kbd>&larr;</kbd> <kbd>&rarr;</kbd> or <kbd>A</kbd> <kbd>D</kbd> walk. Hold <kbd>Shift</kbd> to hurry. Tap or click the floor to walk there.</li>
+            <li><kbd>E</kbd>, <kbd>Enter</kbd> or <kbd>Space</kbd> use whatever is near. Tap an object to walk to it and use it.</li>
+            <li><kbd>L</kbd> lifts your lantern and shows what can be used or found. <kbd>K</kbd> asks Kernel. <kbd>M</kbd> opens the chart. <kbd>J</kbd> opens the journal. <kbd>Esc</kbd> pauses.</li>
+          </>
+        )}
         <li>Stations are small games: each one teaches an idea and pays XP the first time you clear a round.</li>
         <li>Relics are hidden in every building. Each is a short explanation of an idea, saved in your journal.</li>
-        <li>Under the stage, <strong>In this room</strong> lists everything you can do, for anyone who prefers not to walk.</li>
+        <li>Under the picture, a list of <strong>places and objects</strong> offers every action as a plain button, for anyone who prefers not to walk.</li>
         <li>You never have to play to learn. Every lesson, the Codex and the tools stay open from the main menu.</li>
       </ul>
     </GameDialog>
@@ -262,6 +274,31 @@ export function Slider({ label, value, onChange }: { label: string; value: numbe
         <output>{Math.round(value * 100)}%</output>
       </span>
     </label>
+  );
+}
+
+export function GraphicsSettings({ gfx, onGfx }: { gfx: GfxPref; onGfx: (p: Partial<GfxPref>) => void }) {
+  const can3d = webglSupported();
+  return (
+    <fieldset className="gsettings">
+      <legend>Graphics</legend>
+      <div className="row" role="group" aria-label="Which version of the game">
+        <Btn variant={gfx.mode === '3d' ? 'primary' : 'secondary'} aria-pressed={gfx.mode === '3d'} disabled={!can3d} onClick={() => onGfx({ mode: '3d' })}>3D</Btn>
+        <Btn variant={gfx.mode === '2d' ? 'primary' : 'secondary'} aria-pressed={gfx.mode === '2d'} onClick={() => onGfx({ mode: '2d' })}>Classic 2D</Btn>
+      </div>
+      {gfx.mode === '3d' ? (
+        <label className="dial">
+          <span className="dial__label">Quality</span>
+          <select value={gfx.quality} onChange={(e) => onGfx({ quality: e.target.value as GfxPref['quality'] })}>
+            <option value="auto">Automatic</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low (fastest)</option>
+          </select>
+        </label>
+      ) : null}
+      {!can3d ? <p className="small muted">This browser or device cannot draw 3D, so the classic 2D game is used.</p> : <p className="small muted">The 3D version needs a reasonably modern device. Automatic quality lowers the detail if it runs slowly.</p>}
+    </fieldset>
   );
 }
 
@@ -283,7 +320,7 @@ export function AudioSettings() {
   );
 }
 
-export function PauseDialog({ onClose, onResume, onJournal, onMap, onHelp, onTitle }: { onClose: () => void; onResume: () => void; onJournal: () => void; onMap: () => void; onHelp: () => void; onTitle: () => void }) {
+export function PauseDialog({ gfx, onGfx, onClose, onResume, onJournal, onMap, onHelp, onTitle }: { gfx: GfxPref; onGfx: (p: Partial<GfxPref>) => void; onClose: () => void; onResume: () => void; onJournal: () => void; onMap: () => void; onHelp: () => void; onTitle: () => void }) {
   const free = useProgress((s) => s.game.freeRoam);
   const [sure, setSure] = useState(false);
   return (
@@ -299,6 +336,7 @@ export function PauseDialog({ onClose, onResume, onJournal, onMap, onHelp, onTit
         </div>
         <div>
           <AudioSettings />
+          <GraphicsSettings gfx={gfx} onGfx={onGfx} />
           <label className="check">
             <input type="checkbox" checked={free} onChange={(e) => dispatch({ type: 'game', patch: { freeRoam: e.target.checked } })} /> Open every door (for reviewers and teachers; XP is unchanged)
           </label>
@@ -343,10 +381,12 @@ export function EndingDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
-export const KERNEL_INTRO: string[] = [
-  'Welcome to Tideweight. The lanterns along the harbor have gone dark, and you are the new lamplighter. I am Kernel. I will keep you company.',
-  'Walk with the arrow keys or A and D, and hold Shift to hurry. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, use the buttons under the picture or tap where you want to go.',
-  'Six doors line the Quay. The first three are open. The Archive and the Trial Hall open as you gain levels. Everything you earn here counts toward the same progress as the lessons.',
+export const kernelIntro = (mode: '2d' | '3d'): string[] => [
+  'Welcome to Tideweight. The lanterns around the harbor have gone dark, and you are the new lamplighter. I am Kernel. I will keep you company.',
+  mode === '3d'
+    ? 'Walk with W, A, S and D, drag to turn the camera, and hold Shift to run. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, steer with the stick and drag to look.'
+    : 'Walk with the arrow keys or A and D, and hold Shift to hurry. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, use the buttons under the picture or tap where you want to go.',
+  'Six buildings stand around the plaza. The first three are open. The Archive and the Trial Hall open as you gain levels. Everything you earn here counts toward the same progress as the lessons.',
 ];
 
 export function kernelHint(state: PortalState): Talk {

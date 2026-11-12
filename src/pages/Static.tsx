@@ -68,7 +68,7 @@ export function About() {
       <section className="prose" aria-labelledby="game">
         <h2 id="game">The game</h2>
         <p>
-          <Link to="/play">Tideweight: the lamplighter&apos;s harbor</Link> is the hands-on side of the same three learning areas. You walk a harbor, step into six buildings, work small games called stations, and find hidden relics that each explain one idea. Every station has an objective, a way to clear it, feedback that says why, and an XP reward, and every one of them is tied to a lesson.
+          <Link to="/play">Tideweight: the lamplighter&apos;s harbor</Link> is the hands-on side of the same three learning areas. It is a 3D game, drawn in the browser as a moving engraving. You walk a harbor plaza, step into six buildings, work small games called stations, and find hidden relics that each explain one idea. A classic 2D version of the same game runs on devices that cannot draw 3D, and you can choose it from the pause menu. Every station has an objective, a way to clear it, feedback that says why, and an XP reward, and every one of them is tied to a lesson.
         </p>
         <ul>
           <li><strong>Fundamental AI concepts.</strong> The Loom House: the Curator&apos;s Cabinet (learning from labeled examples, and why coverage matters) and the Weight Frame (weights, bias and training). The Archive: the Timeline of Minds (the history of AI). Lessons: Understand AI.</li>
@@ -134,7 +134,7 @@ export function Accessibility() {
           <li><strong>Structure.</strong> One main heading per page, a logical heading order, landmarks, and labels on every form field.</li>
           <li><strong>Colour.</strong> Text and key interface colours are checked against WCAG AA contrast by a script in the project (<code>pnpm contrast</code>). Meaning is never carried by colour alone. Right and wrong answers also show words and icons, and locked badges are hatched and carry a padlock.</li>
           <li><strong>Targets.</strong> Buttons and options are at least 48 pixels tall.</li>
-          <li><strong>The game.</strong> It plays from the keyboard (arrow keys or A and D to walk, E to use, Esc to pause), by touch with on-screen buttons or by tapping where to go, and by mouse. Under the picture, an <em>In this room</em> list offers everything in the room as plain buttons, so the game never depends on walking or on seeing the picture. Windows over the game trap focus and give it back. Sound is off until you turn it on and nothing needs it. Walking animation, camera easing, fades and pulsing stop when your system asks for reduced motion.</li>
+          <li><strong>The game.</strong> In 3D, W A S D walk, the mouse or the left and right arrow keys turn the camera, E uses what is near and Esc pauses; on a touch screen a stick steers and dragging looks. Under the picture, a <em>Places and objects</em> list offers everything in the room as plain buttons, so the game never depends on walking or on seeing the picture. If the 3D view is too slow or too much, the pause menu switches to the classic 2D game or lowers the quality. Nothing flashes. Windows over the game trap focus and give it back. Sound is off until you turn it on and nothing needs it. Walking animation, camera easing, fades and pulsing stop when your system asks for reduced motion.</li>
           <li><strong>Motion and sound.</strong> Movement is short and answers something you did. Nothing loops, and it all stops when your device asks for reduced motion. Sound is off by default and optional.</li>
           <li><strong>Text.</strong> Body text uses Atkinson Hyperlegible, a typeface designed for legibility.</li>
           <li><strong>Pictures.</strong> Every illustration has a text description. Where a picture shows your progress, such as the lanterns over the harbor or the scrolls in the Codex cabinet, the same numbers are written next to it. Diagrams have captions, and each experiment has a written summary of its result.</li>
@@ -174,6 +174,7 @@ export function Credits() {
         <ul>
           <li>React, the user-interface library (MIT license).</li>
           <li>Vite, the build tool (MIT license).</li>
+          <li>Three.js, a 3D graphics library for the browser (MIT license). Every shape, texture, shader and sound in the 3D game is made in code for this project; no models, textures or audio files are loaded.</li>
           <li>Dela Gothic One, Barlow Condensed and Atkinson Hyperlegible, bundled with Fontsource (SIL Open Font License 1.1).</li>
         </ul>
         <p>No analytics, advertising or tracking code is included, and the site makes no requests to other servers.</p>

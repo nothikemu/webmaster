@@ -2,7 +2,8 @@
  * The game page: title screen, then the harbor. Owns which room is open, which overlay is showing, and what each hotspot does.
  * The world itself (movement, camera, hotspots) lives in Room.tsx; the content in data.ts and rooms.ts.
  */
-import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import { useGfx, type GfxPref } from '@/game3d/support';
 import { navigate } from '@/router';
 import { Harbor, type HarborPlace } from '@/art/Harbor';
 import { RankCrest } from '@/art/Ranks';
@@ -16,12 +17,18 @@ import { setMusicMood } from '@/audio/music';
 import { Btn, LinkBtn, Meter } from '@/ui/primitives';
 import { LOCATIONS, STATION_IDS, locationById, relicById, type RoomId, type StationId } from './data';
 import { ROOMS, type Hotspot } from './rooms';
-import { Room, type RoomHandle } from './Room';
+import { Room } from './Room';
 import { QuayFar, QuayNear } from './art/Quay';
 import { ArchiveNear, HallNear, OfficeNear } from './art/Interiors2';
 import { BeaconNear, FoundryNear, LoomNear } from './art/Interiors';
 import { FAR } from './art/Far';
-import { AudioSettings, EndingDialog, GameDialog, HelpDialog, JournalDialog, KERNEL_INTRO, MapDialog, PauseDialog, RelicCard, StationDialog, TalkDialog, kernelHint, type Talk } from './overlays';
+import { AudioSettings, EndingDialog, GraphicsSettings, GameDialog, HelpDialog, JournalDialog, kernelIntro, MapDialog, PauseDialog, RelicCard, StationDialog, TalkDialog, kernelHint, type Talk } from './overlays';
+
+const Stage3D = lazy(() => import('@/game3d/Stage3D').then((m) => ({ default: m.Stage3D })));
+interface StageHandle {
+  activate(h: Hotspot): void;
+  focus(): void;
+}
 
 const NEAR: Record<RoomId, ComponentType> = { quay: QuayNear, loom: LoomNear, foundry: FoundryNear, beacon: BeaconNear, archive: ArchiveNear, hall: HallNear, office: OfficeNear };
 const FARS: Record<RoomId, ComponentType> = { quay: QuayFar, ...FAR };
@@ -99,10 +106,17 @@ export default function Game() {
   const [screen, setScreen] = useState<'title' | 'play'>('title');
   const [room, setRoom] = useState<RoomId>('quay');
   const [startX, setStartX] = useState(ROOMS.quay.spawn);
+  const [from, setFrom] = useState<RoomId | null>(null);
+  const [gfx, setGfx] = useGfx();
+  const use3d = gfx.mode === '3d';
+  const use3dRef = useRef(use3d);
+  use3dRef.current = use3d;
+  const roomNowRef = useRef<RoomId>('quay');
+  roomNowRef.current = room;
   const [overlay, setOverlay] = useState<Overlay | null>(null);
   const [fade, setFade] = useState(false);
   const [sweep, setSweep] = useState(0);
-  const roomRef = useRef<RoomHandle>(null);
+  const roomRef = useRef<StageHandle>(null);
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -110,6 +124,8 @@ export default function Game() {
   const found = useMemo(() => new Set(Object.keys(g.relics)), [g.relics]);
   const done = useMemo(() => new Set(STATION_IDS.filter((id) => stationDone(state, id))), [state]);
   const frozen = screen !== 'play' || overlay !== null;
+  const litKey = LESSONS.map((l) => (state.lessons[l.id]?.done ? '1' : '0')).join('');
+  const lit = useMemo(() => litKey.split('').map((c) => c === '1'), [litKey]);
   const def = ROOMS[room];
   const loc = locationById(room)!;
 
@@ -141,13 +157,15 @@ export default function Game() {
 
   const travel = useCallback((to: RoomId, x?: number) => {
     const apply = () => {
+      setFrom(roomNowRef.current);
       setRoom(to);
       setStartX(x ?? ROOMS[to].spawn);
       dispatch({ type: 'visit', room: to });
       dispatch({ type: 'game', patch: { at: to } });
     };
     play('door');
-    if (reducedMotion()) {
+    // the 3D stage fades between places itself
+    if (use3dRef.current || reducedMotion()) {
       apply();
       return;
     }
@@ -163,12 +181,13 @@ export default function Game() {
     const first = !s.game.started;
     const at = isUnlocked(s, s.game.at) ? s.game.at : 'quay';
     dispatch({ type: 'game', patch: { started: true } });
+    setFrom(null);
     setRoom(at);
     setStartX(ROOMS[at].spawn);
     dispatch({ type: 'visit', room: at });
     setScreen('play');
     play('start');
-    if (first) setOverlay({ k: 'talk', talk: { who: 'Kernel', lines: KERNEL_INTRO } });
+    if (first) setOverlay({ k: 'talk', talk: { who: 'Kernel', lines: kernelIntro(gfx.mode) } });
   };
 
   const onInteract = useCallback(
@@ -227,7 +246,11 @@ export default function Game() {
       if (document.querySelector('dialog[open]')) return;
       const k = e.key.toLowerCase();
       // Opened one tick later: a dialog that appears during the Escape keydown is closed again by the browser's own Escape handling.
-      if (k === 'escape') window.setTimeout(() => setOverlay((o) => o ?? { k: 'pause' }), 0);
+      if (k === 'escape')
+        window.setTimeout(() => {
+          // look at the page, not at stale state: a dialog that was closed a moment ago may not have reached React yet
+          if (!document.querySelector('dialog[open]')) setOverlay({ k: 'pause' });
+        }, 0);
       else if (k === 'k') setOverlay({ k: 'talk', talk: kernelHint(stateRef.current) });
       else if (k === 'm') setOverlay({ k: 'map' });
       else if (k === 'j') setOverlay({ k: 'journal' });
@@ -266,10 +289,8 @@ export default function Game() {
     return (
       <>
         <Title onBegin={begin} onHelp={() => setOverlay({ k: 'help' })} onSettings={() => setOverlay({ k: 'pause' })} />
-        {overlay?.k === 'help' ? <HelpDialog onClose={close} /> : null}
-        {overlay?.k === 'pause' ? (
-          <TitleSettings onClose={close} />
-        ) : null}
+        {overlay?.k === 'help' ? <HelpDialog onClose={close} mode={gfx.mode} /> : null}
+        {overlay?.k === 'pause' ? <TitleSettings onClose={close} gfx={gfx} onGfx={setGfx} /> : null}
       </>
     );
   }
@@ -300,20 +321,13 @@ export default function Game() {
         </div>
       </div>
       <div className="wrap game__stage">
-        <Room
-          key={room}
-          ref={roomRef}
-          def={def}
-          Far={FARS[room]}
-          Near={NEAR[room]}
-          startX={startX}
-          frozen={frozen}
-          found={found}
-          done={done}
-          locked={locked}
-          sweep={sweep}
-          onInteract={onInteract}
-        />
+        {use3d ? (
+          <Suspense fallback={<div className="stage3d-loading" role="status">Raising the harbor…</div>}>
+            <Stage3D ref={roomRef} room={room} from={from} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} lit={lit} quality={gfx.quality} onInteract={onInteract} onFail={() => setGfx({ mode: '2d' })} />
+          </Suspense>
+        ) : (
+          <Room key={room} ref={roomRef} def={def} Far={FARS[room]} Near={NEAR[room]} startX={startX} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} onInteract={onInteract} />
+        )}
         <div className={`game__fade${fade ? ' is-on' : ''}`} aria-hidden="true" />
         <p className="game__goal small">
           <Icon name="flag" /> <strong>Next:</strong> {nextGoal(state).text}
@@ -322,6 +336,8 @@ export default function Game() {
 
       {overlay?.k === 'pause' ? (
         <PauseDialog
+          gfx={gfx}
+          onGfx={setGfx}
           onClose={close}
           onResume={close}
           onJournal={chain({ k: 'journal' })}
@@ -344,7 +360,7 @@ export default function Game() {
         />
       ) : null}
       {overlay?.k === 'journal' ? <JournalDialog onClose={close} /> : null}
-      {overlay?.k === 'help' ? <HelpDialog onClose={close} /> : null}
+      {overlay?.k === 'help' ? <HelpDialog onClose={close} mode={gfx.mode} /> : null}
       {overlay?.k === 'station' ? <StationDialog id={overlay.id} onClose={close} /> : null}
       {overlay?.k === 'talk' ? <TalkDialog talk={overlay.talk} onClose={close} /> : null}
       {overlay?.k === 'ending' ? <EndingDialog onClose={close} /> : null}
@@ -353,10 +369,11 @@ export default function Game() {
   );
 }
 
-function TitleSettings({ onClose }: { onClose: () => void }) {
+function TitleSettings({ onClose, gfx, onGfx }: { onClose: () => void; gfx: GfxPref; onGfx: (p: Partial<GfxPref>) => void }) {
   return (
     <GameDialog title="Sound and settings" onClose={onClose} className="gdialog--pause">
       <AudioSettings />
+      <GraphicsSettings gfx={gfx} onGfx={onGfx} />
       <div className="row">
         <Btn variant="primary" onClick={onClose}>Done</Btn>
       </div>

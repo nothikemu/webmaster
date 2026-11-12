@@ -45,3 +45,17 @@ Not done or not verified
 - Nobody has played it on a real phone or heard the audio. The playthrough drives Chromium with touch emulation and confirms the audio graph and ambience start, not what they sound like.
 - The lesson vignettes still keep their earlier compositions.
 - No screen reader testing. The stage is a `role="application"` widget with an "In this room" list as the non-visual route; that route is tested with the keyboard, not with a screen reader.
+
+
+## 2026-11-12 (later still): the 3D game
+
+Done
+- The game is now a real 3D game. A Three.js renderer with an engraving post-process (hatching by light level, depth outlines, bloom, paper grain), a sky and sea written as shaders, a plaza with six buildings, six interiors, an animated lamplighter, Kernel and three mentors, collision, a camera that avoids walls, jumping, mouse, keyboard and touch controls.
+- `/play` uses 3D when WebGL2 exists and falls back to the classic 2D game automatically; the pause and title menus choose between them and set the quality (automatic, high, medium, low).
+- The same stations, relics, missions, dialogues and saves work in both versions. The fifteen lamps on the plaza light up as lessons are finished.
+- New: `tests/game3d.test.ts` (layout data), `scripts/playtest3d.mjs` (movement, collision, camera, jump, travel, stations, relics, saving, quality, 2D switch, no-WebGL fallback, a phone, axe).
+
+Not done or not verified
+- Real-device frame rates. The test browser draws WebGL in software at a few frames a second.
+- Nobody has played the 3D version on a phone or heard the audio.
+- No screen reader testing.

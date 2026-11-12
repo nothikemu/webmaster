@@ -15,7 +15,7 @@ A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA
 
 ## The game
 
-`/play` is a playable browser game on top of the portal: walk a harbor, enter six buildings, work six small stations (each teaches one idea and pays XP), and find seventeen hidden relics. Arrow keys or A/D walk, E uses, L lifts the lantern, Esc pauses; touch and mouse work too. Design, mapping to the three required learning areas, and accessibility notes are in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). `pnpm playtest` plays the built game in a real browser.
+`/play` is a playable 3D browser game on top of the portal (with a classic 2D version for devices that cannot draw 3D): walk a harbor plaza drawn as a moving engraving, enter six buildings, work six small stations (each teaches one idea and pays XP), and find seventeen hidden relics. Arrow keys or A/D walk, E uses, L lifts the lantern, Esc pauses; touch and mouse work too. Design, mapping to the three required learning areas, and accessibility notes are in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). `pnpm playtest` plays the built game in a real browser.
 
 ## Run it
 

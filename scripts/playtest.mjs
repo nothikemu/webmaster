@@ -55,6 +55,8 @@ const expect = (cond, msg) => {
 
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+// this script plays the classic 2D game; playtest3d.mjs plays the 3D one
+await ctx.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '2d', quality: 'auto' })));
 const page = await ctx.newPage();
 page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
 page.on('pageerror', (e) => consoleErrors.push('PAGEERROR ' + e.message));
@@ -422,6 +424,7 @@ await check('Erase all progress returns to a fresh game', async () => {
 
 // ---------------------------------------------------------------- 8. a phone
 const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
+await phone.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '2d', quality: 'auto' })));
 const m = await phone.newPage();
 m.on('console', (x) => x.type() === 'error' && consoleErrors.push('phone: ' + x.text()));
 m.on('pageerror', (e) => consoleErrors.push('phone PAGEERROR ' + e.message));
