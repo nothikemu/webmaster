@@ -47,7 +47,7 @@ On 2026-11-10 a web search surfaced public copies of **earlier** Webmaster rules
 | No horizontal scroll | Smoke test checks every route at 1280px and 390px; manual check at 320px | Pass |
 | Keyboard | Skip link is the first Tab stop; focus moves to the new page after navigation; every control is native | Pass in smoke test |
 | Motion | Four durations, no bounce, nothing that loops, so no pause control is needed. `prefers-reduced-motion` stops all animation and transitions (`base.css`) | By design; not tested with a screen recording |
-| Sound | Off by default, opt-in, original, no autoplay | Verified off by default in smoke test |
+| Sound and music | Off by default, opt-in, original, no autoplay. No audio files. No audio context exists until the player switches sound on. Separate master, music and effects volumes, and a mute button, all saved. | Smoke test checks: no context before opt-in; the music button starts a running engine that schedules notes and puts signal on the output; the button stops it. **A person has not listened to it**, so judge the music by ear. |
 | Privacy | No analytics, no third-party requests, `connect-src 'self'` in `_headers` | Verified: zero failed or external requests in the smoke test |
 | Content accuracy | `tests/content.test.ts` checks structure, answer keys and that every claim appears in its source text. **It cannot check facts.** | Facts need human review, see below |
 

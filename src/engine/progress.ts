@@ -90,9 +90,16 @@ export interface ActivityItem {
   xp: number;
 }
 export interface Settings {
+  /** Interface sounds on or off. */
   sound: boolean;
-  volume: number; // 0-1
-  name: string; // optional; used only on the certificate, never leaves the device
+  /** Background music on or off. Both start off. */
+  music: boolean;
+  /** Master volume, 0-1. */
+  volume: number;
+  sfxVolume: number; // 0-1
+  musicVolume: number; // 0-1
+  /** The player's name. Optional; shown in the logbook and on the certificate, and never leaves the device. */
+  name: string;
 }
 export interface PortalState {
   v: number;
@@ -102,6 +109,8 @@ export interface PortalState {
   /** Scored side experiences: lab tasks, scenarios, certification. Keyed by id. */
   challenges: Record<string, ChallengeResult>;
   badges: Record<string, number>;
+  /** Missions completed, with the time each was completed. */
+  missions: Record<string, number>;
   pathsDone: Record<string, number>;
   codex: string[];
   activity: ActivityItem[];
@@ -120,12 +129,13 @@ export function createState(now: number): PortalState {
     lessons: {},
     challenges: {},
     badges: {},
+    missions: {},
     pathsDone: {},
     codex: [],
     activity: [],
     xpByDay: {},
     lastLesson: null,
-    settings: { sound: false, volume: 0.6, name: '' },
+    settings: { sound: false, music: false, volume: 0.6, sfxVolume: 0.8, musicVolume: 0.5, name: '' },
   };
 }
 
@@ -174,6 +184,54 @@ export const BADGES: readonly BadgeDef[] = [
   { id: 'literacy-master', name: 'AI Literacy Master', title: 'Certified', path: 'all', how: 'Pass the final certification.', earned: (s) => s.challenges['certification']?.passed === true },
 ];
 
+// ---------- Missions ----------
+export type MissionCategory = 'Fundamentals' | 'Field work' | 'Integrity' | 'Capstone';
+export interface MissionObjective {
+  label: string;
+  /** Where to go to do it. */
+  to: string;
+  done: (s: PortalState) => boolean;
+}
+export interface MissionDef {
+  id: string;
+  category: MissionCategory;
+  title: string;
+  brief: string;
+  /** XP, paid once, on top of what the work itself earns. */
+  reward: number;
+  objectives: MissionObjective[];
+}
+
+const lessonTo = (id: string) => `/learn/${lessonById(id)!.path}/${id}`;
+const finish = (id: string): MissionObjective => ({ label: `Finish "${lessonById(id)!.title}"`, to: lessonTo(id), done: (s) => lessonDone(s, id) });
+const score = (id: string, min: number, what: string): MissionObjective => ({ label: `${what} (score ${min} or more)`, to: lessonTo(id), done: (s) => tried(s, id, min) });
+const scenariosPlayed = (s: PortalState) => SCENARIO_IDS.filter((id) => s.challenges[id]).length;
+
+/**
+ * The mission board. Each mission is a short run of real objectives, and every objective is read straight from
+ * the player's finished work. Nothing here can be completed by visiting or clicking.
+ */
+export const MISSIONS: readonly MissionDef[] = [
+  { id: 'first-light', category: 'Fundamentals', title: 'First light', brief: 'See the difference between a program with rules and a system that learns from examples.', reward: 40, objectives: [finish('u1'), finish('u2')] },
+  { id: 'weave-the-network', category: 'Fundamentals', title: 'Weave the network', brief: 'Train a small neural network, then watch a language model guess the next word.', reward: 50, objectives: [finish('u3'), finish('u4')] },
+  { id: 'the-whole-loom', category: 'Fundamentals', title: 'The whole loom', brief: 'Finish every lesson at the Loom House.', reward: 80, objectives: PATHS.find((p) => p.id === 'understand')!.lessons.map((l) => finish(l.id)) },
+  { id: 'foundry-apprentice', category: 'Field work', title: 'Foundry apprentice', brief: 'Pick the right tool for a job, then write a prompt that asks for what you actually need.', reward: 40, objectives: [finish('t1'), finish('t2')] },
+  { id: 'strike-true', category: 'Field work', title: 'Strike true', brief: 'Refine a result in rounds, and clear the Prompt Lab with a strong five-part prompt.', reward: 50, objectives: [finish('t3'), { label: 'Clear the Prompt Lab with four or more parts', to: '/lab', done: (s) => s.challenges['lab-refine']?.passed === true }] },
+  { id: 'test-every-weld', category: 'Field work', title: 'Test every weld', brief: 'Check an AI answer claim by claim, and catch every one that needs checking.', reward: 60, objectives: [finish('t4'), score('t4', 100, 'Review every claim correctly')] },
+  { id: 'case-files', category: 'Field work', title: 'Case files', brief: 'Work through three school situations and see what each choice costs.', reward: 60, objectives: [{ label: 'Play three scenarios', to: '/scenarios', done: (s) => scenariosPlayed(s) >= 3 }] },
+  { id: 'keepers-watch', category: 'Integrity', title: "Keeper's watch", brief: 'Catch an AI making things up.', reward: 60, objectives: [finish('r2'), score('r2', 100, 'Catch every invented or doubtful claim')] },
+  { id: 'fair-hands', category: 'Integrity', title: 'Fair hands', brief: 'Find where bias gets into a system, and audit a screener for it.', reward: 50, objectives: [finish('r1'), score('r1', 80, 'Audit the screener')] },
+  { id: 'say-what-you-did', category: 'Integrity', title: 'Say what you did', brief: 'Protect your own data and other people\'s, and be honest about who did the work.', reward: 50, objectives: [finish('r4'), finish('r5')] },
+  { id: 'lexicon', category: 'Capstone', title: 'Lexicon', brief: 'Collect twenty terms in the Codex and pass the drill.', reward: 50, objectives: [{ label: 'Collect 20 Codex terms', to: '/learn', done: (s) => s.codex.length >= 20 }, { label: 'Pass the Codex drill', to: '/codex', done: (s) => s.challenges['codex-drill']?.passed === true }] },
+  { id: 'the-seal', category: 'Capstone', title: 'The seal', brief: 'Finish all fifteen lessons and pass the final certification.', reward: 100, objectives: [{ label: 'Finish all 15 lessons', to: '/learn', done: (s) => LESSONS.every((l) => lessonDone(s, l.id)) }, { label: 'Pass the final certification', to: '/certification', done: (s) => s.challenges['certification']?.passed === true }] },
+];
+export const MISSION_CATEGORIES: readonly MissionCategory[] = ['Fundamentals', 'Field work', 'Integrity', 'Capstone'];
+
+export function missionProgress(s: PortalState, m: MissionDef): { done: number; total: number; complete: boolean } {
+  const done = m.objectives.filter((o) => o.done(s)).length;
+  return { done, total: m.objectives.length, complete: !!s.missions[m.id] };
+}
+
 export const SCENARIO_IDS = ['sc1', 'sc2', 'sc3', 'sc4', 'sc5', 'sc6'] as const;
 export function scenarioAverage(s: PortalState): number | null {
   const scores = SCENARIO_IDS.map((id) => s.challenges[id]?.best);
@@ -194,6 +252,7 @@ export type GameEvent =
 export type Reward =
   | { kind: 'xp'; amount: number; label: string }
   | { kind: 'badge'; id: string }
+  | { kind: 'mission'; id: string }
   | { kind: 'path'; id: PathId }
   | { kind: 'lesson'; id: string }
   | { kind: 'level'; from: number; to: number };
@@ -309,7 +368,7 @@ export function applyEvent(prev: PortalState, ev: GameEvent, now: number): Apply
     }
     case 'settings': {
       s.settings = { ...s.settings, ...ev.patch };
-      s.settings.volume = Math.min(1, Math.max(0, s.settings.volume));
+      for (const k of ['volume', 'sfxVolume', 'musicVolume'] as const) s.settings[k] = Math.min(1, Math.max(0, s.settings[k]));
       s.settings.name = s.settings.name.slice(0, 60);
       break;
     }
@@ -321,6 +380,15 @@ export function applyEvent(prev: PortalState, ev: GameEvent, now: number): Apply
       s.badges[b.id] = now;
       pay(XP.badge, `Badge: ${b.name}`);
       rewards.push({ kind: 'badge', id: b.id });
+    }
+  }
+
+  // Missions are checked the same way: only real, finished work can complete one, and each pays once.
+  for (const m of MISSIONS) {
+    if (!s.missions[m.id] && m.objectives.every((o) => o.done(s))) {
+      s.missions[m.id] = now;
+      pay(m.reward, `Mission: ${m.title}`);
+      rewards.push({ kind: 'mission', id: m.id });
     }
   }
 

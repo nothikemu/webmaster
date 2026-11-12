@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { C, INK } from './palette';
-import { Flecks, Shape, Stroke, Wash } from './Draw';
+import { Finish, Flecks, Shape, Stroke, Wash } from './Draw';
 import { box, ell, type Pt } from './ink';
 import { KernelParts, type Mood } from './Kernel';
 import { Cloud, Crest, Gull, PaperLantern, Planks, Ripples } from './props';
@@ -203,7 +203,7 @@ const VIGNETTES: Record<string, () => JSX.Element> = {
     <g>
       <Shape pts={[[-110, 0], [80, 0], [84, -150], [-106, -154]]} fill={C.bone} w={3.4} />
       <Flecks marks={[[-90, -128, 120, 0], [-90, -108, 90, 0], [-90, -88, 110, 0], [-90, -68, 70, 0], [-90, -48, 100, 0]]} w={2.6} opacity={0.85} />
-      <Shape pts={[[-96, -108], [-88, -100], [-70, -122]]} w={3} ink={'#2c6b35'} open fill={undefined} />
+      <Shape pts={[[-96, -108], [-88, -100], [-70, -122]]} w={3} ink={'#2a2a2a'} open fill={undefined} />
       <Stroke pts={[[-92, -62], [-76, -46]]} w={4} color={C.roofRed} />
       <Stroke pts={[[-76, -62], [-92, -46]]} w={4} color={C.roofRed} />
       <Shape pts={ell(60, -78, 44, 44, 14, 0.03, 820)} smooth fill={C.tealLight} fillOpacity={0.55} w={5.4} />
@@ -325,7 +325,7 @@ function Backdrop({ path, n }: { path: PathId; n: number }) {
   if (path === 'understand') {
     return (
       <g>
-        <rect width="640" height="260" fill="#d9d2c0" />
+        <rect width="640" height="260" fill="#d2d0cb" />
         {[0, 1, 2, 3].map((i) => (
           <Stroke key={i} pts={[[sx(40, 600, i + 1) - i * 20 + i * 150, 0], [sx(40, 600, i + 1) - i * 20 + i * 150 + 1, 100], [sx(40, 600, i + 1) - i * 20 + i * 150, 214]]} w={9} color={C.woodDeep} seed={950 + i} />
         ))}
@@ -354,7 +354,7 @@ function Backdrop({ path, n }: { path: PathId; n: number }) {
   if (path === 'use') {
     return (
       <g>
-        <rect width="640" height="260" fill="#c9b78f" />
+        <rect width="640" height="260" fill="#a9a7a2" />
         {Array.from({ length: 16 }, (_, i) => (
           <Stroke key={i} pts={[[i * 42, 0], [i * 42 + 1, 100], [i * 42 - 1, 214]]} w={2.2} opacity={0.5} seed={990 + i} wob={1} />
         ))}
@@ -370,7 +370,7 @@ function Backdrop({ path, n }: { path: PathId; n: number }) {
   }
   return (
     <g>
-      <rect width="640" height="260" fill="#f0d9a8" />
+      <rect width="640" height="260" fill="#dcdad5" />
       <rect y="70" width="640" height="100" fill={C.sky2} opacity="0.8" />
       <Flecks marks={[[10, 30, 140, 0], [300, 20, 130, 1], [60, 120, 150, 0], [440, 130, 160, 1]]} w={3.6} color={C.skyHigh} opacity={0.7} seed={1010} />
       <Shape pts={ell(sx(70, 560), 96, 40, 40, 16, 0.015, 1011)} smooth fill={C.sun} w={3} hatch={{ angle: -35, gap: 9, w: 1.3, density: 0.8 }} hatchColor={C.roofRed} hatchOpacity={0.5} />
@@ -399,6 +399,7 @@ export const LessonArt = memo(function LessonArt({ lessonId, path, index, classN
           <KernelParts mood={MOODS[lessonId] ?? 'idle'} />
         </g>
       </g>
+      <Finish w={640} h={260} />
       <rect width="640" height="260" filter="url(#paint)" opacity="0.34" style={{ mixBlendMode: 'multiply' }} />
       <rect width="640" height="260" filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>

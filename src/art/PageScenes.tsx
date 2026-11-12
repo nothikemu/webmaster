@@ -48,8 +48,8 @@ import {
   Window,
 } from './kit';
 
-const WALL_USE = '#c9b78f';
-const WALL_LOOM = '#d9d2c0';
+const WALL_USE = '#a9a7a2';
+const WALL_LOOM = '#d2d0cb';
 
 /** Sky in three flat bands with dry-brushed streaks, shared by the outdoor scenes. */
 function Sky({ w, h, seed = 1 }: { w: number; h: number; seed?: number }) {

@@ -22,6 +22,14 @@ function init() {
   const loaded = load(storage, Date.now());
   state = loaded.state;
   loadStatus = loaded.status;
+  // A save from an earlier version may already satisfy a badge or mission. Check once, so it is credited at load.
+  if (loaded.status === 'ok') {
+    const r = applyEvent(state, { type: 'settings', patch: {} }, Date.now());
+    if (r.rewards.length) {
+      state = r.state;
+      save(storage, state);
+    }
+  }
 }
 init();
 

@@ -5,14 +5,18 @@ import { Medal } from '@/art/Medals';
 import { RankCrest } from '@/art/Ranks';
 import { MentorBust } from '@/art/Cast';
 import { MENTORS } from '@/content/cast';
-import { BADGES, LEVEL_NAMES, levelInfo, type Reward } from '@/engine/progress';
-import { dispatch, onRewards, useProgress } from '@/engine/store';
-import { configureSound, play } from '@/audio/sfx';
+import { BADGES, LEVEL_NAMES, MISSIONS, levelInfo, type Reward } from '@/engine/progress';
+import { onRewards, useProgress } from '@/engine/store';
+import { play } from '@/audio/sfx';
+import { configureAudio } from '@/audio/engine';
+import { setAudio } from '@/audio/control';
+import { Kernel } from '@/art/Kernel';
 import { Btn, LinkBtn } from './primitives';
 import { PATHS, pathById } from '@/content/paths';
 
 const NAV = [
   { to: '/learn', label: 'Learn' },
+  { to: '/missions', label: 'Missions' },
   { to: '/lab', label: 'Prompt Lab' },
   { to: '/tools', label: 'Tool Atlas' },
   { to: '/scenarios', label: 'Scenarios' },
@@ -38,7 +42,10 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const xp = useProgress((s) => s.xp);
   const sound = useProgress((s) => s.settings.sound);
+  const music = useProgress((s) => s.settings.music);
   const volume = useProgress((s) => s.settings.volume);
+  const sfxVolume = useProgress((s) => s.settings.sfxVolume);
+  const musicVolume = useProgress((s) => s.settings.musicVolume);
   const lv = levelInfo(xp);
   const menuBtn = useRef<HTMLButtonElement>(null);
 
@@ -54,7 +61,7 @@ export function Header() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
-  useEffect(() => configureSound(sound, volume), [sound, volume]);
+  useEffect(() => configureAudio({ sound, music, volume, sfxVolume, musicVolume }), [sound, music, volume, sfxVolume, musicVolume]);
 
   return (
     <header className="site-header" data-surface="ink">
@@ -83,14 +90,18 @@ export function Header() {
             className="btn btn--quiet btn--icon btn--sm"
             aria-pressed={sound}
             aria-label={sound ? 'Sound on. Turn sound off.' : 'Sound off. Turn sound on.'}
-            onClick={() => {
-              const next = !sound;
-              dispatch({ type: 'settings', patch: { sound: next } });
-              configureSound(next, volume);
-              if (next) play('xp');
-            }}
+            onClick={() => setAudio({ sound: !sound }, !sound ? 'xp' : undefined)}
           >
             <Icon name={sound ? 'sound-on' : 'sound-off'} />
+          </button>
+          <button
+            type="button"
+            className="btn btn--quiet btn--icon btn--sm"
+            aria-pressed={music}
+            aria-label={music ? 'Music on. Turn music off.' : 'Music off. Turn music on.'}
+            onClick={() => setAudio({ music: !music }, sound ? 'select' : undefined)}
+          >
+            <Icon name="music" />
           </button>
           <button
             ref={menuBtn}
@@ -185,7 +196,7 @@ export function RewardHost() {
           play('xp');
           window.setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4200);
         }
-        const specials = rewards.filter((r) => r.kind === 'badge' || r.kind === 'level' || r.kind === 'path');
+        const specials = rewards.filter((r) => r.kind === 'badge' || r.kind === 'level' || r.kind === 'path' || r.kind === 'mission');
         if (specials.length) setQueue((q) => [...q, ...specials]);
         if (rewards.some((r) => r.kind === 'lesson')) play('lesson');
       }),
@@ -197,7 +208,7 @@ export function RewardHost() {
     if (!d) return;
     if (moment && !d.open) {
       d.showModal();
-      play(moment.kind === 'badge' ? 'badge' : 'level');
+      play(moment.kind === 'badge' ? 'badge' : moment.kind === 'mission' ? 'mission' : 'level');
     }
   }, [moment]);
 
@@ -214,6 +225,18 @@ export function RewardHost() {
           <p className="label">Badge earned</p>
           <h2 id="moment-title">{b.name}</h2>
           <p>{b.title}. {b.how}</p>
+        </>
+      );
+    }
+  } else if (moment?.kind === 'mission') {
+    const m = MISSIONS.find((x) => x.id === moment.id);
+    if (m) {
+      body = (
+        <>
+          <Kernel mood="cheer" hold="flag" className="moment__medal moment__medal--kernel" />
+          <p className="label">Mission complete</p>
+          <h2 id="moment-title">{m.title}</h2>
+          <p>{m.brief} Every objective was real, finished work, and the {m.reward} XP bonus is paid once.</p>
         </>
       );
     }
@@ -257,6 +280,7 @@ export function RewardHost() {
           <div className="row">
             <Btn variant="primary" go onClick={close}>Keep going</Btn>
             {moment?.kind === 'badge' ? <LinkBtn to="/logbook" variant="quiet" onClick={close}>See all badges</LinkBtn> : null}
+            {moment?.kind === 'mission' ? <LinkBtn to="/missions" variant="quiet" onClick={close}>Open the mission board</LinkBtn> : null}
           </div>
         </div>
       </dialog>

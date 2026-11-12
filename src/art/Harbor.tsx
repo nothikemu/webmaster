@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Link } from '@/router';
 import { C, INK, HUE, type PathHueName } from './palette';
-import { Dry, Flecks, Hatch, Shape, Spatter, Stroke, Wash } from './Draw';
+import { Dry, Finish, Flecks, Hatch, Shape, Spatter, Stroke, Wash } from './Draw';
 import { box, ell } from './ink';
 import { KernelParts } from './Kernel';
 import { Barrel, Boat, Cloud, Crate, Crest, Gull, House, Pine, Planks, Ripples, Rope, Smoke, TileRoof } from './props';
@@ -61,12 +61,9 @@ const HarborBase = memo(function HarborBase() {
         <Hatch pts={[[880, 540], [1010, 580], [1130, 540], [1010, 640]]} angle={-30} gap={8} w={1.4} opacity={0.25} smooth />
 
         {/* ---- clouds ---- */}
-        <Cloud x={150} y={150} w={310} seed={3} />
         <Cloud x={470} y={228} w={190} seed={8} fill={C.paperHi} />
-        <Cloud x={1170} y={228} w={300} seed={12} />
         <Cloud x={1440} y={300} w={220} seed={5} fill={C.paperHi} />
         <Cloud x={90} y={352} w={250} seed={14} fill={C.skyHigh} />
-        <Cloud x={700} y={368} w={210} seed={17} fill={C.skyHigh} />
 
         {/* ---- far mountains, faceted and hatched on the shadow side ---- */}
         <Shape pts={[[520, 664], [612, 540], [706, 586], [812, 452], [912, 566], [992, 524], [1102, 604], [1212, 486], [1322, 562], [1442, 462], [1600, 560], [1600, 664]]} fill={C.hillFar} w={3.2} />
@@ -229,6 +226,7 @@ const HarborBase = memo(function HarborBase() {
         </g>
       </g>
       {/* uneven pigment and paper tooth over everything */}
+      <Finish w={W} h={H} />
       <rect width={W} height={H} filter="url(#paint)" opacity="0.34" style={{ mixBlendMode: 'multiply' }} />
       <rect width={W} height={H} filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>
@@ -241,7 +239,7 @@ function FestoonLantern({ x, y, lit, hue, index }: { x: number; y: number; lit: 
     <g className="festoon__lantern" style={{ ['--i' as string]: index }}>
       <Stroke pts={[[x, y], [x, y + 13]]} w={2.2} smooth={false} />
       <Shape pts={box(x - 7, y + 12, 14, 5)} fill={hue} w={1.8} seed={300 + index} />
-      <Shape pts={ell(x, y + 34, 13, 17, 9, 0.05, 320 + index)} smooth fill={lit ? C.lantern : C.paperLo} w={2.8} hatch={lit ? { angle: -60, gap: 6, w: 1 } : { angle: 45, gap: 4.5, w: 1.1 }} hatchOpacity={lit ? 0.3 : 0.45} />
+      <Shape pts={ell(x, y + 34, 13, 17, 9, 0.05, 320 + index)} smooth fill={lit ? C.lantern : C.ink3} w={2.8} hatch={lit ? { angle: -60, gap: 6, w: 1 } : { angle: 45, gap: 4.5, w: 1.1 }} hatchOpacity={lit ? 0.3 : 0.45} />
       {lit ? <Stroke pts={[[x - 12, y + 32], [x, y + 37], [x + 12, y + 32]]} w={1.5} opacity={0.6} /> : null}
       <Shape pts={box(x - 6, y + 50, 12, 4)} fill={hue} w={1.6} seed={340 + index} />
       <Stroke pts={[[x, y + 54], [x - 1.5, y + 64]]} w={2.2} color={hue} smooth={false} />
@@ -249,6 +247,17 @@ function FestoonLantern({ x, y, lit, hue, index }: { x: number; y: number; lit: 
     </g>
   );
 }
+
+/** Three clouds that drift very slowly in the live layer, so the sky is not a still photograph. */
+const DriftClouds = memo(function DriftClouds() {
+  return (
+    <g filter="url(#rough)">
+      <g className="hero__drift hero__drift--a"><Cloud x={150} y={150} w={310} seed={3} /></g>
+      <g className="hero__drift hero__drift--b"><Cloud x={1170} y={228} w={300} seed={12} /></g>
+      <g className="hero__drift hero__drift--c"><Cloud x={700} y={368} w={210} seed={17} fill={C.skyHigh} /></g>
+    </g>
+  );
+});
 
 export interface HarborPlace {
   id: PathHueName;
@@ -288,6 +297,7 @@ export function Harbor({ className, lit, places, certified }: HarborProps) {
     <div className={className}>
       <HarborBase />
       <svg className="hero__layer hero__layer--live" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio={FIT} role="group" aria-label="The three places of the harbor" focusable="false">
+        <DriftClouds />
         {/* the beam of the lighthouse, once the certification is passed */}
         {certified ? (
           <g className="hero__beam" transform="translate(70 0)">

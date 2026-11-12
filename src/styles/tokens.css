@@ -1,59 +1,59 @@
 /*
   Design tokens. Every component reads these; nothing else in the CSS contains a raw colour.
-  Concept: a harbor town printed in four inks on aged paper.
-  Ink (sumi), paper (washi), seal red (action) and one flat hue per learning path.
-  No gradients, no glow, no glass. Depth comes from hard offset shadows and screentone dots.
+  Concept: a harbor town in black ink on aged white paper, printed with screentone and hatching.
+  The palette is strictly monochrome: ink, paper and the grays between. Variety comes from value, texture and
+  composition, never from a hue. No gradients, no glow, no glass. Depth comes from hard offset shadows and screentone dots.
 */
 :root {
   /* Ink and paper */
-  --ink: #1b1612;
-  --ink-2: #271f18;
-  --ink-3: #3a2f25;
-  --ink-line: #6b5a49;
-  --paper: #eadfc6;
-  --paper-hi: #f6efdc;
-  --paper-lo: #d8caa6;
-  --paper-line: #a8977a;
+  --ink: #0d0d0d;
+  --ink-2: #171717;
+  --ink-3: #262626;
+  --ink-line: #666666;
+  --paper: #e4e2dd;
+  --paper-hi: #f3f2ee;
+  --paper-lo: #cac8c2;
+  --paper-line: #8a8883;
 
   /* Text. Pairs are checked by `pnpm contrast`. */
-  --text: #1b1612; /* on paper */
-  --text-2: #5a4838; /* secondary text on paper */
-  --text-ink: #f6efdc; /* on ink */
-  --text-ink-2: #cfc1a1; /* secondary text on ink */
+  --text: #0d0d0d; /* on paper */
+  --text-2: #474644; /* secondary text on paper */
+  --text-ink: #f3f2ee; /* on ink */
+  --text-ink-2: #bdbbb5; /* secondary text on ink */
 
-  /* Action: the seal-red. Fills take paper-coloured text; the -lo and -hi steps are for text. */
-  --seal: #c9341f;
-  --seal-lo: #a42a19; /* red text on paper */
-  --seal-hi: #ff8a72; /* red text on ink */
+  /* Action: black on paper, paper on ink. The -lo and -hi steps are for text. */
+  --seal: #0d0d0d;
+  --seal-lo: #0d0d0d; /* accent text on paper */
+  --seal-hi: #f3f2ee; /* accent text on ink */
 
-  /* Path hues. Each is one flat colour with a text-safe step for paper and for ink. */
-  --indigo: #2f4a7c;
-  --indigo-lo: #2f4a7c;
-  --indigo-hi: #9db5e6;
-  --teal: #1f7c7a;
-  --teal-lo: #14595a;
-  --teal-hi: #62d1cb;
-  --ochre: #d98a1b;
-  --ochre-lo: #7d4a00;
-  --ochre-hi: #f4bd52;
+  /* The three paths are told apart by value (charcoal, graphite, silver) and by hatching, never by a hue. */
+  --indigo: #2b2b2b;
+  --indigo-lo: #2b2b2b;
+  --indigo-hi: #c4c4c4;
+  --teal: #5b5b5b;
+  --teal-lo: #3d3d3d;
+  --teal-hi: #dcdcdc;
+  --ochre: #8c8c8c;
+  --ochre-lo: #333333;
+  --ochre-hi: #f0f0f0;
 
-  /* Feedback: always paired with an icon and words, never colour alone. */
-  --good: #2c6b35;
-  --good-hi: #8fd49a;
-  --bad: #a42a19;
-  --bad-hi: #ff8a72;
+  /* Feedback: always paired with an icon and words, and a hatched ground for the wrong answer. Never value alone. */
+  --good: #1f1f1f;
+  --good-hi: #e6e6e6;
+  --bad: #3a3a3a;
+  --bad-hi: #cfcfcf;
 
-  /* Illustration-only colours (not used for text) */
-  --sky-1: #f3d3a8;
-  --sky-2: #eeb485;
-  --sun: #d63a24;
-  --hill-far: #c49b7a;
-  --hill-near: #8d6a52;
-  --sea: #1f7c7a;
-  --sea-deep: #15595a;
-  --wood: #7a4f33;
-  --wood-deep: #4d2f1d;
-  --lantern: #f4bd52;
+  /* Illustration-only values (not used for text) */
+  --sky-1: #d6d4cf;
+  --sky-2: #b4b2ad;
+  --sun: #1a1a1a;
+  --hill-far: #9b9994;
+  --hill-near: #4d4b48;
+  --sea: #4d4d4d;
+  --sea-deep: #2c2c2c;
+  --wood: #5a5854;
+  --wood-deep: #2a2926;
+  --lantern: #f6f4ec;
 
   /* Active path hue. Overridden by [data-path]. */
   --hue: var(--seal);

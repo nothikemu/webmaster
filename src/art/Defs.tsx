@@ -17,6 +17,15 @@ export function ArtDefs() {
         <pattern id="tone-fine" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
           <circle cx="3" cy="3" r="1.15" fill={C.ink} />
         </pattern>
+        {/* the screen: a coarse 45 degree halftone laid over finished scenes, the way a printer lays a tone over line work */}
+        <pattern id="screen" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <circle cx="3.5" cy="3.5" r="1.45" fill={C.ink} />
+        </pattern>
+        {/* edge darkening for drama; it is a tone, not a glow, and never lightens anything */}
+        <radialGradient id="vignette" cx="50%" cy="46%" r="75%">
+          <stop offset="55%" stopColor={C.ink} stopOpacity="0" />
+          <stop offset="100%" stopColor={C.ink} stopOpacity="0.5" />
+        </radialGradient>
         <pattern id="hatch" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <rect width="9" height="9" fill="none" />
           <path d="M0 0v9" stroke={C.ink} strokeWidth="2" />
@@ -55,12 +64,12 @@ export function ArtDefs() {
         {/* uneven pigment: broad, soft blotches that stop flat colour from looking like a vector fill */}
         <filter id="paint" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
           <feTurbulence type="fractalNoise" baseFrequency="0.011 0.019" numOctaves="3" seed="11" />
-          <feColorMatrix values="0 0 0 0 0.42  0 0 0 0 0.27  0 0 0 0 0.14  1.5 1 0 0 -0.95" />
+          <feColorMatrix values="0 0 0 0 0.3  0 0 0 0 0.3  0 0 0 0 0.3  1.5 1 0 0 -0.95" />
         </filter>
         {/* printed-paper tooth, laid over a whole scene */}
         <filter id="grain" x="0" y="0" width="100%" height="100%">
           <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" />
-          <feColorMatrix values="0 0 0 0 0.25  0 0 0 0 0.17  0 0 0 0 0.1  0 0 0 0.9 -0.28" />
+          <feColorMatrix values="0 0 0 0 0.16  0 0 0 0 0.16  0 0 0 0 0.16  0 0 0 0.9 -0.28" />
         </filter>
       </defs>
     </svg>

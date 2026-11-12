@@ -3,6 +3,7 @@ import { TOOLS, TOOL_CATEGORIES } from '@/content/tools';
 import { Btn, Callout, Chip, Panel } from '@/ui/primitives';
 import { Icon } from '@/art/Icons';
 import { AtlasRoom } from '@/art/PageScenes';
+import { ToolPlate, type ToolKind } from '@/art/MoreScenes';
 
 export default function Tools() {
   const [cat, setCat] = useState<string>('all');
@@ -59,6 +60,7 @@ export default function Tools() {
           {list.map((t) => (
             <li key={t.id}>
               <Panel as="article" lift className="dossier">
+                <ToolPlate kind={(['chat', 'research', 'study', 'coding'] as const).includes(t.category as ToolKind) ? (t.category as ToolKind) : 'chat'} variant={TOOLS.filter((x) => x.category === t.category).indexOf(t)} className="dossier__art" />
                 <div className="dossier__head">
                   <div>
                     <h2>{t.name}</h2>

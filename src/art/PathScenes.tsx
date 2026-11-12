@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { C, INK } from './palette';
-import { Flecks, Hatch, Shape, Stroke } from './Draw';
+import { Finish, Flecks, Hatch, Shape, Stroke } from './Draw';
 import { box, ell, type Pt } from './ink';
 import { KernelParts } from './Kernel';
 import { Brannock, Sedge, Wren } from './Cast';
@@ -25,10 +25,10 @@ function Loom() {
   const warps = Array.from({ length: 13 }, (_, i) => 204 + i * 21);
   return (
     <g>
-      <rect width="640" height="400" fill="#d9d2c0" />
+      <rect width="640" height="400" fill="#d2d0cb" />
       <Flecks marks={[[10, 30, 120, 0], [300, 20, 160, 1], [470, 60, 130, 0], [60, 90, 100, 1]]} w={3.4} color={C.paperHi} opacity={0.6} seed={3} />
       {/* back wall: timber frame and a window onto the harbor hills */}
-      <Shape pts={box(0, 0, 640, 262)} fill="#d9d2c0" w={0} reg={[0, 0]} />
+      <Shape pts={box(0, 0, 640, 262)} fill="#d2d0cb" w={0} reg={[0, 0]} />
       {[60, 180, 330, 470, 600].map((x, i) => (
         <Stroke key={i} pts={[[x, 0], [x + 1, 130], [x - 1, 262]]} w={8} color={C.woodDeep} seed={300 + i} wob={1.1} />
       ))}
@@ -92,10 +92,10 @@ function Loom() {
 function Foundry() {
   return (
     <g>
-      <rect width="640" height="400" fill="#cfe0dc" />
+      <rect width="640" height="400" fill="#bcbab5" />
       <Flecks marks={[[20, 20, 140, 0], [320, 30, 120, 1], [480, 80, 150, 0]]} w={3.4} color={C.paperHi} opacity={0.65} seed={4} />
       {/* back wall of planks, with a harbor window */}
-      <Shape pts={box(0, 0, 640, 264)} fill="#c9b78f" w={0} reg={[0, 0]} />
+      <Shape pts={box(0, 0, 640, 264)} fill="#a9a7a2" w={0} reg={[0, 0]} />
       {Array.from({ length: 16 }, (_, i) => (
         <Stroke key={i} pts={[[i * 42, 0], [i * 42 + 1, 130], [i * 42 - 1, 264]]} w={2.2} opacity={0.55} seed={400 + i} wob={1} />
       ))}
@@ -156,7 +156,7 @@ function Foundry() {
 function Beacon() {
   return (
     <g>
-      <rect width="640" height="400" fill="#f0d9a8" />
+      <rect width="640" height="400" fill="#dcdad5" />
       <rect y="120" width="640" height="150" fill={C.sky2} opacity="0.8" />
       <Flecks marks={[[20, 40, 150, 0], [240, 20, 140, 1], [30, 150, 160, 0], [330, 170, 170, 1], [20, 220, 150, 0]]} w={3.8} color={C.skyHigh} opacity={0.7} seed={5} />
       <Shape pts={ell(120, 110, 52, 52, 18, 0.015, 450)} smooth fill={C.sun} w={3.4} hatch={{ angle: -35, gap: 9, w: 1.4, density: 0.8 }} hatchColor={C.roofRed} hatchOpacity={0.55} />
@@ -222,6 +222,7 @@ export const PathScene = memo(function PathScene({ path, className }: { path: Pa
       <g filter="url(#rough)">
         <Scene />
       </g>
+      <Finish w={640} h={400} />
       <rect width="640" height="400" filter="url(#paint)" opacity="0.34" style={{ mixBlendMode: 'multiply' }} />
       <rect width="640" height="400" filter="url(#grain)" opacity="0.5" style={{ mixBlendMode: 'multiply' }} />
     </svg>

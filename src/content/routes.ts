@@ -9,6 +9,7 @@ export const ROUTES: readonly string[] = [
   '/learn',
   ...PATHS.map((p) => `/learn/${p.id}`),
   ...PATHS.flatMap((p) => p.lessons.map((l) => `/learn/${p.id}/${l.id}`)),
+  '/missions',
   '/lab',
   '/tools',
   '/scenarios',

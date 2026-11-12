@@ -7,7 +7,7 @@
   z-index: 50;
   background: var(--ink);
   color: var(--text);
-  border-bottom: 4px solid var(--seal);
+  border-bottom: 4px solid var(--paper-hi);
 }
 .site-header__bar {
   display: flex;
@@ -90,7 +90,7 @@
 .xp-chip__lv {
   color: var(--ochre-hi);
 }
-@media (max-width: 1060px) {
+@media (max-width: 1180px) {
   .site-header__menu {
     display: inline-flex;
   }
@@ -103,7 +103,7 @@
     margin: 0;
     padding: var(--s-4) var(--gutter) var(--s-5);
     background: var(--ink);
-    border-bottom: 4px solid var(--seal);
+    border-bottom: 4px solid var(--paper-hi);
   }
   .site-nav.is-open {
     display: block;
@@ -671,7 +671,7 @@
     padding: 0 0.6rem;
   }
 }
-@media (max-width: 360px) {
+@media (max-width: 440px) {
   .site-header .logo__word {
     position: absolute;
     width: 1px;

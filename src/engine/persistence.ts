@@ -3,7 +3,7 @@
  * `sanitize` rebuilds a clean state from untrusted JSON, so a corrupted or hand-edited save can never crash the app.
  * It is a learning tracker, not a security boundary: anyone can edit their own browser storage.
  */
-import { BADGES, STATE_VERSION, createState, type ActivityItem, type ChallengeResult, type LessonProgress, type PortalState } from './progress';
+import { BADGES, MISSIONS, STATE_VERSION, createState, type ActivityItem, type ChallengeResult, type LessonProgress, type PortalState } from './progress';
 import { LESSONS, PATHS } from '@/content/paths';
 import { GLOSSARY } from '@/content/glossary';
 
@@ -37,6 +37,7 @@ const num = (v: unknown, lo: number, hi: number, fallback = 0): number => (typeo
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const LESSON_IDS = new Set(LESSONS.map((l) => l.id));
 const BADGE_IDS = new Set(BADGES.map((b) => b.id));
+const MISSION_IDS = new Set(MISSIONS.map((m) => m.id));
 const PATH_IDS = new Set(PATHS.map((p) => p.id as string));
 const TERM_IDS = new Set(GLOSSARY.map((g) => g.id));
 const CHALLENGE_KEY = /^[a-z0-9-]{1,40}$/;
@@ -70,6 +71,7 @@ export function sanitize(raw: unknown, now: number): PortalState | null {
     }
   }
   if (isObj(raw.badges)) for (const [id, t] of Object.entries(raw.badges)) if (BADGE_IDS.has(id) && typeof t === 'number') s.badges[id] = t;
+  if (isObj(raw.missions)) for (const [id, t] of Object.entries(raw.missions)) if (MISSION_IDS.has(id) && typeof t === 'number') s.missions[id] = t;
   if (isObj(raw.pathsDone)) for (const [id, t] of Object.entries(raw.pathsDone)) if (PATH_IDS.has(id) && typeof t === 'number') s.pathsDone[id] = t;
   if (Array.isArray(raw.codex)) s.codex = [...new Set(raw.codex.filter((t): t is string => typeof t === 'string' && TERM_IDS.has(t)))];
   if (Array.isArray(raw.activity)) {
@@ -87,9 +89,13 @@ export function sanitize(raw: unknown, now: number): PortalState | null {
   }
   s.lastLesson = typeof raw.lastLesson === 'string' && LESSON_IDS.has(raw.lastLesson) ? raw.lastLesson : null;
   if (isObj(raw.settings)) {
+    const vol = (v: unknown, fallback: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : fallback);
     s.settings = {
       sound: raw.settings.sound === true,
-      volume: typeof raw.settings.volume === 'number' ? Math.min(1, Math.max(0, raw.settings.volume)) : 0.6,
+      music: raw.settings.music === true,
+      volume: vol(raw.settings.volume, 0.6),
+      sfxVolume: vol(raw.settings.sfxVolume, 0.8),
+      musicVolume: vol(raw.settings.musicVolume, 0.5),
       name: typeof raw.settings.name === 'string' ? raw.settings.name.slice(0, 60) : '',
     };
   }

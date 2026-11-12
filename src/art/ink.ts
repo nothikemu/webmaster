@@ -347,3 +347,98 @@ export function arc(cx: number, cy: number, rx: number, ry: number, from: number
 }
 
 export const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+
+/** Area of a polygon (shoelace). */
+export function areaOf(poly: readonly Pt[]): number {
+  let a = 0;
+  for (let i = 0; i < poly.length; i++) {
+    const p = poly[i]!;
+    const q = poly[(i + 1) % poly.length]!;
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return Math.abs(a) / 2;
+}
+
+/** Point in polygon, by ray casting. */
+export function inside(pt: Pt, poly: readonly Pt[]): boolean {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i]!;
+    const b = poly[j]!;
+    if (a[1] > pt[1] !== b[1] > pt[1] && pt[0] < ((b[0] - a[0]) * (pt[1] - a[1])) / (b[1] - a[1]) + a[0]) c = !c;
+  }
+  return c;
+}
+
+/**
+ * Stippled shading: small ink dots scattered inside a shape, thin on the lit side (top left) and dense on the
+ * shadow side (bottom right), the way an engraver or a comic artist builds a form with dots instead of a gradient.
+ * Returns nothing for small shapes, where it would only be noise.
+ */
+export function stippleD(poly: readonly Pt[], seed: number, cap = 46, power = 1.35): string {
+  const area = areaOf(poly);
+  if (area < 1500) return '';
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const p of poly) {
+    minX = Math.min(minX, p[0]);
+    maxX = Math.max(maxX, p[0]);
+    minY = Math.min(minY, p[1]);
+    maxY = Math.max(maxY, p[1]);
+  }
+  const w = maxX - minX || 1;
+  const h = maxY - minY || 1;
+  const r = rng(seed ^ 0x5151);
+  const n = Math.min(cap, Math.floor(area / 240));
+  let d = '';
+  let made = 0;
+  for (let tries = 0; tries < n * 8 && made < n; tries++) {
+    const x = minX + r() * w;
+    const y = minY + r() * h;
+    const t = ((x - minX) / w + (y - minY) / h) / 2; // 0 at the lit corner, 1 at the shadow corner
+    if (r() > Math.pow(Math.max(0, (t - 0.4) / 0.6), power)) continue;
+    if (!inside([x, y], poly)) continue;
+    const q = 0.5 + r() * 0.85 * (0.4 + t);
+    d += `M${R(x)} ${R(y - q)}l${R(q)} ${R(q)}l${R(-q)} ${R(q)}l${R(-q)} ${R(-q)}z`;
+    made++;
+  }
+  return d;
+}
+
+/** The ragged outline of a hand-cut print: a rectangle whose edges wander a little and whose corners are chipped. */
+export function deckleEdge(w: number, h: number, inset = 4, seed = 1): Pt[] {
+  const r = rng(seed * 977 + Math.round(w) * 31 + Math.round(h));
+  const j = (a: number) => (r() - 0.5) * 2 * a;
+  const pts: Pt[] = [];
+  const side = (x0: number, y0: number, x1: number, y1: number, horiz: boolean) => {
+    const len = Math.hypot(x1 - x0, y1 - y0);
+    const n = Math.max(2, Math.round(len / 42));
+    for (let i = 0; i < n; i++) {
+      const t = i / n;
+      const x = x0 + (x1 - x0) * t;
+      const y = y0 + (y1 - y0) * t;
+      pts.push(horiz ? [x, y + j(2.4)] : [x + j(2.4), y]);
+    }
+  };
+  const c = 9 + r() * 4;
+  side(inset + c, inset, w - inset - c, inset, true);
+  pts.push([w - inset - c * 0.2, inset + c * 0.5]);
+  side(w - inset, inset + c, w - inset, h - inset - c, false);
+  pts.push([w - inset - c * 0.5, h - inset - c * 0.15]);
+  side(w - inset - c, h - inset, inset + c, h - inset, true);
+  pts.push([inset + c * 0.3, h - inset - c * 0.4]);
+  side(inset, h - inset - c, inset, inset + c, false);
+  pts.push([inset + c * 0.6, inset + c * 0.2]);
+  return pts;
+}
+
+const hexLum = (hex: string): number => {
+  const m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return -1;
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(m[1]!.slice(i, i + 2), 16) / 255);
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+};
+/** 0 to 1 luminance of a #rrggbb colour, or -1 for anything else. */
+export const luminance = hexLum;

@@ -7,7 +7,7 @@ import { Books, CompassRose, Quill, RolledScroll, ScrollEnd, SealStamp, Signpost
 
 export type SpotKind = 'lab' | 'atlas' | 'scenarios' | 'codex' | 'certification';
 
-const WALL: Record<SpotKind, string> = { lab: '#c9b78f', atlas: C.bone, scenarios: C.sky2, codex: '#d9d2c0', certification: C.paperLo };
+const WALL: Record<SpotKind, string> = { lab: '#a9a7a2', atlas: C.bone, scenarios: C.sky2, codex: '#d2d0cb', certification: C.paperLo };
 
 const LABEL: Record<SpotKind, string> = {
   lab: 'Three painted wooden blocks on a workbench, each marked for one part of a prompt.',

@@ -48,7 +48,7 @@
 }
 .tag--bad {
   background: var(--paper-lo);
-  background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgb(27 22 18 / 0.18) 4px 6px);
+  background-image: repeating-linear-gradient(135deg, transparent 0 4px, rgb(13 13 13 / 0.18) 4px 6px);
 }
 .tag--good {
   background: var(--paper-hi);
@@ -200,10 +200,10 @@
   background: var(--paper-lo);
 }
 .tok--2 {
-  background: #e9d49a;
+  background: #b9b7b1;
 }
 .tok--3 {
-  background: #cfe0d8;
+  background: #a3a19c;
 }
 .tok--out {
   opacity: 0.75;

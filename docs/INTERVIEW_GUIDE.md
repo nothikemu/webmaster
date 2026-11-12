@@ -70,7 +70,7 @@ See `docs/DESIGN_SYSTEM.md`. Short version: one ink-and-paper palette, one seal-
 
 ## Testing and iteration
 
-- `pnpm test`: 99 unit tests over the XP rules, ranks and streaks, saving and corrupt-save recovery, every lesson's structure and answer key, the experiments' maths, scoring, the mentors' lines, the myth-or-fact set, the codex drill and the wording of unverified tool facts.
+- `pnpm test`: 107 unit tests over the XP rules, ranks and streaks, saving and corrupt-save recovery, every lesson's structure and answer key, the experiments' maths, scoring, the mentors' lines, the myth-or-fact set, the codex drill and the wording of unverified tool facts.
 - `pnpm smoke`: a real browser finishes a lesson (210 XP), reloads (progress persists), resets, checks keyboard behavior, and scans every page for accessibility problems.
 - Real bugs found and fixed by testing: the header overflowed on phones; the selected-answer style hid the right/wrong colours; six lessons were missing diagrams; the XP chip's accessible name did not match its visible text; stats lists broke their semantics; a codex definition gave away its own term in the drill ("weights" inside the definition of "Weight"); the links inside the harbor picture and the sea chart had spoken names that left out their visible numbers.
 
@@ -83,6 +83,12 @@ Be ready to explain this, because it is the idea that holds the design together.
 - **The sea chart** (`ChartMap.tsx`) works the same way: paper drawn once, stops drawn on top as real links. A dashed leg becomes a solid line when both of its stops are finished.
 - **The Codex cabinet** gains a scroll per collected term, and **the Logbook cabin** hangs a medal per badge.
 - Every one of these repeats its numbers in text, so the pictures are never the only way to know your progress.
+
+## Missions and the audio system
+
+- **Missions** (`engine/progress.ts`, `MISSIONS`) are twelve short runs of objectives. Each objective is a function of the saved state, such as "lesson finished" or "scored 100 in the experiment", so a mission cannot be completed by visiting or clicking. They are checked after every event, like badges, each pays once, and a save from an earlier version is credited when it loads.
+- **Audio** (`audio/engine.ts`, `music.ts`, `sfx.ts`) is one Web Audio graph with a master volume and two buses. Nothing is created until the player switches sound on. The soundtrack is generated live, so it needs no files and never repeats exactly. Be ready to explain how a browser's autoplay rule shapes the design.
+- **Why the site is monochrome:** the identity is ink on paper, and every value is a gray. The paths are told apart by value and by name, and feedback never relies on value alone.
 
 ## Technical challenges worth telling
 

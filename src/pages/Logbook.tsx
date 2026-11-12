@@ -9,7 +9,8 @@ import { LESSONS, PATHS, lessonById } from '@/content/paths';
 import { Btn, Callout, Chip, LinkBtn, Meter, Panel } from '@/ui/primitives';
 import { RankCrest } from '@/art/Ranks';
 import { LogCabin } from '@/art/PageScenes';
-import { configureSound, play } from '@/audio/sfx';
+import { play } from '@/audio/sfx';
+import { setAudio } from '@/audio/control';
 
 const dayLabel = (iso: string) => new Date(iso + 'T12:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
@@ -246,24 +247,32 @@ export default function Logbook() {
         <Panel className="settings">
           <div className="settings__grid">
             <div className="stack">
-              <h3>Sound</h3>
-              <p className="small">Off by default. Short original sounds made in your browser. Nothing depends on them.</p>
+              <h3>Sound and music</h3>
+              <p className="small">Both are off by default and start only after you switch them on. Everything is made live in your browser, with no audio files. Nothing in the portal depends on sound.</p>
               <div className="row">
-                <Btn variant={state.settings.sound ? 'primary' : 'secondary'} aria-pressed={state.settings.sound} icon={state.settings.sound ? 'sound-on' : 'sound-off'} onClick={() => { const n = !state.settings.sound; dispatch({ type: 'settings', patch: { sound: n } }); configureSound(n, state.settings.volume); if (n) play('xp'); }}>
-                  Sound {state.settings.sound ? 'on' : 'off'}
+                <Btn variant={state.settings.sound ? 'primary' : 'secondary'} aria-pressed={state.settings.sound} icon={state.settings.sound ? 'sound-on' : 'sound-off'} onClick={() => setAudio({ sound: !state.settings.sound }, !state.settings.sound ? 'xp' : undefined)}>
+                  Effects {state.settings.sound ? 'on' : 'off'}
+                </Btn>
+                <Btn variant={state.settings.music ? 'primary' : 'secondary'} aria-pressed={state.settings.music} icon="music" onClick={() => setAudio({ music: !state.settings.music })}>
+                  Music {state.settings.music ? 'on' : 'off'}
+                </Btn>
+                <Btn variant="quiet" icon="x" disabled={!state.settings.sound && !state.settings.music} aria-disabled={!state.settings.sound && !state.settings.music} onClick={() => setAudio({ sound: false, music: false })}>
+                  Mute everything
                 </Btn>
               </div>
-              <div className="field">
-                <label htmlFor="vol">Volume: {Math.round(state.settings.volume * 100)}%</label>
-                <input id="vol" type="range" min={0} max={100} value={Math.round(state.settings.volume * 100)} onChange={(e) => dispatch({ type: 'settings', patch: { volume: +e.target.value / 100 } })} onMouseUp={() => play('right')} />
-              </div>
+              {([['vol', 'Master volume', 'volume'], ['mvol', 'Music volume', 'musicVolume'], ['svol', 'Effects volume', 'sfxVolume']] as const).map(([id, label, key]) => (
+                <div className="field" key={id}>
+                  <label htmlFor={id}>{label}: {Math.round(state.settings[key] * 100)}%</label>
+                  <input id={id} type="range" min={0} max={100} value={Math.round(state.settings[key] * 100)} onChange={(e) => setAudio({ [key]: +e.target.value / 100 })} onMouseUp={() => key !== 'musicVolume' && play('right')} />
+                </div>
+              ))}
             </div>
             <div className="stack">
-              <h3>Name for your certificate</h3>
+              <h3>Player name</h3>
               <div className="field">
                 <label htmlFor="cert-name">Name (optional)</label>
                 <input id="cert-name" className="input" value={state.settings.name} maxLength={60} autoComplete="off" onChange={(e) => dispatch({ type: 'settings', patch: { name: e.target.value } })} />
-                <span className="field__hint">Only used on the printable certificate, and kept on this device.</span>
+                <span className="field__hint">Shown in your logbook and on the printable certificate, and kept on this device.</span>
               </div>
             </div>
             <div className="stack">

@@ -120,3 +120,86 @@ describe('tool atlas', () => {
     for (const t of TOOLS.filter((x) => !x.access.verified)) expect(t.access.age, t.id).toMatch(/Reported|Not read directly/);
   });
 });
+
+import { MISSIONS, MISSION_CATEGORIES, applyEvent, missionProgress, type GameEvent, type PortalState } from '@/engine/progress';
+import { sanitize } from '@/engine/persistence';
+
+const T = Date.UTC(2026, 10, 12, 12);
+const play = (s: PortalState, evs: GameEvent[]) => {
+  let state = s;
+  const rewards: ReturnType<typeof applyEvent>['rewards'] = [];
+  for (const e of evs) {
+    const r = applyEvent(state, e, T);
+    state = r.state;
+    rewards.push(...r.rewards);
+  }
+  return { state, rewards };
+};
+/** Everything needed to finish one lesson. */
+const lessonEvents = (id: string): GameEvent[] => {
+  const l = lessonById(id)!;
+  return [
+    { type: 'learned', lesson: id },
+    { type: 'tried', lesson: id, score: 100 },
+    { type: 'checked', lesson: id, correct: l.check.length },
+  ];
+};
+
+describe('missions', () => {
+  it('have unique ids, real objectives and a known category', () => {
+    expect(new Set(MISSIONS.map((m) => m.id)).size).toBe(MISSIONS.length);
+    for (const m of MISSIONS) {
+      expect(MISSION_CATEGORIES, m.id).toContain(m.category);
+      expect(m.objectives.length, m.id).toBeGreaterThan(0);
+      expect(m.reward, m.id).toBeGreaterThan(0);
+      for (const o of m.objectives) expect(o.to, o.label).toMatch(/^\//);
+    }
+  });
+  it('are not complete for a new player, and no objective is already done', () => {
+    const s = createState(T);
+    for (const m of MISSIONS) expect(missionProgress(s, m), m.id).toMatchObject({ done: 0, complete: false });
+  });
+  it('cannot be completed by reading or visiting', () => {
+    const { state } = play(createState(T), [{ type: 'learned', lesson: 'u1' }, { type: 'learned', lesson: 'u2' }]);
+    expect(state.missions['first-light']).toBeUndefined();
+  });
+  it('complete when every objective is finished work, and pay exactly once', () => {
+    const { state, rewards } = play(createState(T), [...lessonEvents('u1'), ...lessonEvents('u2')]);
+    expect(state.missions['first-light']).toBe(T);
+    expect(rewards.filter((r) => r.kind === 'mission')).toEqual([{ kind: 'mission', id: 'first-light' }]);
+    const xp = state.xp;
+    const again = play(state, [{ type: 'tried', lesson: 'u1', score: 100 }, { type: 'checked', lesson: 'u2', correct: 3 }]);
+    expect(again.state.xp).toBe(xp);
+    expect(again.rewards.filter((r) => r.kind === 'mission')).toHaveLength(0);
+  });
+  it('pay the reward they advertise', () => {
+    const base = play(createState(T), [...lessonEvents('u1')]).state.xp;
+    const after = play(play(createState(T), [...lessonEvents('u1')]).state, lessonEvents('u2')).state.xp;
+    const m = MISSIONS.find((x) => x.id === 'first-light')!;
+    // finishing u2 earns the lesson's own XP plus the mission bonus
+    const lessonXp = 20 + 60 + (3 * 20 + 30) + 40;
+    expect(after - base).toBe(lessonXp + m.reward);
+  });
+  it('are kept across a save and ignore unknown ids in a hand-edited file', () => {
+    const { state } = play(createState(T), [...lessonEvents('u1'), ...lessonEvents('u2')]);
+    const back = sanitize(JSON.parse(JSON.stringify({ ...state, missions: { ...state.missions, 'not-a-mission': 5, 'the-seal': 'yes' } })), T)!;
+    expect(Object.keys(back.missions)).toEqual(['first-light']);
+  });
+});
+
+describe('audio settings', () => {
+  it('start with sound and music off, so nothing can play before the player asks', () => {
+    const s = createState(T).settings;
+    expect(s.sound).toBe(false);
+    expect(s.music).toBe(false);
+  });
+  it('are saved, clamped, and default sensibly when an older save lacks them', () => {
+    const raw = JSON.parse(JSON.stringify(createState(T)));
+    raw.settings = { sound: true, music: true, volume: 7, sfxVolume: -3, musicVolume: 'loud', name: 'Ada' };
+    const s = sanitize(raw, T)!.settings;
+    expect(s).toMatchObject({ sound: true, music: true, volume: 1, sfxVolume: 0, musicVolume: 0.5, name: 'Ada' });
+    const old = JSON.parse(JSON.stringify(createState(T)));
+    old.settings = { sound: true, volume: 0.4, name: '' };
+    expect(sanitize(old, T)!.settings).toMatchObject({ sound: true, music: false, volume: 0.4, sfxVolume: 0.8, musicVolume: 0.5 });
+  });
+});

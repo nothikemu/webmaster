@@ -2,33 +2,37 @@
 
 ## The idea
 
-**Tideweight is a harbor town printed in four inks on aged paper.** You learn how AI works by walking its three places: the Loom House (how models are woven from data), the Foundry Docks (using AI tools well), and the Beacon (seeing risk and keeping judgment). A small round automaton, **Kernel**, in a woven travelling hat, guides you.
+**Tideweight is a harbor town printed in black ink on aged white paper.** You learn how AI works by walking its three places: the Loom House (how models are woven from data), the Foundry Docks (using AI tools well), and the Beacon (seeing risk and keeping judgment). A small round automaton, **Kernel**, in a woven travelling hat, guides you, with three mentors (Wren, Brannock, Sedge) and a harbor cat, Bobbin.
 
-The interface borrows the *discipline* of a premium competitive-game menu: precise rectilinear panels, diagonal cut corners, hard offset shadows, buttons that visibly press, very few colours. The illustration borrows the mood of inked print and Japanese graphic design: flat colour, heavy ink outlines, screentone dots, wave patterns. Neither is copied.
+**The whole site is strictly monochrome.** Ink, paper and the grays between. There is no accent colour anywhere: not in the interface, the illustration, the icons, the progress meters or the favicon. Variety comes from value, texture, hatching, stippling, screentone and composition.
+
+The interface borrows the *discipline* of a premium competitive-game menu: precise rectilinear panels, diagonal cut corners, hard offset shadows, buttons that visibly press, very few values. The illustration borrows the craft of inked print: woodblock, engraving, manga screentone and hand-drawn technical plates. Neither is copied.
 
 ## What we deliberately avoided
 
 The brief prohibits Y2K, Frutiger Aero, acid, vapor and synthwave looks, cyberpunk, liquid glass, glassmorphism, neon gradients, purple-and-blue AI palettes, glowing borders, gradient blobs, floating spheres, generic SaaS dashboards, stock-looking illustration and random HUD decoration. Concretely:
 
-- **No gradients** used as decoration. The only gradient-like CSS is `repeating-linear-gradient` for hatching on disabled and wrong states.
+- **No gradients** used as decoration. The only gradient-like CSS is `repeating-linear-gradient` for hatching on disabled, wrong and in-progress states, and one soft edge-darkening on finished scenes (a tone, not a glow).
 - **No glow, blur, glass or transparency effects.** Depth is a hard 4px offset shadow.
-- **No purple or violet.** Path 1 uses a muted indigo (a traditional dye colour) as one flat colour, never in a gradient and never glowing.
+- **No colour at all.** No violet, no blue, no accent red. The three paths are charcoal, graphite and silver.
 - **No HUD ornament** (scanlines, graticules, corner brackets). The earlier version of this project had these; they were removed.
 - **No identical card grid and no shared page template.** Every page has its own composition (see below).
 - The earlier version used VALORANT's exact palette (`#0a121a`, `#ff4655`, `#ece8e1`). That has been replaced entirely.
 
 ## Colour (`src/styles/tokens.css`)
 
+Nothing but grays. Names are kept from earlier versions so the code stays readable, but every value is neutral.
+
 | Role | Token | Value | Use |
 | --- | --- | --- | --- |
-| Ink | `--ink` | `#1b1612` | Text on paper, panels, outlines |
-| Paper | `--paper`, `--paper-hi`, `--paper-lo` | `#eadfc6`, `#f6efdc`, `#d8caa6` | Page, raised surfaces, shaded surfaces |
-| Seal | `--seal` | `#c9341f` | The one action colour: primary buttons, selected keys |
-| Path 1 | `--indigo` | `#2f4a7c` | Understand AI |
-| Path 2 | `--teal` | `#1f7c7a` | Use AI |
-| Path 3 | `--ochre` | `#d98a1b` | Use AI Responsibly |
+| Ink | `--ink`, `--ink-2`, `--ink-3` | `#0d0d0d`, `#171717`, `#262626` | Text on paper, dark surfaces, outlines |
+| Paper | `--paper`, `--paper-hi`, `--paper-lo` | `#e4e2dd`, `#f3f2ee`, `#cac8c2` | Page, raised surfaces, shaded surfaces (a warm white) |
+| Action | `--seal` | `#0d0d0d` | Primary buttons. On ink surfaces the primary button inverts to a paper face. |
+| Path 1, Understand | `--indigo` | `#2b2b2b` | Charcoal |
+| Path 2, Use | `--teal` | `#5b5b5b` | Graphite |
+| Path 3, Responsible | `--ochre` | `#8c8c8c` | Silver |
 
-Each hue has text-safe steps (`-lo` for paper, `-hi` for ink). `pnpm contrast` reads the tokens and checks every text and key UI pair against WCAG 2.2 AA. Colour never carries meaning alone: right and wrong show words and icons, locked badges are hatched and padlocked, status is written out.
+**Paths are told apart by value and by name, never by hue.** Each has text-safe steps (`-lo` for paper, `-hi` for ink). `pnpm contrast` reads the tokens and checks every text and key UI pair against WCAG 2.2 AA (all pass). Feedback never relies on value alone: right and wrong show words and icons, the wrong answer sits on a hatched ground, locked badges are hatched and padlocked, mission status uses a dashed, hatched or solid stamp, and progress bars carry a ruled hatch and an ink end-cap.
 
 ## Type
 
@@ -55,7 +59,8 @@ No two pages open the same way. They share the plate (a framed illustration on a
 
 | Page | Composition |
 | --- | --- |
-| Home | The harbor, full-bleed, with the headline on a paper panel. A progress strip with the rank crest. Staggered path cards. A daily myth-or-fact card beside Kernel. The four steps of a lesson as a route. Two wide and three tall toolkit cards, each with its own spot illustration. A dark band with Kernel. |
+| Home | The harbor, full-bleed, parallax on scroll, its bottom edge a black silhouette of breaking water, with the headline on a paper panel. A progress strip with the rank crest. Staggered path cards. A daily myth-or-fact card beside Kernel. The four steps of a lesson as a route. Two wide and three tall toolkit cards, each with its own spot illustration. Illustrated dividers between sections. A dark band whose technical plate of Kernel breaks out of it upward. |
+| Missions | A mission office plate beside the brief, then four groups (Fundamentals, Field work, Integrity, Capstone), each opened by its own illustrated divider. Missions are contract-style rows with a dashed, hatched or solid status stamp and a checklist of real objectives. |
 | The chart (`/learn`) | A sea chart of the three places with fifteen stops and the seal at the lighthouse. Stops are links whose look follows progress. Below it, each path stop by stop. |
 | Path | A dark band split on a diagonal: title on ink, the path's scene on the right, sized so the scene is not cropped. |
 | Lesson | Dark hero with the lesson's own illustration, a sticky rail with the objective and step tracker, the mentor's line, alternating text and diagram beats, an experiment bench, a check, a seal. |
@@ -81,12 +86,14 @@ All artwork is original and written as code in `src/art/`. No raster images, no 
 - `ringD`: closed shapes are two overlapping strokes that do not quite meet, the way a contour is closed by hand.
 - `edgesD`: architecture is drawn one edge at a time with small overshoots at the corners.
 - `hatchD`: scanline-clipped, jittered hatching for shadow.
+- `stippleD`: stippled shading. Every medium or light filled shape gets ink dots, thin on the lit side (top left) and dense on the shadow side, so forms are built the way an engraver builds them. It is automatic (`Shape` does it unless told not to).
+- `deckleEdge`: the ragged outline of a hand-cut print. A `Scene` given the class `plate` is clipped to it and inked round it, so illustrations are cut shapes with a shadow that follows them, not boxes.
 - `dryD`: a dry-brush stroke made of separate bristle lines that start and stop on their own. Used for sky streaks, sheen on water, worn paths and fog.
 - `spatterD`: flecks of ink thrown off a loaded brush.
 - `cumulus`, `crest`, `star`, `gear`, `arc`: shapes that recur.
 - Everything is **seeded**, so the art is identical on every load. Components are `memo`-ised so the geometry is computed once.
 - **Print misregistration**: fills sit a pixel or two off their outlines.
-- Three SVG filters in `Defs.tsx`: `#rough` (roughens edges), `#paint` (broad, soft blotches that stop flat colour from looking like a vector fill) and `#grain` (paper tooth). `Scene` in `Draw.tsx` is the frame that applies them, so every picture is finished the same way.
+- Three SVG filters in `Defs.tsx`: `#rough` (roughens edges), `#paint` (broad, soft blotches that stop flat fills looking like vector fills) and `#grain` (paper tooth), plus a `#screen` halftone pattern and a `#vignette` that darkens scene edges. `Finish` in `Draw.tsx` lays screen and vignette on every scene. `Scene` in `Draw.tsx` is the frame that applies them, so every picture is finished the same way.
 
 **Files**
 
@@ -100,6 +107,8 @@ All artwork is original and written as code in `src/art/`. No raster images, no 
 - `ChartMap.tsx`: the sea chart on the Learn page. The paper is drawn once; the stops are links drawn on top.
 - `PageScenes.tsx`: one scene for each place outside the lessons (workshop frieze, chart room, crossroads, scroll cabinet, log cabin, three mentor portraits, notice board, gangway, print table, adrift).
 - `PathScenes.tsx`, `LessonArt.tsx`: one scene per path and one illustration per lesson.
+- `MoreScenes.tsx`: the mission office, a plate for each kind of tool (several variants, so no two tools share a picture), and a technical drawing of Kernel with numbered callouts and a title block.
+- `Dividers.tsx`: five illustrated dividers (waves, rope, chain, cogs, rigging) and the hero's ink edge.
 - `Medals.tsx`, `Ranks.tsx`: nine badge emblems and ten rank crests.
 - `Spots.tsx`, `Certificate.tsx`: small spot illustrations for the home page, and the corner flourish, signatures and seal of the certificate.
 - `Icons.tsx`, `Diagram.tsx`: 32 icons on one pen weight, and one renderer for every lesson diagram.
@@ -117,4 +126,16 @@ Every illustration has a text description (`role="img"` with `aria-label`) or is
 - Motion answers an action: a button presses, a panel lifts, a toast slides in, a medal or rank crest lands like a stamp.
 - **One entrance, nothing that loops.** When the home page loads, the festoon lanterns swing and settle and the gulls drift in, once, in under two seconds. No animation on the site repeats, so nothing needs a pause control.
 - `prefers-reduced-motion` reduces every animation and transition to nothing.
-- **Sound** is synthesized with the Web Audio API: a plucked, bell-like pentatonic palette. Off by default, one clear button in the header, volume in the Logbook, no autoplay (the audio context is only created after the click), and every sound is paired with a visible change.
+- **One entrance, a few slow things.** On arrival the festoon lanterns swing and settle and the gulls drift in, once. Pictures are revealed top down like ink on paper. Three clouds in the hero drift very slowly, and the harbor lags the page a little on scroll (CSS scroll-driven animation, where the browser supports it). Everything else is still.
+- **Page transitions:** each page fades up 8px over 200ms.
+- `prefers-reduced-motion` removes all of it: no entrance, no reveal, no drift, no parallax, no smooth scrolling.
+
+## Sound and music
+
+Everything is synthesized live with the Web Audio API. There are **no audio files**, nothing is fetched and nothing is sampled, so the soundtrack and the effects are original to this project.
+
+- **Off by default, and silent until asked.** No audio context exists until the player switches sound or music on (the smoke test checks this). If a saved preference is on, the context starts suspended and wakes on the first tap, click or key press.
+- **Music** (`audio/music.ts`) is a slow generative score in D minor: a drone, a pad that changes chord every eight beats, a sparse plucked motif with a dark echo, a soft sea-noise swell and a very quiet pulse. It is built to sit under reading. It never loops exactly.
+- **Effects** (`audio/sfx.ts`) use a plucked, bell-like pentatonic palette: press, navigation, selection, right, wrong, XP, lesson, badge, mission and level. No chirps and no coins.
+- **Controls:** a music button and a sound button in the header, and in the Logbook: effects on or off, music on or off, a mute-everything button, and separate master, music and effects volumes. Preferences are saved.
+- Every sound is paired with something visible, and nothing depends on sound.

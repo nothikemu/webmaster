@@ -6,14 +6,14 @@
 
 /* ---------- Shared pieces ---------- */
 
-/* A plate: an illustration framed like a print, on a hard shadow. */
+/* A plate: an illustration cut like a print. The picture draws its own ragged, inked edge and is transparent beyond it,
+   so the shadow follows the hand-cut shape instead of a box. */
 .plate {
   display: block;
   width: 100%;
   height: auto;
-  background: var(--paper-hi);
-  border: 3px solid var(--ink);
-  box-shadow: 8px 8px 0 var(--ink);
+  background: transparent;
+  filter: drop-shadow(7px 7px 0 var(--ink));
 }
 
 /* A fact line: one true, useful thing about the page (a count, a limit, where data goes). Never decoration. */
@@ -132,14 +132,14 @@
   --part: var(--seal);
 }
 .parts li[data-part='context'] {
-  --part: var(--indigo);
+  --part: var(--teal);
 }
 .parts li[data-part='audience'] {
-  --part: var(--teal-lo);
-}
-.parts li[data-part='format'] {
   --part: var(--ochre);
   --part-ink: var(--ink);
+}
+.parts li[data-part='format'] {
+  --part: var(--text-2);
 }
 .parts li.is-on {
   background: var(--part);
@@ -270,7 +270,9 @@
 }
 .file:hover .file__no,
 .file:focus-visible .file__no {
-  background: var(--seal);
+  background: var(--paper-hi);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 3px var(--ink);
 }
 .file__body {
   padding-block: var(--s-3);
@@ -354,7 +356,7 @@
   padding-block: var(--s-6);
   background: var(--ink);
   color: var(--text);
-  border-bottom: 4px solid var(--seal);
+  border-bottom: 4px solid var(--paper-hi);
 }
 .rankband__grid {
   display: grid;
@@ -947,4 +949,251 @@
 }
 .lb-stats .stats {
   row-gap: var(--s-5);
+}
+
+/* ---------- Motion: page entrance, ink reveal, parallax, drifting sky ---------- */
+html {
+  scroll-behavior: auto;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+  .page-enter {
+    animation: page-in var(--dur-mid) var(--ease) backwards;
+  }
+  /* Pictures are revealed top down, like ink laid on paper, once, as the page arrives. */
+  .plate,
+  .frieze__art,
+  .rankband__art,
+  .lost__art,
+  .triptych__art {
+    animation: ink-reveal var(--dur-slow) var(--ease) backwards;
+  }
+  .hero__drift {
+    animation: drift 120s ease-in-out infinite alternate;
+  }
+  .hero__drift--b {
+    animation-duration: 160s;
+    animation-delay: -40s;
+  }
+  .hero__drift--c {
+    animation-duration: 200s;
+    animation-delay: -90s;
+  }
+}
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+@keyframes ink-reveal {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+}
+@keyframes drift {
+  from {
+    transform: translateX(-46px);
+  }
+  to {
+    transform: translateX(46px);
+  }
+}
+/* The harbor lags the page a little as you scroll, so it reads as distance. Browsers without scroll-driven animation simply keep it still. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .hero__art {
+      transform-origin: 50% 100%;
+      animation: hero-parallax linear both;
+      animation-timeline: scroll(root block);
+      animation-range: 0 640px;
+    }
+    @keyframes hero-parallax {
+      from {
+        transform: scale(1.06) translateY(0);
+      }
+      to {
+        transform: scale(1.06) translateY(54px);
+      }
+    }
+  }
+}
+
+/* ---------- Dividers and the hero's ink edge ---------- */
+.divider {
+  display: block;
+  width: 100%;
+  height: 64px;
+  margin: var(--s-6) 0 0;
+}
+.hero__edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  width: 100%;
+  height: clamp(36px, 5vw, 70px);
+  pointer-events: none;
+}
+@media (max-width: 899px) {
+  .hero__edge {
+    display: none;
+  }
+}
+.strip__mission {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--t-sm);
+}
+.strip__mission a {
+  color: var(--text-ink);
+}
+
+/* ---------- Tool Atlas: a plate on each dossier ---------- */
+.dossier__art {
+  display: block;
+  width: calc(100% + var(--s-5) * 2 - var(--bw) * 2);
+  max-width: none;
+  height: auto;
+  margin: calc(var(--bw) - var(--s-5)) calc(var(--bw) - var(--s-5)) var(--s-4);
+  aspect-ratio: 320 / 110;
+  border-bottom: 3px solid var(--ink);
+  clip-path: polygon(calc(var(--cut) - 1px) 0, 100% 0, 100% 100%, 0 100%, 0 calc(var(--cut) - 1px));
+}
+
+/* ---------- Home: the schematic breaks out of its band ---------- */
+.proof__grid {
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+}
+.proof .plate {
+  filter: drop-shadow(8px 8px 0 var(--ink-3));
+}
+@media (min-width: 900px) {
+  .proof__plate {
+    margin-top: -7rem;
+  }
+}
+@media (max-width: 899px) {
+  .proof__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---------- Missions ---------- */
+.mission-group {
+  margin-top: var(--s-6);
+}
+.mission-group__grid {
+  display: grid;
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(0, 2fr);
+  gap: var(--s-6);
+  align-items: start;
+  padding-top: var(--s-5);
+}
+.mission-group__title {
+  position: sticky;
+  top: 6rem;
+}
+.mission-group__title h2 {
+  margin-bottom: var(--s-3);
+}
+.mission-group__title p {
+  color: var(--text-2);
+}
+.missions {
+  list-style: none;
+  display: grid;
+  gap: var(--s-4);
+  margin: 0;
+  padding: 0;
+}
+.mission {
+  position: relative;
+  margin: 0;
+  padding: var(--s-4) var(--s-5);
+  background: var(--paper-hi);
+  border: 2px solid var(--ink);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+.mission__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+}
+.mission__head h3 {
+  flex: 1 1 10rem;
+  font-size: var(--t-2);
+}
+.mission__stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.8rem;
+  padding: 0.15rem 0.7rem;
+  border: 2px dashed var(--ink);
+  color: var(--text);
+  font: 700 0.9rem / 1 var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.mission__stamp svg {
+  width: 1em;
+  height: 1em;
+}
+.mission--under-way .mission__stamp {
+  border-style: solid;
+  background: repeating-linear-gradient(135deg, transparent 0 4px, rgb(13 13 13 / 0.22) 4px 6px);
+}
+.mission--complete {
+  background: var(--paper-lo);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.mission--complete .mission__stamp {
+  border-style: solid;
+  background: var(--ink);
+  color: var(--paper-hi);
+}
+.mission__reward {
+  font: 700 1.05rem / 1 var(--font-ui);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mission__brief {
+  margin: var(--s-2) 0 var(--s-3);
+  color: var(--text-2);
+  max-width: var(--measure);
+}
+.mission__objs {
+  list-style: none;
+  display: grid;
+  gap: var(--s-2);
+  margin: 0;
+  padding: 0;
+}
+.mission__objs li {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-height: 2.4rem;
+  margin: 0;
+}
+.mission__objs svg {
+  flex: none;
+  width: 1.3rem;
+  height: 1.3rem;
+}
+.mission__objs li.is-done {
+  font-weight: 700;
+}
+@media (max-width: 860px) {
+  .mission-group__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--s-4);
+  }
+  .mission-group__title {
+    position: static;
+  }
 }

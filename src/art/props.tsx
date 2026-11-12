@@ -182,7 +182,7 @@ export function Boat({ x, y, s = 1, seed = 1, hull = C.seal, sail = C.bone }: { 
 export function Planks({ pts, rows = 5, seed = 1 }: { pts: [Pt, Pt, Pt, Pt]; rows?: number; seed?: number }) {
   const [tl, tr, br, bl] = pts;
   const out: React.ReactNode[] = [];
-  const tones = [C.wood, C.woodLight, C.wood, '#6c4430', C.wood, C.woodLight];
+  const tones = [C.wood, C.woodLight, C.wood, '#46443f', C.wood, C.woodLight];
   for (let i = 0; i < rows; i++) {
     const a = i / rows;
     const b = (i + 1) / rows;

@@ -6,7 +6,7 @@
 import { memo } from 'react';
 import { Link } from '@/router';
 import { C, INK, HUE, type PathHueName } from './palette';
-import { Dry, Flecks, Hatch, Shape, Stroke, Wash } from './Draw';
+import { Dry, Finish, Flecks, Hatch, Shape, Stroke, Wash } from './Draw';
 import { box, ell, spline, type Pt } from './ink';
 import { Boat, Crest, Gull, Pine, Smoke, TileRoof } from './props';
 import { CompassRose, Lettering, MiniLighthouse } from './kit';
@@ -264,6 +264,7 @@ export function ChartMap({ stops, certified, certTo, className }: ChartProps) {
           {certified ? '. Passed.' : '. Not passed yet.'}
         </text>
       </Link>
+      <Finish w={W} h={H} />
       <rect width={W} height={H} filter="url(#paint)" opacity="0.2" style={{ mixBlendMode: 'multiply', pointerEvents: 'none' }} />
       <rect width={W} height={H} filter="url(#grain)" opacity="0.45" style={{ mixBlendMode: 'multiply', pointerEvents: 'none' }} />
     </svg>

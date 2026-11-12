@@ -213,6 +213,30 @@ console.log('\nProgress pictures, rank moment, drill and warm-up');
   if ((await page.locator('.hero-pin').count()) !== 3) fail('harbor should link to the three places');
   else ok('harbor links to the three places');
 
+  // audio: nothing exists until the player asks; the music button starts a real, audible engine and the same button stops it
+  const before = await page.evaluate(() => document.documentElement.dataset.audio ?? 'none');
+  if (before !== 'none') fail(`no audio context should exist before the player switches sound on (found "${before}")`);
+  else ok('no audio context exists before the player asks');
+  await page.getByRole('button', { name: /Music off/ }).click();
+  await page.waitForTimeout(3200);
+  const au = await page.evaluate(() => ({ state: document.documentElement.dataset.audio, notes: Number(document.documentElement.dataset.musicNotes ?? 0), peak: Number(document.documentElement.dataset.audioPeak ?? 0) }));
+  if (au.state !== 'running' || au.notes < 3) fail(`music should be running and scheduling notes (${JSON.stringify(au)})`);
+  else ok(`music runs after the button is pressed (${au.notes} voices scheduled)`);
+  if (!(au.peak > 0)) fail(`music should produce signal (peak ${au.peak})`);
+  else ok(`the master output carries signal (peak ${au.peak})`);
+  const pressed = await page.getByRole('button', { name: /Music on/ }).getAttribute('aria-pressed');
+  if (pressed !== 'true') fail('music button should report it is on');
+  await page.getByRole('button', { name: /Music on/ }).click();
+  if ((await page.getByRole('button', { name: /Music off/ }).count()) !== 1) fail('music button should switch off again');
+  else ok('music button switches off again');
+
+  // missions
+  await page.goto(base + '/missions/', { waitUntil: 'networkidle' });
+  const missions = await page.locator('.mission').count();
+  if (missions !== 12) fail(`mission board should list 12 missions (found ${missions})`);
+  else ok('mission board lists 12 missions in four groups');
+  await page.goto(base + '/', { waitUntil: 'networkidle' });
+
   // myth or fact: answer it, get a reason and a lesson link
   await page.getByRole('button', { name: 'It is a myth' }).click();
   if ((await page.locator('.myth__answer a.btn').count()) !== 1) fail('myth card should give a reason and a lesson link');

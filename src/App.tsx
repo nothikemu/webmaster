@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useRef } from 'react';
 import { usePath } from '@/router';
 import { ArtDefs } from '@/art/Defs';
+import { play } from '@/audio/sfx';
 import { Footer, Header, RewardHost } from '@/ui/Shell';
 import { ErrorBoundary } from '@/ui/ErrorBoundary';
 import { isPathId, lessonById, pathById } from '@/content/paths';
@@ -8,6 +9,7 @@ import { isPathId, lessonById, pathById } from '@/content/paths';
 const Home = lazy(() => import('./pages/Home'));
 const LessonPage = lazy(() => import('./pages/Lesson'));
 const Lab = lazy(() => import('./pages/Lab'));
+const Missions = lazy(() => import('./pages/Missions'));
 const Tools = lazy(() => import('./pages/Tools'));
 const Scenarios = lazy(() => import('./pages/Scenarios'));
 const Codex = lazy(() => import('./pages/Codex'));
@@ -23,6 +25,7 @@ const Credits = lazy(() => import('./pages/Static').then((m) => ({ default: m.Cr
 const TITLES: Record<string, string> = {
   '/': 'Tideweight: Learn how AI works, use it well, and know its limits',
   '/learn': 'The chart',
+  '/missions': 'Missions',
   '/lab': 'Prompt Lab',
   '/tools': 'Tool Atlas',
   '/scenarios': 'Scenarios',
@@ -43,6 +46,7 @@ function Route({ path }: { path: string }) {
     if (parts.length === 3) return <LessonPage pathId={parts[1]!} lessonId={parts[2]!} />;
   }
   switch (path) {
+    case '/missions': return <Missions />;
     case '/lab': return <Lab />;
     case '/tools': return <Tools />;
     case '/scenarios': return <Scenarios />;
@@ -82,7 +86,8 @@ export default function App() {
       return;
     }
     // After navigating, start at the top and move focus to the page so keyboard and screen-reader users land in the new content.
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    play('nav');
     main.current?.focus({ preventScroll: true });
   }, [path]);
 
@@ -96,7 +101,9 @@ export default function App() {
       <main id="main" ref={main} tabIndex={-1}>
         <ErrorBoundary resetKey={path}>
           <Suspense fallback={<div className="wrap page loading" role="status">Loading the page…</div>}>
-            <Route path={path} />
+            <div key={path} className="page-enter">
+              <Route path={path} />
+            </div>
           </Suspense>
         </ErrorBoundary>
       </main>

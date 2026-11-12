@@ -29,7 +29,7 @@ export function Lettering({ x, y, size = 16, fill = INK, children, anchor = 'mid
 // ---------------------------------------------------------------- rooms
 
 /** A wall of upright boards: uneven seams, a few knots, nail heads, and a band of shadow under the ceiling. */
-export function WallPlanks({ x, y, w, h, fill = '#c9b78f', every = 46, seed = 1, shade = true }: { x: number; y: number; w: number; h: number; fill?: string; every?: number; seed?: number; shade?: boolean }) {
+export function WallPlanks({ x, y, w, h, fill = '#a9a7a2', every = 46, seed = 1, shade = true }: { x: number; y: number; w: number; h: number; fill?: string; every?: number; seed?: number; shade?: boolean }) {
   const n = Math.ceil(w / every);
   return (
     <g>

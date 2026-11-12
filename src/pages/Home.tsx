@@ -5,11 +5,13 @@ import { PathScene } from '@/art/PathScenes';
 import { Kernel } from '@/art/Kernel';
 import { RankCrest } from '@/art/Ranks';
 import { Spot, type SpotKind } from '@/art/Spots';
+import { Divider, InkEdge } from '@/art/Dividers';
+import { KernelSchematic } from '@/art/MoreScenes';
 import { Icon } from '@/art/Icons';
 import { LESSONS, PATHS, lessonById } from '@/content/paths';
 import { GLOSSARY } from '@/content/glossary';
 import { mythForDay } from '@/content/myths';
-import { levelInfo, overallProgress, pathProgress, recommendNext, streak, XP } from '@/engine/progress';
+import { MISSIONS, levelInfo, missionProgress, overallProgress, pathProgress, recommendNext, streak, XP } from '@/engine/progress';
 import { useProgress } from '@/engine/store';
 import { Btn, LinkBtn, Meter, Panel } from '@/ui/primitives';
 import { play } from '@/audio/sfx';
@@ -67,6 +69,9 @@ export default function Home() {
   const recLesson = rec.lesson ? lessonById(rec.lesson) : undefined;
   const total = LESSONS.reduce((a, l) => a + l.minutes, 0);
   const run = streak(state, Date.now());
+  const nextMission = MISSIONS.find((m) => !state.missions[m.id]);
+  const nm = nextMission ? missionProgress(state, nextMission) : null;
+  const name = state.settings.name.trim();
   const certified = state.challenges['certification']?.passed === true;
 
   // The picture only needs to know which lessons are finished, so it is not redrawn for every XP change.
@@ -89,6 +94,7 @@ export default function Home() {
     <>
       <section className="hero" aria-labelledby="hero-h">
         <Harbor className="hero__art" lit={lit} places={places} certified={certified} />
+        <InkEdge className="hero__edge" />
         <div className="wrap hero__inner">
           <Panel className="hero__copy" lift>
             <p className="label">An AI learning portal for grades 9 to 12</p>
@@ -137,7 +143,15 @@ export default function Home() {
               <dd>{run}</dd>
             </div>
           </dl>
-          <p className="strip__note">{started ? rec.why : 'Every lesson you finish lights one lantern over the harbor. No account is needed, and your progress is saved on this device only.'}</p>
+          <p className="strip__note">
+            {name ? `Welcome back, ${name}. ` : ''}
+            {started ? rec.why : 'Every lesson you finish lights one lantern over the harbor. No account is needed, and your progress is saved on this device only.'}
+          </p>
+          {nextMission && nm ? (
+            <p className="strip__mission">
+              <Link to="/missions">Next mission: {nextMission.title}</Link>, {nm.done} of {nm.total} objectives done.
+            </p>
+          ) : null}
         </div>
       </section>
 
@@ -176,6 +190,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Divider kind="rope" className="divider" />
       <section className="section warmup" aria-labelledby="warm-h">
         <div className="wrap warmup__grid">
           <div className="warmup__copy">
@@ -187,6 +202,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Divider kind="chain" className="divider" />
       <section className="section how" aria-labelledby="how-h">
         <div className="wrap">
           <h2 id="how-h">How every lesson works</h2>
@@ -209,6 +225,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Divider kind="cogs" className="divider" />
       <section className="section toolkit" aria-labelledby="kit-h">
         <div className="wrap">
           <h2 id="kit-h">Beyond the lessons</h2>
@@ -229,7 +246,7 @@ export default function Home() {
 
       <section className="section proof" data-surface="ink" aria-labelledby="proof-h">
         <div className="wrap proof__grid">
-          <Kernel mood="cheer" className="proof__kernel" label="Kernel, the guide, cheering" />
+          <KernelSchematic className="plate proof__plate" />
           <div>
             <h2 id="proof-h">The experiments are real</h2>
             <p className="prose">
