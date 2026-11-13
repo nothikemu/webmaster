@@ -88,6 +88,7 @@ Be ready to explain this, because it is the idea that holds the design together.
 
 - **Missions** (`engine/progress.ts`, `MISSIONS`) are twelve short runs of objectives. Each objective is a function of the saved state, such as "lesson finished" or "scored 100 in the experiment", so a mission cannot be completed by visiting or clicking. They are checked after every event, like badges, each pays once, and a save from an earlier version is credited when it loads.
 - **Audio** (`audio/engine.ts`, `music.ts`, `sfx.ts`) is one Web Audio graph with a master volume and two buses. Nothing is created until the player switches sound on. The soundtrack is generated live, so it needs no files and never repeats exactly. Be ready to explain how a browser's autoplay rule shapes the design.
+- **Why the game is black, white and red while the pages are monochrome:** the pages are a calm place to read, so they stay ink on paper; the game is an action space, and one hot colour does the one job a colour is for there: it says "this matters, go here" (the goal, the path, active things). Everything else is black and white so the red is always the loudest thing in the picture. (Original work: the inspiration is a design vocabulary, no assets.)
 - **Why the site is monochrome:** the identity is ink on paper, and every value is a gray. The paths are told apart by value and by name, and feedback never relies on value alone.
 
 ## The game (`/play`)

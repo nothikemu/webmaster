@@ -384,8 +384,8 @@ export function EndingDialog({ onClose }: { onClose: () => void }) {
 export const kernelIntro = (mode: '2d' | '3d'): string[] => [
   'Welcome to Tideweight. The lanterns around the harbor have gone dark, and you are the new lamplighter. I am Kernel. I will keep you company.',
   mode === '3d'
-    ? 'Walk with W, A, S and D, drag to turn the camera, and hold Shift to run. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, steer with the stick and drag to look.'
-    : 'Walk with the arrow keys or A and D, and hold Shift to hurry. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, use the buttons under the picture or tap where you want to go.',
+    ? 'Walk with W, A, S and D, drag to turn the camera, and hold Shift to run. The Objective box at the top left always says what to do next, and a red path and a red marker lead you there. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, steer with the stick and drag to look.'
+    : 'Walk with the arrow keys or A and D, and hold Shift to hurry. The Objective box always says what to do next. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, use the buttons under the picture or tap where you want to go.',
   'Six buildings stand around the plaza. The first three are open. The Archive and the Trial Hall open as you gain levels. Everything you earn here counts toward the same progress as the lessons.',
 ];
 

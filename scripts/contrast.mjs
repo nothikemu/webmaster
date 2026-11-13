@@ -52,6 +52,13 @@ const pairs = [
   ['good-hi', 'ink', 4.5, 'success text on ink'],
   ['bad', 'paper', 4.5, 'error text on paper'],
   ['bad-hi', 'ink', 4.5, 'error text on ink'],
+  // The game's red (docs/STYLE_GUIDE.md): fills with normal text need 4.5, large bold labels and graphics need 3.
+  ['paper-hi', 'red-fill', 4.5, 'label on red fill'],
+  ['red-deep', 'paper-hi', 4.5, 'deep red text on raised paper'],
+  ['red-deep', 'paper', 4.5, 'deep red text on paper'],
+  ['paper-hi', 'red', 3, 'large bold label on red'],
+  ['ink', 'red', 3, 'large ink label on red'],
+  ['red', 'ink', 3, 'red graphic on ink'],
   // Non-text UI: borders and focus rings need 3:1 against what they sit on.
   ['ink', 'paper', 3, 'ink border/focus ring on paper'],
   ['paper-hi', 'ink', 3, 'paper focus ring on ink'],

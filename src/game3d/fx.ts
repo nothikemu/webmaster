@@ -11,7 +11,7 @@ import {
   Group,
   Mesh,
   NormalBlending,
-  type MeshStandardMaterial,
+  type MeshLambertMaterial,
   PlaneGeometry,
   Points,
   ShaderMaterial
@@ -52,27 +52,33 @@ float vnoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 *
   return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
 void main() {
   vec3 V = normalize(cameraPosition - vW);
-  vec3 N = normalize(vN + vec3(vnoise(vW.xz * 2.2 + time * 0.5) - 0.5, 0.0, vnoise(vW.xz * 2.2 - time * 0.4 + 9.0) - 0.5) * 0.22);
+  vec3 N = normalize(vN);
   float fres = pow(1.0 - max(dot(N, V), 0.0), 3.0);
   vec3 R = reflect(-V, N);
-  vec3 S = normalize(sunDir);
-  float ss = max(dot(R, S), 0.0);
-  float spec = pow(ss, 220.0) * 18.0 + pow(ss, 14.0) * 0.4;
-  float skyRefl = mix(1.35, 0.12, pow(clamp(R.y, 0.0, 1.0), 0.5));
-  float v = mix(0.045, skyRefl, 0.25 + 0.75 * fres);
-  // white water against the quay and in the crests
+  float ss = max(dot(R, normalize(sunDir)), 0.0);
+  float spec = smoothstep(0.985, 0.992, ss);
+  // slanted wave strokes: paper-white lines on black water, drifting
+  float band = sin((vW.x * 0.55 - vW.z * 1.0) * 1.15 + time * 0.8 + vnoise(vW.xz * 0.22) * 5.0);
+  float stroke = smoothstep(0.80, 0.84, band);
+  float band2 = sin((vW.x * 0.9 + vW.z * 0.6) * 0.8 - time * 0.55 + vnoise(vW.xz * 0.4 + 7.0) * 4.0);
+  float stroke2 = smoothstep(0.90, 0.93, band2) * 0.8;
+  // white water against the quay
   float edge = abs(vW.z - quayZ);
-  float foam = smoothstep(2.4, 0.0, edge - 0.5 * sin(vW.x * 0.6 + time * 0.8)) * smoothstep(0.35, 0.8, vnoise(vW.xz * 1.6 + vec2(time * 0.5, 0.0)));
-  float crest = smoothstep(0.62, 0.78, vnoise(vW.xz * 0.9 + vec2(time * 0.35, time * 0.2))) * 0.25;
-  v += (foam * 0.95 + crest + spec) ;
+  float foam = smoothstep(2.2, 0.0, edge - 0.5 * sin(vW.x * 0.6 + time * 0.8)) * smoothstep(0.4, 0.62, vnoise(vW.xz * 1.4 + vec2(time * 0.5, 0.0)));
+  float white = max(max(stroke, stroke2), foam);
+  // the sky is red, so the sea picks it up toward the horizon
+  float redness = smoothstep(0.1, 0.8, fres);
+  vec3 col = mix(vec3(0.03), vec3(1.4), white);
+  col = mix(col, vec3(2.4, 0.16, 0.2) * (0.5 + 0.5 * redness), redness * (1.0 - white));
+  col = mix(col, vec3(7.0), spec);
   float dist = length(cameraPosition - vW);
   float f = 1.0 - exp(-pow(dist * fogDensity, 2.0));
-  v = mix(v, 1.25, f);
-  gl_FragColor = vec4(vec3(v), 1.0);
+  col = mix(col, vec3(1.25), f);
+  gl_FragColor = vec4(col, 1.0);
 }
 `;
 export function makeWater(sunDir: Vector3, fogDensity: number, quayZ: number) {
-  const g = new PlaneGeometry(900, 900, 180, 180);
+  const g = new PlaneGeometry(900, 900, 100, 100); // 20k triangles; the waves are long and shallow, so a coarse sea costs nothing you can see
   g.rotateX(-Math.PI / 2);
   const m = new ShaderMaterial({ vertexShader: WATER_VERT, fragmentShader: WATER_FRAG, uniforms: { time: { value: 0 }, sunDir: { value: sunDir.clone() }, fogDensity: { value: fogDensity }, quayZ: { value: quayZ } } });
   const o = new Mesh(g, m);
@@ -264,7 +270,7 @@ export function makeGull(mats: Mats): { group: Group; flap(t: number, k: number)
 }
 
 /** A flag: a plane whose back edge ripples. */
-export function makeFlag(w: number, h: number, mat: MeshStandardMaterial) {
+export function makeFlag(w: number, h: number, mat: MeshLambertMaterial) {
   const g = new PlaneGeometry(w, h, 14, 6);
   const base = Float32Array.from(g.attributes.position!.array as Float32Array);
   const m = new Mesh(g, mat);

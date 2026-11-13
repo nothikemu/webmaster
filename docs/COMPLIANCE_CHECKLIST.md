@@ -60,6 +60,8 @@ On 2026-11-10 a web search surfaced public copies of **earlier** Webmaster rules
 - [x] Simulations are labeled as simulations on the screen they appear on (the forge is not a live AI; the classifier is a one-nearest-neighbor model; the audit's people are invented).
 - [x] Keyboard, touch and mouse play; a non-visual route to every action ("In this room"); sound off by default; reduced motion respected.
 - [x] The 3D version uses Three.js (MIT license, credited on the Credits page); everything drawn or heard is generated in code. WebGL2 is required for 3D; without it the 2D version starts automatically.
+- [x] The poster look (black, white and one red; cel bands, halftone, thick outlines, slanted menus) is a *design vocabulary* chosen after research, written up in `docs/STYLE_GUIDE.md`. It uses no asset, name, logo, character, font, music or iconography from any game; every shape, texture, shader and sound is generated in code. (Reviewers should still judge whether the resemblance is acceptable under the competition's originality rule; that decision is not ours to make.)
+- [x] Red is never the only signal: the goal is also named in words with its distance in the Objective box and on its label; locked doors say "Locked" in words; contrast of the red pairs is checked by `pnpm contrast`.
 - [ ] Not tested with a screen reader or on a physical phone.
 
 ## E. Known gaps, stated plainly

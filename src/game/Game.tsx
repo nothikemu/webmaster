@@ -10,7 +10,9 @@ import { RankCrest } from '@/art/Ranks';
 import { Icon } from '@/art/Icons';
 import { LESSONS, PATHS } from '@/content/paths';
 import { dispatch, resetAll, useProgress } from '@/engine/store';
-import { gameProgress, isUnlocked, levelInfo, nextGoal, stationDone } from '@/engine/progress';
+import { gameProgress, isUnlocked, levelInfo, stationDone } from '@/engine/progress';
+import { objective } from './objective';
+import { ObjectiveTracker } from './Objective';
 import { play } from '@/audio/sfx';
 import { setAmbience, stopAmbience } from '@/audio/ambience';
 import { setMusicMood } from '@/audio/music';
@@ -128,6 +130,7 @@ export default function Game() {
   const lit = useMemo(() => litKey.split('').map((c) => c === '1'), [litKey]);
   const def = ROOMS[room];
   const loc = locationById(room)!;
+  const goal = useMemo(() => objective(state, room), [state, room]);
 
   // Tell the tests and the page where we are.
   useEffect(() => {
@@ -282,7 +285,9 @@ export default function Game() {
     return () => window.clearTimeout(t);
   }, [screen, allCleared, g.ended, overlay]);
 
-  const close = useCallback(() => setOverlay(null), []);
+  // A dialog closes only itself: the browser reports a closed dialog a moment late, and by then the player may already have opened the
+  // next one (Escape twice). The late report must not close that one.
+  const close = () => setOverlay((cur) => (cur === overlay ? null : cur));
   const chain = (o: Overlay) => () => setOverlay(o);
 
   if (screen === 'title') {
@@ -323,15 +328,13 @@ export default function Game() {
       <div className="wrap game__stage">
         {use3d ? (
           <Suspense fallback={<div className="stage3d-loading" role="status">Raising the harbor…</div>}>
-            <Stage3D ref={roomRef} room={room} from={from} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} lit={lit} quality={gfx.quality} onInteract={onInteract} onFail={() => setGfx({ mode: '2d' })} />
+            <Stage3D ref={roomRef} room={room} from={from} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} lit={lit} quality={gfx.quality} objective={goal} onInteract={onInteract} onFail={() => setGfx({ mode: '2d' })} />
           </Suspense>
         ) : (
           <Room key={room} ref={roomRef} def={def} Far={FARS[room]} Near={NEAR[room]} startX={startX} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} onInteract={onInteract} />
         )}
         <div className={`game__fade${fade ? ' is-on' : ''}`} aria-hidden="true" />
-        <p className="game__goal small">
-          <Icon name="flag" /> <strong>Next:</strong> {nextGoal(state).text}
-        </p>
+        {use3d ? null : <ObjectiveTracker obj={goal} />}
       </div>
 
       {overlay?.k === 'pause' ? (

@@ -4,7 +4,7 @@
 
 **Tideweight is a harbor town printed in black ink on aged white paper.** You learn how AI works by walking its three places: the Loom House (how models are woven from data), the Foundry Docks (using AI tools well), and the Beacon (seeing risk and keeping judgment). A small round automaton, **Kernel**, in a woven travelling hat, guides you, with three mentors (Wren, Brannock, Sedge) and a harbor cat, Bobbin.
 
-**The whole site is strictly monochrome.** Ink, paper and the grays between. There is no accent colour anywhere: not in the interface, the illustration, the icons, the progress meters or the favicon. Variety comes from value, texture, hatching, stippling, screentone and composition.
+**The site's pages are strictly monochrome; the game (`/play`) adds one hot red.** (The 3D game's look is specified in [STYLE_GUIDE.md](STYLE_GUIDE.md); its red tokens are `--red`, `--red-fill` and `--red-deep`, and they are used only inside the game.) For the pages: Ink, paper and the grays between. There is no accent colour anywhere: not in the interface, the illustration, the icons, the progress meters or the favicon. Variety comes from value, texture, hatching, stippling, screentone and composition.
 
 The interface borrows the *discipline* of a premium competitive-game menu: precise rectilinear panels, diagonal cut corners, hard offset shadows, buttons that visibly press, very few values. The illustration borrows the craft of inked print: woodblock, engraving, manga screentone and hand-drawn technical plates. Neither is copied.
 

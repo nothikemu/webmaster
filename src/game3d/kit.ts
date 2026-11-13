@@ -7,7 +7,7 @@ import {
   DoubleSide,
   Float32BufferAttribute,
   BufferGeometry,
-  type MeshStandardMaterial,
+  type MeshLambertMaterial,
   ConeGeometry,
   CylinderGeometry,
   Group,
@@ -99,7 +99,7 @@ export function roof(w: number, d: number, rise: number, m: Material, pos: V3 = 
   g.setAttribute('position', new Float32BufferAttribute(P, 3));
   g.setAttribute('uv', new Float32BufferAttribute(U, 2));
   g.computeVertexNormals();
-  const dm = (m as MeshStandardMaterial).clone();
+  const dm = (m as MeshLambertMaterial).clone();
   dm.side = DoubleSide;
   return mesh(g, dm, pos);
 }

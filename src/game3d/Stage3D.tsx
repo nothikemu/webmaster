@@ -5,7 +5,7 @@
  * Space jumps, E / Enter uses what is near, tap or click a label (or the ground) to walk there. On a touch screen the left thumb
  * steers and the right thumb looks. The same things are listed under the picture, so nothing depends on walking.
  */
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import type { Color} from 'three';
 import { Euler, MathUtils, Raycaster, Vector2, Vector3 } from 'three';
 import { play } from '@/audio/sfx';
@@ -17,8 +17,12 @@ import { buildInterior, type Interior } from './interiors';
 import { makeKernel, makeLamplighter, type Kernel3, type Lamplighter } from './chars';
 import { followCamera, newBody, step, type Body, type CamState } from './controls';
 import { makeMats } from './mat';
+import { bakeWorld } from './bake';
 import { INTERIOR, PLAZA_R, QUAY_Z, SPOTS, START, WALK_R, doorFront, interiorSpawn, nearestSpot, type BuildingId, type Spot } from './layout';
 import { Icon } from '@/art/Icons';
+import type { Objective } from '@/game/objective';
+import { ObjectiveTracker } from '@/game/Objective';
+import { makeGuide, type Guide } from './guide';
 
 export interface Stage3DHandle {
   activate(h: Hotspot): void;
@@ -34,6 +38,8 @@ interface Props {
   locked: ReadonlySet<string>;
   sweep: number;
   lit: boolean[];
+  /** What the player should do next; the stage draws the path and the marker for it. */
+  objective: Objective | null;
   quality: Quality | 'auto';
   onInteract: (h: Hotspot) => void;
   /** Called if the 3D view cannot start or is lost, so the game can fall back to 2D. */
@@ -44,10 +50,38 @@ const VERB: Record<Spot['kind'], string> = { station: 'Play', door: 'Enter', npc
 const phrase = (label: string): string => label.replace(/^(A|An|The) /, (m) => m.toLowerCase());
 export const toHotspot = (s: Spot): Hotspot => ({ id: s.id, kind: s.kind, x: s.x, label: s.label, ref: s.ref, lines: s.lines, links: s.links, reach: s.reach, lift: s.y });
 
+/** Light levels. The picture is cut into bands from these, so they decide how much of the world is paper, dots or ink. */
+const QUAY_LIGHT = { sun: 18, hemi: 4.8, fill: 3.5 };
+const ROOM_LIGHT = { hemi: 4.4, fill: 7 };
+
+const TUTORIAL_KEY = 'tideweight/tutorial';
+function tutorialSeen(): boolean {
+  try {
+    return localStorage.getItem(TUTORIAL_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function rememberTutorial(): void {
+  try {
+    localStorage.setItem(TUTORIAL_KEY, '1');
+  } catch {
+    // a private window: the tutorial simply shows again next time
+  }
+}
+
 const GLYPH: Record<Spot['kind'], string> = { station: '◆', door: '▲', npc: '…', relic: '✶', link: '●', look: '●' };
 
+/** The four steps of the first-minute tutorial. Each one finishes by itself when the player does the thing. */
+const COACH: ((touch: boolean) => JSX.Element)[] = [
+  (t) => (t ? <>Drag the <b>left stick</b> to walk.</> : <>Walk with <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or the arrow keys.</>),
+  (t) => (t ? <>Drag the <b>right side</b> of the picture to look around.</> : <>Look around: drag the mouse, or press <kbd>←</kbd><kbd>→</kbd>.</>),
+  (t) => (t ? <>Tap <b>Jump</b>. Push the stick to its edge to run.</> : <>Hold <kbd>Shift</kbd> to run and press <kbd>Space</kbd> to jump.</>),
+  (t) => (t ? <>Follow the <b>red path</b> to the red door, then tap <b>Use</b>.</> : <>Follow the <b>red path</b> to the red door, then press <kbd>E</kbd>.</>),
+];
+
 export const Stage3D = memo(
-  forwardRef<Stage3DHandle, Props>(function Stage3D({ room, from, frozen, found, done, locked, sweep, lit, quality, onInteract, onFail }, ref) {
+  forwardRef<Stage3DHandle, Props>(function Stage3D({ room, from, frozen, found, done, locked, sweep, lit, quality, objective, onInteract, onFail }, ref) {
     const wrap = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
     const labels = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -55,9 +89,19 @@ export const Stage3D = memo(
     const [sweeping, setSweeping] = useState(false);
     const [qualityNow, setQualityNow] = useState<Quality>('high');
     const [failed, setFailed] = useState(false);
+    const [goalDist, setGoalDist] = useState<number | null>(null);
+    const [coach, setCoach] = useState<number>(() => (tutorialSeen() ? -1 : 0));
+    const [idle, setIdle] = useState(false);
+    const coachRef = useRef(coach);
+    coachRef.current = coach;
+    const touch = useMemo(() => typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches, []);
+    const finishCoach = useCallback((to = -1) => {
+      setCoach(to);
+      if (to === -1) rememberTutorial();
+    }, []);
 
-    const latest = useRef({ room, from, frozen, found, done, locked, lit, quality, onInteract });
-    latest.current = { room, from, frozen, found, done, locked, lit, quality, onInteract };
+    const latest = useRef({ room, from, frozen, found, done, locked, lit, quality, objective, onInteract });
+    latest.current = { room, from, frozen, found, done, locked, lit, quality, objective, onInteract };
     const sweepRef = useRef(false);
     const failRef = useRef(onFail);
     failRef.current = onFail;
@@ -104,12 +148,18 @@ export const Stage3D = memo(
       const mats = makeMats();
       const harbor: Harbor = buildHarbor(mats, SUN_DIR, 0.0125);
       gfx.scene.add(harbor.group);
-      if (new URLSearchParams(location.search).get('debug')) gfx.setDebug(true);
-      gfx.sun.intensity = 30;
-      gfx.hemi.intensity = 4.5;
-      gfx.fill.intensity = 7;
+      if (new URLSearchParams(location.search).get('debug')) {
+        gfx.setDebug(true);
+        (window as unknown as { __tw?: Gfx }).__tw = gfx;
+      }
+      gfx.sun.intensity = QUAY_LIGHT.sun;
+      gfx.hemi.intensity = QUAY_LIGHT.hemi;
+      gfx.fill.intensity = QUAY_LIGHT.fill;
 
+      const guide: Guide = makeGuide(reduced);
+      gfx.scene.add(guide.group);
       const player: Lamplighter = makeLamplighter(mats);
+      bakeWorld(player.group, (dt, t) => player.update(dt, 4, true, t));
       const kernel: Kernel3 = makeKernel(mats);
       gfx.scene.add(player.group, kernel.group);
       const interiors = new Map<BuildingId, Interior>();
@@ -128,6 +178,16 @@ export const Stage3D = memo(
       // a tap of Space is remembered until the next frame, so a slow frame cannot lose it
       let jumpQueued = false;
       let fadeGoal = 1;
+      let goalKey: string | null = '\0';
+      let moveAcc = 0;
+      let yawAcc = 0;
+      let prevYaw = cam.yaw;
+      let ranAcc = 0;
+      let idleFor = 0;
+      let idleShown = false;
+      let distTick = 0;
+      let jumpedOnce = false;
+      const arrow = el.querySelector<HTMLElement>('.goalarrow');
       let pending: { room: RoomId; from: RoomId | null } | null = { room: latest.current.room, from: latest.current.from };
       gfx.fade = 0;
 
@@ -143,6 +203,7 @@ export const Stage3D = memo(
       };
 
       const swap = (r: RoomId, from: RoomId | null) => {
+        const changed = r !== roomNow;
         roomNow = r;
         spots = SPOTS[r];
         harbor.group.visible = r === 'quay';
@@ -155,8 +216,8 @@ export const Stage3D = memo(
           gfx.sun.visible = true;
           cam.pitch = 0.28;
           cam.dist = 7.2;
-          gfx.hemi.intensity = 4.5;
-          gfx.fill.intensity = 7;
+          gfx.hemi.intensity = QUAY_LIGHT.hemi;
+          gfx.fill.intensity = QUAY_LIGHT.fill;
           bgFog.density = 0.0125;
           bgFog.color.setScalar(1.25);
           const d = from && from !== 'quay' ? doorFront(from as BuildingId) : START;
@@ -175,8 +236,8 @@ export const Stage3D = memo(
           const { w, d } = INTERIOR[id];
           inside = (x, z) => Math.abs(x) < w / 2 - 0.7 && Math.abs(z) < d / 2 - 0.7;
           gfx.sun.visible = false;
-          gfx.fill.intensity = 0;
-          gfx.hemi.intensity = 3.2;
+          gfx.fill.intensity = ROOM_LIGHT.fill;
+          gfx.hemi.intensity = ROOM_LIGHT.hemi;
           cam.pitch = 0.3;
           cam.dist = 8.4;
           bgFog.density = 0.014;
@@ -185,6 +246,11 @@ export const Stage3D = memo(
           place(sp.x, sp.z, sp.ry);
         }
         walkTarget = null;
+        guide.setWorld(colliders, inside);
+        guide.setGoal(null);
+        goalKey = '\0';
+        prevYaw = cam.yaw;
+        if (changed && coachRef.current >= 0) finishCoach(-1);
         setNearId(null);
       };
 
@@ -337,11 +403,15 @@ export const Stage3D = memo(
       const slow: number[] = [];
       let lastQualityCheck = 0;
       const look = new Vector3();
+      const UP = new Vector3(0, 1, 0);
+      const kOff = new Vector3();
+      const kTarget = new Vector3();
       const proj = new Vector3();
       const tmpEuler = new Euler();
       let nearNow: string | null = null;
       let stepClock = 0;
       let sweepK = 0;
+      let statTick = 0;
 
       const frame = (now: number) => {
         const rawDt = (now - last) / 1000;
@@ -351,12 +421,12 @@ export const Stage3D = memo(
         const L = latest.current;
 
         // adapt quality from the real frame time
-        slow.push(rawDt);
+        slow.push(Math.min(rawDt, 0.1)); // a stalled or hidden tab is not a reason to lower the quality
         if (slow.length > 60) slow.shift();
         if (L.quality === 'auto' && t - lastQualityCheck > 2.5 && slow.length >= 40) {
           lastQualityCheck = t;
           const avg = slow.reduce((a, b) => a + b, 0) / slow.length;
-          if (avg > 0.036 && gfx.quality !== 'low') {
+          if (avg > 0.021 && gfx.quality !== 'low') {
             gfx.setQuality(gfx.quality === 'high' ? 'medium' : 'low');
             setQualityNow(gfx.quality);
             slow.length = 0;
@@ -413,6 +483,25 @@ export const Stage3D = memo(
         const jump = jumpQueued && !frozen;
         jumpQueued = false;
         step(body, { moveX: mx, moveZ: mz, run, jump }, cam.yaw, dt, colliders, inside);
+        if (!frozen) {
+          moveAcc += body.speed * dt;
+          if (keys.has('shift') && body.speed > 3) ranAcc += dt;
+          if (jump) jumpedOnce = true;
+          const dyaw = Math.abs(Math.atan2(Math.sin(cam.yaw - prevYaw), Math.cos(cam.yaw - prevYaw)));
+          yawAcc += dyaw;
+          const c = coachRef.current;
+          if (c === 0 && moveAcc >= 4) finishCoach(1);
+          else if (c === 1 && yawAcc >= 0.8) finishCoach(2);
+          else if (c === 2 && (jumpedOnce || ranAcc >= 1.2)) finishCoach(3);
+        }
+        prevYaw = cam.yaw;
+        if (frozen || Math.abs(mx) + Math.abs(mz) > 0.05 || walkTarget) idleFor = 0;
+        else idleFor += dt;
+        const wantIdle = idleFor > 16 && coachRef.current < 0;
+        if (wantIdle !== idleShown) {
+          idleShown = wantIdle;
+          setIdle(wantIdle);
+        }
         stepClock += dt * body.speed;
         if (stepClock > 1.9 && body.grounded) {
           stepClock = 0;
@@ -424,8 +513,8 @@ export const Stage3D = memo(
         player.group.rotation.y = body.face;
         player.update(dt, body.speed, body.grounded, t);
         look.set(body.pos.x + Math.sin(body.face) * 3, 1.5, body.pos.z + Math.cos(body.face) * 3);
-        const off = new Vector3(-1.0, 1.9 + Math.sin(t * 1.3) * 0.12, -0.9).applyAxisAngle(new Vector3(0, 1, 0), body.face);
-        kernel.update(dt, t, new Vector3(body.pos.x + off.x, off.y, body.pos.z + off.z), look, false);
+        kOff.set(-1.0, 1.9 + Math.sin(t * 1.3) * 0.12, -0.9).applyAxisAngle(UP, body.face);
+        kernel.update(dt, t, kTarget.set(body.pos.x + kOff.x, kOff.y, body.pos.z + kOff.z), look, false);
         const near = nearestSpot(roomNow, body.pos.x, body.pos.z);
         if ((near?.id ?? null) !== nearNow) {
           nearNow = near?.id ?? null;
@@ -454,9 +543,44 @@ export const Stage3D = memo(
         void tmpEuler;
         gfx.followShadow(body.pos);
 
+        // the path and the marker for the current objective
+        const ob = L.objective;
+        const wantKey = ob?.target && ob.target.room === roomNow && pending === null ? ob.target.spot : null;
+        if (wantKey !== goalKey) {
+          goalKey = wantKey;
+          const sp = wantKey ? spots.find((x) => x.id === wantKey) : undefined;
+          if (sp) guide.setGoal({ x: sp.x, z: sp.z, y: sp.y + 1.3, height: roomNow === 'quay' ? 18 : INTERIOR[roomNow as BuildingId].h - 0.6 });
+          else guide.setGoal(null);
+        }
+        guide.update(dt, t, body.pos);
+        if ((distTick += dt) > 0.5) {
+          distTick = 0;
+          setGoalDist(guide.distance === null ? null : Math.round(guide.distance));
+        }
+
         // labels over the picture
         const W = el.clientWidth;
         const H = el.clientHeight;
+        const gl = guide.goal;
+        if (arrow) {
+          let showArrow = false;
+          if (gl && !L.frozen) {
+            proj.set(gl.x, gl.y, gl.z).project(gfx.camera);
+            const behind = proj.z > 1;
+            let nx = behind ? -proj.x : proj.x;
+            let ny = behind ? -proj.y : proj.y;
+            if (behind || Math.abs(nx) > 0.88 || Math.abs(ny) > 0.84) {
+              const m = Math.max(Math.abs(nx) / 0.88, Math.abs(ny) / 0.84, 0.0001);
+              nx /= m;
+              ny /= m;
+              showArrow = true;
+              arrow.style.transform = `translate(${((nx + 1) / 2) * W}px, ${((1 - ny) / 2) * H}px) translate(-50%, -50%)`;
+              (arrow.firstElementChild as HTMLElement | null)?.style.setProperty('transform', `rotate(${Math.atan2(nx, ny)}rad)`);
+              arrow.dataset.dist = `${Math.round(guide.distance ?? 0)} m`;
+            }
+          }
+          arrow.style.display = showArrow ? '' : 'none';
+        }
         for (const s of spots) {
           const b = labels.current[s.id];
           if (!b) continue;
@@ -466,6 +590,7 @@ export const Stage3D = memo(
           const reveal = s.kind !== 'relic' || (sweepRef.current && !isFound) || (!isFound && d < s.reach * 2.4);
           const visible = reveal && proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1 && d < (s.kind === 'relic' ? 22 : 110);
           b.style.display = visible ? '' : 'none';
+          if (visible && s.id === goalKey) b.dataset.dist = `${Math.round(guide.distance ?? 0)} m`;
           if (visible) {
             const px = Math.min(W - 60, Math.max(60, ((proj.x + 1) / 2) * W));
             const py = Math.min(H - 40, Math.max(40, ((1 - proj.y) / 2) * H));
@@ -478,6 +603,19 @@ export const Stage3D = memo(
         wrap.current?.setAttribute('data-yaw', cam.yaw.toFixed(2));
         wrap.current?.setAttribute('data-py', body.pos.y.toFixed(2));
         wrap.current?.setAttribute('data-room', roomNow);
+        if ((statTick = (statTick + 1) % 12) === 0 && wrap.current) {
+          const st = gfx.stats;
+          wrap.current.setAttribute('data-calls', String(st.calls));
+          wrap.current.setAttribute('data-scene-calls', String(st.sceneCalls));
+          wrap.current.setAttribute('data-tris', String(st.tris));
+          wrap.current.setAttribute('data-passes', String(st.passes));
+          wrap.current.setAttribute('data-geoms', String(st.geometries));
+          wrap.current.setAttribute('data-textures', String(st.textures));
+          wrap.current.setAttribute('data-programs', String(st.programs));
+          wrap.current.setAttribute('data-cpu', st.cpuMs.toFixed(2));
+          wrap.current.setAttribute('data-goal', guide.goal && goalKey ? goalKey : '');
+          wrap.current.setAttribute('data-goal-dist', guide.distance === null ? '' : String(Math.round(guide.distance)));
+        }
         wrap.current?.setAttribute('data-fps', String(Math.round(1 / Math.max(0.001, slow.reduce((a, b) => a + b, 0) / Math.max(1, slow.length)))));
         gfx.render(dt);
         raf = requestAnimationFrame(frame);
@@ -505,7 +643,7 @@ export const Stage3D = memo(
         api.current = null;
         gfx.dispose();
       };
-    }, []);
+    }, [finishCoach]);
 
     // react to room, progress and quality changes
     useEffect(() => {
@@ -516,6 +654,7 @@ export const Stage3D = memo(
     }, [lit]);
 
     const spots = SPOTS[room];
+    const goalId = objective?.target && objective.target.room === room ? objective.target.spot : null;
     const nearSpot = spots.find((s) => s.id === nearId);
     const use = useCallback((s: Spot) => {
       if (latest.current.frozen) return;
@@ -565,7 +704,7 @@ export const Stage3D = memo(
                   }}
                   type="button"
                   tabIndex={-1}
-                  className={`hs3 hs3--${s.kind} is-${st}${s.id === nearId ? ' is-near' : ''}`}
+                  className={`hs3 hs3--${s.kind} is-${st}${s.id === nearId ? ' is-near' : ''}${s.id === goalId ? ' is-goal' : ''}`}
                   aria-label={st === 'locked' ? `${s.label} (locked)` : st === 'found' ? `${s.label} (found)` : st === 'done' ? `${s.label} (cleared)` : s.label}
                   onClick={() => use(s)}
                 >
@@ -575,6 +714,29 @@ export const Stage3D = memo(
               );
             })}
           </div>
+          {objective ? <ObjectiveTracker obj={objective} distance={goalId ? goalDist : null} /> : null}
+          <div className="goalarrow" aria-hidden="true" style={{ display: 'none' }}>
+            <span />
+          </div>
+          {coach >= 0 && !frozen ? (
+            <div className="coach" role="status" aria-live="polite">
+              <p className="coach__count">
+                Training {coach + 1}/4
+              </p>
+              <p className="coach__text">{COACH[coach]!(touch)}</p>
+              <button type="button" className="coach__skip" onClick={() => finishCoach(-1)}>
+                Skip
+              </button>
+            </div>
+          ) : null}
+          {coach < 0 && idle && !frozen && objective ? (
+            <div className="coach coach--hint" role="status" aria-live="polite">
+              <p className="coach__count">Stuck?</p>
+              <p className="coach__text">
+                {objective.title}. {objective.target ? 'Follow the red path.' : objective.hint}
+              </p>
+            </div>
+          ) : null}
           {nearSpot ? (
             <div className="stage3d__prompt" aria-hidden="true">
               <kbd>E</kbd>

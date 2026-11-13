@@ -1,28 +1,32 @@
 /**
- * The renderer: Three.js plus a post-processing pipeline that turns a lit 3D scene into an engraving.
+ * The renderer: Three.js plus one stylising pass that turns a lit 3D scene into a printed comic poster.
  *
- *   scene  ->  HDR colour + depth  ->  bloom (bright parts only)  ->  stylise  ->  screen
+ *   scene  ->  HDR colour + depth  ->  stylise  ->  screen
  *
- * "Stylise" is where the look comes from. Light level decides how much ink goes on the paper: bare paper in the light,
- * single hatching in the half-light, cross-hatching, then dense lines, then solid ink. Outlines are drawn wherever the depth
- * jumps (silhouettes) or its slope changes (creases). Everything is black ink on warm paper; there is no colour anywhere.
+ * "Stylise" is where the look comes from (see docs/STYLE_GUIDE.md). A pixel belongs to one of two families, chosen by its hue:
+ * neutral (paper, ink) or red. Light level is cut into hard cel bands, and each band is printed with a halftone screen: bare colour
+ * in the light, round dots in the half-light, denser dots, then solid ink. Thick black outlines are drawn wherever the depth jumps
+ * (silhouettes) or its slope changes (creases). Nothing blends or glows: no bloom, no film grain, no per-frame noise.
  *
- * Quality tiers trade resolution, shadows and bloom for speed, and the game picks one from the measured frame time.
+ * Quality tiers trade resolution and shadows for speed, and the game steps down a tier when the measured frame time is too long.
  */
 import {
   BackSide,
+  BufferGeometry,
   Color,
   DepthTexture,
   DirectionalLight,
   FloatType,
   FogExp2,
+  Float32BufferAttribute,
   HalfFloatType,
   HemisphereLight,
   LinearFilter,
   Mesh,
+  NearestFilter,
   NoToneMapping,
   OrthographicCamera,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   PerspectiveCamera,
   RGBAFormat,
   Scene,
@@ -32,20 +36,26 @@ import {
   Vector3,
   WebGLRenderTarget,
   WebGLRenderer,
-  BufferGeometry,
-  Float32BufferAttribute,
-  NearestFilter,
 } from 'three';
 
 export type Quality = 'high' | 'medium' | 'low';
 
 /** Where the low sun is: far off to the north-east, so shadows fall toward the player and the sun sits in the picture. */
-export const SUN_DIR = new Vector3(0.42, 0.27, -0.86).normalize();
+export const SUN_DIR = new Vector3(0.42, 0.5, -0.8).normalize();
 
-const TIERS: Record<Quality, { pr: number; shadows: boolean; shadowMap: number; bloom: boolean; bloomScale: number }> = {
-  high: { pr: 1.75, shadows: true, shadowMap: 2048, bloom: true, bloomScale: 0.5 },
-  medium: { pr: 1.25, shadows: true, shadowMap: 1024, bloom: true, bloomScale: 0.35 },
-  low: { pr: 1, shadows: false, shadowMap: 512, bloom: false, bloomScale: 0.25 },
+/** pr: the most device pixels per CSS pixel we will draw (the biggest single lever on a laptop's GPU). */
+const TIERS: Record<Quality, { pr: number; shadows: boolean; shadowMap: number; shadowSize: number }> = {
+  high: { pr: 1.5, shadows: true, shadowMap: 1024, shadowSize: 38 },
+  medium: { pr: 1.25, shadows: true, shadowMap: 1024, shadowSize: 30 },
+  low: { pr: 1, shadows: false, shadowMap: 512, shadowSize: 30 },
+};
+
+/** The five colours of the whole picture. */
+export const PALETTE = {
+  ink: new Color(0.043, 0.043, 0.051),
+  paper: new Color(0.96, 0.945, 0.915),
+  red: new Color(0.89, 0.07, 0.165),
+  redDeep: new Color(0.56, 0.043, 0.1),
 };
 
 /** A fullscreen triangle: cheaper than a quad and has no diagonal seam. */
@@ -61,120 +71,104 @@ varying vec2 vUv;
 void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }
 `;
 
-const BRIGHT_FRAG = /* glsl */ `
-uniform sampler2D tColor;
-varying vec2 vUv;
-void main() {
-  vec3 c = texture2D(tColor, vUv).rgb;
-  float m = max(c.r, max(c.g, c.b));
-  gl_FragColor = vec4(c * smoothstep(1.15, 2.4, m), 1.0);
-}
-`;
-
-const BLUR_FRAG = /* glsl */ `
-uniform sampler2D tColor;
-uniform vec2 dir;
-varying vec2 vUv;
-void main() {
-  vec3 s = texture2D(tColor, vUv).rgb * 0.227027;
-  s += texture2D(tColor, vUv + dir * 1.3846).rgb * 0.316216 + texture2D(tColor, vUv - dir * 1.3846).rgb * 0.316216;
-  s += texture2D(tColor, vUv + dir * 3.2308).rgb * 0.070270 + texture2D(tColor, vUv - dir * 3.2308).rgb * 0.070270;
-  gl_FragColor = vec4(s, 1.0);
-}
-`;
-
 const STYLE_FRAG = /* glsl */ `
 uniform sampler2D tColor;
 uniform sampler2D tDepth;
-uniform sampler2D tBloom;
 uniform vec2 res;
 uniform float near;
 uniform float far;
-uniform float time;
 uniform float pr;
-uniform float bloomAmt;
 uniform float exposure;
 uniform float fade;
+uniform float wipeDir;
 uniform float debug;
 uniform vec3 paper;
 uniform vec3 ink;
+uniform vec3 red;
+uniform vec3 redDeep;
 varying vec2 vUv;
 
-float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
-float vnoise(vec2 p) {
-  vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y);
-}
 float invZ(vec2 uv) {
   float d = texture2D(tDepth, uv).x;
   if (d > 0.99999) return 0.0;
   return (far - d * (far - near)) / (near * far);
 }
-// one family of parallel ink strokes: 1 on a stroke, 0 between. thick is the share of each period that is ink.
-float strokes(vec2 p, float ang, float spacing, float thick) {
-  vec2 dir = vec2(cos(ang), sin(ang));
-  float f = abs(fract(dot(p, dir) / spacing) - 0.5) * 2.0;
-  float w = 1.0 - thick;
-  float aa = 1.2 / spacing;
-  return smoothstep(w - aa, w + aa, f);
+
+// A halftone screen at 45 degrees. a is how much ink (0 none, 1 solid); returns 1 on a dot. p is in CSS pixels.
+float dots(vec2 p, float a, float cell) {
+  if (a <= 0.002) return 0.0;
+  if (a >= 0.998) return 1.0;
+  vec2 q = vec2(p.x + p.y, p.x - p.y) * 0.70710678 / cell;
+  float d = length(fract(q) - 0.5);
+  float r = sqrt(a) * 0.74;
+  float aa = 0.8 / (cell * pr);
+  return 1.0 - smoothstep(r - aa, r + aa, d);
 }
 
 void main() {
   vec2 px = 1.0 / res;
-  vec3 hdr = texture2D(tColor, vUv).rgb;
-  hdr += texture2D(tBloom, vUv).rgb * bloomAmt;
-  float L = dot(hdr, vec3(0.2126, 0.7152, 0.0722));
-  if (debug > 0.5 && debug < 1.5) { gl_FragColor = vec4(vec3(1.0 - exp(-L * exposure)), 1.0); return; }
-  L = 1.0 - exp(-L * exposure);
+  vec3 c = texture2D(tColor, vUv).rgb;
+  float lum = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  float L = 1.0 - exp(-lum * exposure);
+  if (debug > 0.5 && debug < 1.5) { gl_FragColor = vec4(vec3(L), 1.0); return; }
 
-  // ---- outlines: where depth jumps, and where its slope changes
-  float w = pr * 1.1;
-  float c = invZ(vUv);
+  // which family: red things stay red, everything else is paper and ink
+  float rd = clamp((c.r - max(c.g, c.b)) / max(c.r, 0.0001), 0.0, 1.0);
+  float isRed = smoothstep(0.5, 0.56, rd) * step(0.02, lum);
+
+  // ---- outlines: thick black where the depth jumps, and where its slope changes
+  float w = pr * 1.35;
+  float z0 = invZ(vUv);
   float l = invZ(vUv + vec2(-px.x, 0.0) * w), r = invZ(vUv + vec2(px.x, 0.0) * w);
   float u = invZ(vUv + vec2(0.0, px.y) * w), d = invZ(vUv + vec2(0.0, -px.y) * w);
   float edge = 0.0;
-  if (c > 0.0 || l > 0.0 || r > 0.0 || u > 0.0 || d > 0.0) {
-    float jump = max(max(abs(c - l), abs(c - r)), max(abs(c - u), abs(c - d))) / max(c, max(max(l, r), max(u, d))) ;
-    float crease = abs(l + r + u + d - 4.0 * c) / max(c, 0.002);
-    float nearFade = smoothstep(0.004, 0.03, c);
-    edge = max(smoothstep(0.045, 0.10, jump), smoothstep(0.07, 0.16, crease) * nearFade);
+  if (z0 > 0.0 || l > 0.0 || r > 0.0 || u > 0.0 || d > 0.0) {
+    float jump = max(max(abs(z0 - l), abs(z0 - r)), max(abs(z0 - u), abs(z0 - d))) / max(z0, max(max(l, r), max(u, d)));
+    float crease = abs(l + r + u + d - 4.0 * z0) / max(z0, 0.002);
+    float nearFade = smoothstep(0.004, 0.03, z0);
+    edge = max(smoothstep(0.04, 0.085, jump), smoothstep(0.07, 0.15, crease) * nearFade);
   }
-  // soft tonal edges (a lit face against a shaded one)
-  vec3 hl = texture2D(tColor, vUv + vec2(-px.x, 0.0) * w).rgb, hr = texture2D(tColor, vUv + vec2(px.x, 0.0) * w).rgb;
-  vec3 hu = texture2D(tColor, vUv + vec2(0.0, px.y) * w).rgb, hd = texture2D(tColor, vUv + vec2(0.0, -px.y) * w).rgb;
-  float tone = length((hr - hl) * 0.5) + length((hu - hd) * 0.5);
-  edge = max(edge, smoothstep(0.55, 1.1, tone) * 0.55);
-
   if (debug > 1.5 && debug < 2.5) { gl_FragColor = vec4(vec3(1.0 - edge), 1.0); return; }
-  // ---- hatching: more ink where there is less light
+
+  // ---- cel bands, printed as halftone
   vec2 p = gl_FragCoord.xy / pr;
-  p += (vec2(vnoise(p * 0.045), vnoise(p * 0.045 + 31.7)) - 0.5) * 3.2; // a hand that is not quite steady
-  float sp = 4.6;
-  float a = strokes(p, 0.785, sp, clamp((0.88 - L) * 1.35, 0.0, 0.62));
-  float b = strokes(p, -0.785, sp, clamp((0.58 - L) * 1.7, 0.0, 0.62));
-  float h = strokes(p, 0.02, sp * 0.9, clamp((0.36 - L) * 2.3, 0.0, 0.7));
-  float solid = smoothstep(0.17, 0.05, L);
-  float inkAmt = max(max(a, b), max(h, solid));
-  if (debug > 2.5) edge = 0.0;
-  inkAmt = max(inkAmt, edge);
+  vec2 q = vUv - 0.5;
+  float vig = smoothstep(0.95, 0.25, length(q * vec2(1.0, 0.85)));
+  float Lv = L * mix(0.55, 1.0, vig);
+  float b0 = smoothstep(0.075, 0.095, Lv);   // above core shadow
+  float b1 = smoothstep(0.255, 0.285, Lv);   // above the dense half-tone
+  float b2 = smoothstep(0.52, 0.55, Lv);     // above the light half-tone
 
-  // paper, with a little fibre and a little grain
-  float fibre = vnoise(gl_FragCoord.xy * 0.35 / pr) * 0.05 + vnoise(gl_FragCoord.xy * 0.03 / pr) * 0.05;
-  vec3 pap = paper * (1.0 - fibre);
-  vec3 col = mix(pap, ink, clamp(inkAmt, 0.0, 1.0));
-  // the brightest light burns the paper white and the ink away
-  float glow = smoothstep(0.93, 1.0, L);
-  col = mix(col, vec3(0.985, 0.98, 0.955), glow);
+  // ink coverage for neutral things, and for red things
+  float covN = mix(1.0, 0.64, b0);
+  covN = mix(covN, 0.30, b1);
+  covN = mix(covN, 0.0, b2);
+  float covR = mix(1.0, 0.7, b0);
+  covR = mix(covR, 0.34, b1);
+  covR = mix(covR, 0.0, b2);
+  float cov = mix(covN, covR, isRed);
+  float cell = 5.2;
+  float dn = dots(p, cov, cell);
 
-  float vig = smoothstep(1.25, 0.35, length((vUv - 0.5) * vec2(1.0, 0.82)) * 1.45);
-  col *= mix(0.55, 1.0, vig);
-  col += (hash(gl_FragCoord.xy + floor(time * 24.0)) - 0.5) * 0.035;
-  col = mix(vec3(0.05), col, fade);
+  vec3 base = mix(paper, red, isRed);
+  vec3 col = mix(base, mix(ink, redDeep, isRed * (1.0 - step(0.9, cov))), dn);
+
+  col = mix(col, ink, edge);
+
+  // ---- place changes: a slanted wipe, black with a red leading edge
+  if (fade < 0.999) {
+    float s = (wipeDir > 0.0 ? vUv.x : 1.0 - vUv.x) * 0.72 + vUv.y * 0.28;
+    float front = fade * 1.3 - 0.15;
+    float shown = step(s, front - 0.06);
+    float bar = step(s, front) * (1.0 - shown);
+    col = mix(ink, col, shown);
+    col = mix(col, red, bar);
+  }
   gl_FragColor = vec4(col, 1.0);
 }
 `;
 
-/** The sky: a gradient, a low sun, and cloud banks that drift. Written as HDR so the sun blooms. */
+/** The sky: a red field fading to black overhead, slanted rays turning around a pale sun. Written as HDR so the bands land where we want them. */
 const SKY_VERT = /* glsl */ `
 varying vec3 vDir;
 void main() { vDir = normalize(position); vec4 p = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * p; gl_Position.z = gl_Position.w; }
@@ -182,33 +176,42 @@ void main() { vDir = normalize(position); vec4 p = modelViewMatrix * vec4(positi
 const SKY_FRAG = /* glsl */ `
 uniform float time;
 uniform vec3 sunDir;
-uniform float dusk;
 varying vec3 vDir;
-float hash(vec2 p) { p = fract(p * vec2(127.1, 311.7)); p += dot(p, p + 19.19); return fract(p.x * p.y); }
-float vnoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), f.x), f.y); }
-float fbm(vec2 p) { float s = 0.0, a = 0.5; for (int i = 0; i < 5; i++) { s += a * vnoise(p); p = p * 2.03 + 7.1; a *= 0.5; } return s; }
 void main() {
   vec3 d = normalize(vDir);
-  float h = clamp(d.y, -0.2, 1.0);
-  float sky = mix(1.55, 0.05, pow(clamp(h, 0.0, 1.0), 0.5));          // pale mist at the horizon, near black overhead
-  sky = mix(sky, 1.3, smoothstep(0.0, -0.2, d.y));
-  // cloud banks on a plane above us
-  vec2 uv = d.xz / (d.y + 0.35) * 1.6 + vec2(time * 0.012, time * 0.004);
-  float n = fbm(uv * 1.3);
-  float cover = smoothstep(0.42, 0.78, n) * smoothstep(-0.02, 0.28, d.y);
-  float lit = 0.5 + 0.5 * dot(normalize(vec2(d.x, d.z) + 0.001), normalize(sunDir.xz + 0.001));
-  float cloud = mix(0.3, 1.9, lit * (0.4 + 0.6 * fbm(uv * 3.1 + 4.0)));
-  float v = mix(sky, cloud, cover * 0.85);
-  // the sun, low and enormous
-  float s = max(dot(d, normalize(sunDir)), 0.0);
-  float disc = smoothstep(0.9965, 0.9985, s);
-  float halo = pow(s, 28.0) * 0.8 + pow(s, 6.0) * 0.25;
-  v += halo * (1.0 - cover * 0.6);
-  vec3 col = vec3(v) + vec3(disc * 6.0);
+  vec3 S = normalize(sunDir);
+  float h = clamp(d.y, 0.0, 1.0);
+  float base = mix(1.05, 0.17, pow(h, 0.5));
+  // rays around the sun, turning very slowly
+  vec3 u = normalize(cross(S, vec3(0.0, 1.0, 0.0)));
+  vec3 v = cross(S, u);
+  float ang = atan(dot(d, v), dot(d, u));
+  float sd = max(dot(d, S), 0.0);
+  float tri = abs(fract(ang * 11.0 / 6.2831853 + time * 0.006) - 0.5) * 2.0;
+  float ray = smoothstep(0.47, 0.53, tri);
+  base *= mix(0.6, 1.0, ray) ;
+  // a ring of paler sky close to the sun
+  base += pow(sd, 5.0) * 0.5;
+  vec3 col = vec3(base * 4.0, base * 0.26, base * 0.3);
+  // below the horizon the sea takes over, but keep a pale band so the horizon line reads
+  col = mix(col, vec3(1.3), smoothstep(0.0, -0.18, d.y));
+  float disc = smoothstep(0.9968, 0.9978, sd);
+  col = mix(col, vec3(7.0), disc);
   gl_FragColor = vec4(col, 1.0);
 }
 `;
+
+export interface GfxStats {
+  calls: number;
+  tris: number;
+  sceneCalls: number;
+  sceneTris: number;
+  passes: number;
+  geometries: number;
+  textures: number;
+  programs: number;
+  cpuMs: number;
+}
 
 export interface Gfx {
   renderer: WebGLRenderer;
@@ -219,8 +222,10 @@ export interface Gfx {
   fill: DirectionalLight;
   quality: Quality;
   time: number;
-  /** 0 = black, 1 = the picture. Used for the fade between places. */
+  /** 0 = black, 1 = the picture. Used for the wipe between places. */
   fade: number;
+  /** +1 wipes in from the left, -1 from the right. */
+  wipeDir: number;
   setQuality(q: Quality): void;
   /** Show the lit scene without the ink, for tuning. */
   setDebug(on: boolean): void;
@@ -230,31 +235,31 @@ export interface Gfx {
   followShadow(p: Vector3): void;
   /** Average milliseconds per frame over the last second, or 0 before enough frames. */
   frameMs(): number;
+  /** What the last frame cost: draw calls, triangles, passes, and the CPU time spent submitting it. */
+  stats: GfxStats;
   dispose(): void;
 }
 
 export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
   const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance', stencil: false });
   renderer.toneMapping = NoToneMapping;
-  renderer.shadowMap.type = PCFSoftShadowMap;
+  renderer.shadowMap.type = PCFShadowMap;
   renderer.setClearColor(new Color(0x000000), 1);
+  renderer.info.autoReset = false; // the picture is more than one pass; count them all
+  const stats: GfxStats = { calls: 0, tris: 0, sceneCalls: 0, sceneTris: 0, passes: 0, geometries: 0, textures: 0, programs: 0, cpuMs: 0 };
 
   const scene = new Scene();
   scene.fog = new FogExp2(new Color(1.25, 1.25, 1.22), 0.0125);
-  const camera = new PerspectiveCamera(52, 16 / 9, 0.3, 700);
+  const camera = new PerspectiveCamera(52, 16 / 9, 0.3, 520);
   const sunDir = SUN_DIR.clone();
 
   const sun = new DirectionalLight(0xffffff, 3.4);
   sun.position.copy(sunDir).multiplyScalar(80);
   sun.castShadow = true;
-  sun.shadow.bias = -0.0004;
-  sun.shadow.normalBias = 0.04;
-  sun.shadow.camera.left = -46;
-  sun.shadow.camera.right = 46;
-  sun.shadow.camera.top = 46;
-  sun.shadow.camera.bottom = -46;
+  sun.shadow.bias = -0.0005;
+  sun.shadow.normalBias = 0.05;
   sun.shadow.camera.near = 1;
-  sun.shadow.camera.far = 200;
+  sun.shadow.camera.far = 160;
   scene.add(sun, sun.target);
   const hemi = new HemisphereLight(0xdcdcdc, 0x2b2b2b, 0.9);
   scene.add(hemi);
@@ -263,50 +268,42 @@ export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
   scene.add(fill, fill.target);
 
   // sky dome, always centred on the camera
-  const skyMat = new ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, side: BackSide, depthWrite: false, depthTest: false, fog: false, uniforms: { time: { value: 0 }, sunDir: { value: sunDir.clone() }, dusk: { value: 1 } } });
-  const sky = new Mesh(new SphereGeometry(500, 32, 16), skyMat);
+  const skyMat = new ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, side: BackSide, depthWrite: false, depthTest: false, fog: false, uniforms: { time: { value: 0 }, sunDir: { value: sunDir.clone() } } });
+  const sky = new Mesh(new SphereGeometry(400, 24, 12), skyMat);
   sky.renderOrder = -1000;
   sky.frustumCulled = false;
   scene.add(sky);
 
   const tri = triangle();
   const ortho = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
-  const mats = {
-    bright: new ShaderMaterial({ vertexShader: VERT, fragmentShader: BRIGHT_FRAG, uniforms: { tColor: { value: null } }, depthTest: false, depthWrite: false }),
-    blur: new ShaderMaterial({ vertexShader: VERT, fragmentShader: BLUR_FRAG, uniforms: { tColor: { value: null }, dir: { value: new Vector2() } }, depthTest: false, depthWrite: false }),
-    style: new ShaderMaterial({
-      vertexShader: VERT,
-      fragmentShader: STYLE_FRAG,
-      depthTest: false,
-      depthWrite: false,
-      uniforms: {
-        tColor: { value: null },
-        tDepth: { value: null },
-        tBloom: { value: null },
-        res: { value: new Vector2(1, 1) },
-        near: { value: camera.near },
-        far: { value: camera.far },
-        time: { value: 0 },
-        pr: { value: 1 },
-        bloomAmt: { value: 0.9 },
-        exposure: { value: 1.25 },
-        fade: { value: 1 },
-        debug: { value: 0 },
-        paper: { value: new Color(0.93, 0.915, 0.87) },
-        ink: { value: new Color(0.055, 0.055, 0.06) },
-      },
-    }),
-  };
-
-  const quad = new Mesh(tri, mats.style);
+  const style = new ShaderMaterial({
+    vertexShader: VERT,
+    fragmentShader: STYLE_FRAG,
+    depthTest: false,
+    depthWrite: false,
+    uniforms: {
+      tColor: { value: null },
+      tDepth: { value: null },
+      res: { value: new Vector2(1, 1) },
+      near: { value: camera.near },
+      far: { value: camera.far },
+      pr: { value: 1 },
+      exposure: { value: 1.25 },
+      fade: { value: 1 },
+      wipeDir: { value: 1 },
+      debug: { value: 0 },
+      paper: { value: PALETTE.paper },
+      ink: { value: PALETTE.ink },
+      red: { value: PALETTE.red },
+      redDeep: { value: PALETTE.redDeep },
+    },
+  });
+  const quad = new Mesh(tri, style);
   quad.frustumCulled = false;
   const post = new Scene();
   post.add(quad);
 
   let rtScene: WebGLRenderTarget | null = null;
-  let rtBright: WebGLRenderTarget | null = null;
-  let rtA: WebGLRenderTarget | null = null;
-  let rtB: WebGLRenderTarget | null = null;
   let W = 1;
   let H = 1;
   let quality: Quality = initial;
@@ -314,9 +311,6 @@ export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
 
   function build() {
     rtScene?.dispose();
-    rtBright?.dispose();
-    rtA?.dispose();
-    rtB?.dispose();
     const t = TIERS[quality];
     const pr = Math.min(window.devicePixelRatio || 1, t.pr);
     const w = Math.max(2, Math.floor(W * pr));
@@ -328,19 +322,20 @@ export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
     depth.minFilter = NearestFilter;
     depth.magFilter = NearestFilter;
     rtScene = new WebGLRenderTarget(w, h, { type: HalfFloatType, format: RGBAFormat, minFilter: LinearFilter, magFilter: LinearFilter, depthTexture: depth, depthBuffer: true });
-    const bw = Math.max(2, Math.floor(w * t.bloomScale));
-    const bh = Math.max(2, Math.floor(h * t.bloomScale));
-    const opts = { type: HalfFloatType, format: RGBAFormat, minFilter: LinearFilter, magFilter: LinearFilter, depthBuffer: false };
-    rtBright = new WebGLRenderTarget(bw, bh, opts);
-    rtA = new WebGLRenderTarget(bw, bh, opts);
-    rtB = new WebGLRenderTarget(bw, bh, opts);
-    mats.style.uniforms.res!.value.set(w, h);
-    mats.style.uniforms.pr!.value = pr;
+    style.uniforms.res!.value.set(w, h);
+    style.uniforms.pr!.value = pr;
     renderer.shadowMap.enabled = t.shadows;
     sun.castShadow = t.shadows;
     sun.shadow.mapSize.set(t.shadowMap, t.shadowMap);
+    const s = t.shadowSize;
+    sun.shadow.camera.left = -s;
+    sun.shadow.camera.right = s;
+    sun.shadow.camera.top = s;
+    sun.shadow.camera.bottom = -s;
+    sun.shadow.camera.updateProjectionMatrix();
     sun.shadow.map?.dispose();
     sun.shadow.map = null;
+    // materials must be rebuilt when shadows are switched on or off
     scene.traverse((o) => {
       const m = (o as Mesh).material as { needsUpdate?: boolean } | undefined;
       if (m && !Array.isArray(m)) m.needsUpdate = true;
@@ -359,13 +354,14 @@ export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
     },
     time: 0,
     fade: 1,
+    wipeDir: 1,
     setQuality(q) {
       if (q === quality) return;
       quality = q;
       build();
     },
     setDebug(on) {
-      mats.style.uniforms.debug!.value = on ? Number(new URLSearchParams(location.search).get('debug') ?? 1) : 0;
+      style.uniforms.debug!.value = on ? Number(new URLSearchParams(location.search).get('debug') ?? 1) : 0;
     },
     resize(w, h) {
       W = Math.max(2, w);
@@ -382,6 +378,7 @@ export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
       sun.position.set(x + sunDir.x * 80, sunDir.y * 80, z + sunDir.z * 80);
       sun.target.updateMatrixWorld();
     },
+    stats,
     frameMs() {
       if (frames.length < 30) return 0;
       return frames.reduce((a, b) => a + b, 0) / frames.length;
@@ -391,53 +388,34 @@ export function createGfx(canvas: HTMLCanvasElement, initial: Quality): Gfx {
       gfx.time += dt;
       skyMat.uniforms.time!.value = gfx.time;
       sky.position.copy(camera.position);
-      const tier = TIERS[quality];
+      renderer.info.reset();
       renderer.setRenderTarget(rtScene);
       renderer.clear();
       renderer.render(scene, camera);
-
-      let bloomTex = rtScene!.texture;
-      if (tier.bloom && rtBright && rtA && rtB) {
-        quad.material = mats.bright;
-        mats.bright.uniforms.tColor!.value = rtScene!.texture;
-        renderer.setRenderTarget(rtBright);
-        renderer.render(post, ortho);
-        quad.material = mats.blur;
-        let src = rtBright;
-        for (let i = 0; i < 2; i++) {
-          mats.blur.uniforms.tColor!.value = src.texture;
-          mats.blur.uniforms.dir!.value.set(1 / rtA.width, 0);
-          renderer.setRenderTarget(rtA);
-          renderer.render(post, ortho);
-          mats.blur.uniforms.tColor!.value = rtA.texture;
-          mats.blur.uniforms.dir!.value.set(0, 1 / rtB.height);
-          renderer.setRenderTarget(rtB);
-          renderer.render(post, ortho);
-          src = rtB;
-        }
-        bloomTex = rtB.texture;
-      }
-      const u = mats.style.uniforms;
+      stats.sceneCalls = renderer.info.render.calls;
+      stats.sceneTris = renderer.info.render.triangles;
+      const u = style.uniforms;
       u.tColor!.value = rtScene!.texture;
       u.tDepth!.value = rtScene!.depthTexture;
-      u.tBloom!.value = bloomTex;
-      u.bloomAmt!.value = tier.bloom ? 0.9 : 0;
-      u.time!.value = gfx.time;
       u.near!.value = camera.near;
       u.far!.value = camera.far;
       u.fade!.value = gfx.fade;
-      quad.material = mats.style;
+      u.wipeDir!.value = gfx.wipeDir;
       renderer.setRenderTarget(null);
       renderer.render(post, ortho);
-      frames.push(performance.now() - t0 + dt * 0);
+      stats.passes = 2;
+      stats.calls = renderer.info.render.calls;
+      stats.tris = renderer.info.render.triangles;
+      stats.geometries = renderer.info.memory.geometries;
+      stats.textures = renderer.info.memory.textures;
+      stats.programs = renderer.info.programs?.length ?? 0;
+      stats.cpuMs = performance.now() - t0;
+      frames.push(stats.cpuMs);
       if (frames.length > 90) frames.shift();
     },
     dispose() {
       rtScene?.dispose();
-      rtBright?.dispose();
-      rtA?.dispose();
-      rtB?.dispose();
-      Object.values(mats).forEach((m) => m.dispose());
+      style.dispose();
       // free everything the scene made, and give the graphics context back (browsers allow only a handful at once)
       scene.traverse((o) => {
         const m = o as Mesh;

@@ -14,14 +14,13 @@ export interface Lamplighter {
 
 export function makeLamplighter(mats: Mats): Lamplighter {
   const g = new Group();
-  const cloakM = mats.cloth(2, 2);
-  cloakM.color = new Color(0.16, 0.16, 0.18);
+  const cloakM = mats.clothRed(2, 2);
   const body = new Group();
   g.add(body);
   const cloak = mesh(new CylinderGeometry(0.2, 0.56, 1.3, 20), cloakM, [0, 0.95, 0]);
   const shoulders = ball(0.31, cloakM, [0, 1.46, 0], 14);
   shoulders.scale.set(1.05, 0.7, 0.9);
-  const hood = ball(0.27, cloakM, [0, 1.68, 0.02], 16);
+  const hood = ball(0.27, mats.black, [0, 1.68, 0.02], 16);
   hood.scale.set(1, 1.08, 1.08);
   const face = ball(0.19, mats.black, [0, 1.66, 0.17], 12);
   face.scale.set(0.95, 1, 0.7);
@@ -101,7 +100,6 @@ export interface Kernel3 {
 export function makeKernel(mats: Mats): Kernel3 {
   const g = new Group();
   const shell = mats.white.clone();
-  shell.metalness = 0.15;
   const body = ball(0.21, shell, [0, 0, 0], 20);
   body.scale.set(1, 0.95, 1);
   const dome = ball(0.17, mats.glassDark, [0, 0.22, 0.02], 18);
@@ -116,7 +114,7 @@ export function makeKernel(mats: Mats): Kernel3 {
   armR.add(capsule(0.04, 0.12, shell, [0.05, 0.05, 0], [0, 0, -0.7]));
   const mini = mesh(new SphereGeometry(0.05, 8, 6), mats.bulbLit, [0.12, 0.14, 0], [0, 0, 0], false);
   armR.add(mini);
-  const ringM = ring(0.25, 0.012, mats.brass, [0, -0.06, 0], [Math.PI / 2, 0, 0], 24);
+  const ringM = ring(0.25, 0.012, mats.red, [0, -0.06, 0], [Math.PI / 2, 0, 0], 24);
   g.add(body, dome, eL, eR, brim, hat, armL, armR, ringM);
   const v = new Vector3();
   return {
@@ -154,7 +152,7 @@ export function makeNpc(kind: 'wren' | 'brannock' | 'sedge', mats: Mats): Npc {
   const arm = new Group();
 
   if (kind === 'wren') {
-    cloth.color = new Color(0.3, 0.3, 0.33);
+    cloth.color = new Color(1.5, 0.1, 0.16);
     bodyG.add(ball(0.52, cloth, [0, 0.62, 0], 20), box(0.5, 0.45, 0.05, mats.paper, [0, 0.4, 0.5]));
     head.position.set(0, 1.35, 0);
     head.add(ball(0.24, skin, [0, 0, 0], 16), cyl(0.7, 0.7, 0.05, mats.wood, [0, 0.18, 0], 28), cone(0.3, 0.3, mats.wood, [0, 0.2, 0], 20));

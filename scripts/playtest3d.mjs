@@ -61,6 +61,7 @@ const ctx = await browser.newContext({ viewport: { width: 900, height: 700 } });
 await ctx.addInitScript(() => {
   if (!sessionStorage.getItem('gfxset')) {
     localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: 'low' }));
+    if (!location.search.includes('tut=1')) localStorage.setItem('tideweight/tutorial', '1');
     sessionStorage.setItem('gfxset', '1');
   }
 });
@@ -98,7 +99,9 @@ async function toRoom(label, expected) {
 }
 const closeTop = async () => {
   await page.keyboard.press('Escape');
-  await page.waitForTimeout(150);
+  // wait for the dialog to be gone, not for a fixed time: a slow frame must not make the next key arrive while it is still closing
+  await page.waitForFunction(() => !document.querySelector('dialog[open]'), null, { timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(120);
 };
 
 // ---------------------------------------------------------------- 1. start
@@ -118,6 +121,18 @@ await check('a new game opens in 3D with the three.js engine loaded only now', a
   expect((await room()) === 'quay', 'not on the quay');
   await page.waitForFunction(() => document.activeElement?.classList.contains('stage3d'), null, { timeout: 6000 }).catch(() => {});
   expect(await page.evaluate(() => document.activeElement?.classList.contains('stage3d')), 'focus is not on the stage');
+});
+await check('the objective tracker names the first goal, and the guide marks it with a distance and a marker', async () => {
+  const t = page.locator('.objective');
+  await t.waitFor({ timeout: 10000 });
+  const text = (await t.innerText()).toLowerCase();
+  expect(text.includes('objective') && text.includes('loom house'), `the tracker says: ${text}`);
+  await page.waitForFunction(() => document.querySelector('.stage3d')?.getAttribute('data-goal') === 'door:loom', null, { timeout: 10000 });
+  await page.waitForFunction(() => Number(document.querySelector('.stage3d')?.getAttribute('data-goal-dist')) > 0, null, { timeout: 10000 });
+  const d = await num('data-goal-dist');
+  expect(d > 20 && d < 90, `the route to the Loom door is ${d} m`);
+  expect((await page.locator('.hs3.is-goal').count()) === 1, 'the goal has no marked label');
+  expect((await page.locator('.hs3.is-goal').getAttribute('aria-label'))?.includes('Loom'), 'the goal label is not the Loom House');
 });
 await check('the picture is drawn and changes as the player moves', async () => {
   const a = await page.locator('.stage3d').screenshot();
@@ -224,13 +239,25 @@ await check('every room can be entered and has its own set of things', async () 
 });
 
 // ---------------------------------------------------------------- 3. saving and settings
+await check('inside a room the tracker points at a station, and the way out is marked once the work is done', async () => {
+  if ((await room()) !== 'quay') {
+    await fromList('Quay');
+    await page.waitForFunction(() => document.querySelector('.stage3d')?.getAttribute('data-room') === 'quay', null, { timeout: 20000 });
+    await page.waitForTimeout(400);
+  }
+  await toRoom('Loom', 'loom');
+  await page.waitForFunction(() => document.querySelector('.stage3d')?.getAttribute('data-goal')?.startsWith('station:'), null, { timeout: 10000 });
+  const text = (await page.locator('.objective').innerText()).toLowerCase();
+  expect(text.includes('play'), `the tracker says: ${text}`);
+  expect((await page.locator('.hs3.is-goal').count()) === 1, 'the station has no marked label');
+});
 await check('progress and position survive a reload', async () => {
   await page.goto(`${base}/play/`);
   await page.waitForSelector('.title');
   expect(/station rounds/.test(await page.locator('.title__save').innerText()), 'no save summary');
   await page.click('button:has-text("Continue")');
   await page.waitForSelector('.stage3d canvas', { timeout: 30000 });
-  await page.waitForFunction(() => document.querySelector('.stage3d')?.getAttribute('data-room') === 'office', null, { timeout: 20000 });
+  await page.waitForFunction(() => document.querySelector('.stage3d')?.getAttribute('data-room') === 'loom', null, { timeout: 20000 });
 });
 await check('K, J, M and Escape open Kernel, the journal, the chart and the pause menu in 3D', async () => {
   await page.waitForTimeout(500);
@@ -239,7 +266,7 @@ await check('K, J, M and Escape open Kernel, the journal, the chart and the paus
     await page.waitForSelector('dialog.gdialog[open]', { timeout: 15000 }).catch(() => {
       throw new Error(`pressing ${key} opened nothing`);
     });
-    expect((await page.locator('dialog.gdialog[open] h2').first().innerText()) === title, `${key} opened the wrong dialog`);
+    expect((await page.locator('dialog.gdialog[open] h2').first().innerText()).toLowerCase() === title.toLowerCase(), `${key} opened the wrong dialog`);
     await closeTop();
   }
 });
@@ -321,6 +348,46 @@ await check('on a phone: a stick and a Use button, no sideways scroll, and the s
   expect(z0 - z1 > 0.5, `the stick moved the player ${(z0 - z1).toFixed(2)} m`);
 });
 await phone.close();
+
+await check('a first-time player is taught in four steps that finish by themselves, and can skip; it is remembered', async () => {
+  const c2 = await browser.newContext({ viewport: { width: 900, height: 700 } });
+  await c2.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: 'low' })));
+  const p2 = await c2.newPage();
+  watch(p2, 'tutorial');
+  await p2.goto(`${base}/play/`);
+  await p2.waitForSelector('.title');
+  await p2.click('button:has-text("Begin")');
+  await p2.waitForSelector('dialog.gdialog[open]');
+  for (const name of ['Next', 'Next', 'Done']) await p2.locator('dialog.gdialog[open]').getByRole('button', { name }).click();
+  await p2.waitForSelector('.stage3d canvas', { timeout: 30000 });
+  const step = async () => (await p2.locator('.coach__count').innerText()).trim().toLowerCase();
+  const waitStep = (n) => p2.waitForFunction((k) => document.querySelector('.coach__count')?.textContent?.toLowerCase().includes(`${k}/4`), n, { timeout: 25000 });
+  await waitStep(1);
+  expect((await p2.locator('.coach__text').innerText()).includes('Walk'), 'step 1 does not teach walking');
+  await p2.waitForFunction(() => document.activeElement?.classList.contains('stage3d'), null, { timeout: 8000 }).catch(() => {});
+  await p2.keyboard.down('w');
+  await waitStep(2);
+  await p2.keyboard.up('w');
+  expect((await p2.locator('.coach__text').innerText()).toLowerCase().includes('look'), 'step 2 does not teach looking');
+  await p2.keyboard.down('ArrowLeft');
+  await waitStep(3);
+  await p2.keyboard.up('ArrowLeft');
+  expect((await p2.locator('.coach__text').innerText()).toLowerCase().includes('shift'), 'step 3 does not teach running and jumping');
+  await p2.keyboard.press('Space');
+  await waitStep(4);
+  expect((await p2.locator('.coach__text').innerText()).toLowerCase().includes('red path'), 'step 4 does not point at the red path');
+  expect((await step()).includes('4/4'), 'not on the last step');
+  await p2.locator('.coach__skip').click();
+  await p2.waitForFunction(() => !document.querySelector('.coach'), null, { timeout: 5000 });
+  expect((await p2.evaluate(() => localStorage.getItem('tideweight/tutorial'))) === '1', 'skipping was not remembered');
+  await p2.reload();
+  await p2.waitForSelector('.title');
+  await p2.click('button:has-text("Continue")').catch(() => p2.click('button:has-text("Begin")'));
+  await p2.waitForSelector('.stage3d canvas', { timeout: 30000 }).catch(() => {});
+  await p2.waitForTimeout(1200);
+  expect((await p2.locator('.coach').count()) === 0, 'the tutorial came back after a reload');
+  await c2.close();
+});
 
 await browser.close();
 server.close();

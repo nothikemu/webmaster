@@ -59,3 +59,21 @@ Not done or not verified
 - Real-device frame rates. The test browser draws WebGL in software at a few frames a second.
 - Nobody has played the 3D version on a phone or heard the audio.
 - No screen reader testing.
+
+## 2026-11-13: poster look, performance pass, guidance
+
+Asked for (relayed from the project's coordinator chat): drop the engraved look for a bold red, black and white comic-poster look inspired by a well-known stylish action-RPG's visual language (original assets only), make the game much smoother with before/after numbers, and make it always clear where to go. This replaces the earlier "strictly monochrome" rule *for the game*; the site's pages stay monochrome.
+
+Done
+- Research by web search (art and UI breakdowns, three.js performance, wayfinding), summarised with sources in `docs/STYLE_GUIDE.md`, `docs/PERFORMANCE.md` and `docs/GAME_DESIGN.md`. The style guide fixes the palette (ink, paper, red, red fill, deep red), the cel/halftone/outline rules, the UI language (slanted slabs, offset red shadows, caps, snappy entrances) and an originality checklist. Nothing is copied from any game: no assets, names, fonts, music.
+- Look: one stylising pass (`src/game3d/gfx.ts`): hue picks neutral or red, light is cut into hard bands printed as halftone dots, thick black depth outlines, red sky with slanted rays, black sea with white strokes, a slanted wipe between places. Red doors, roofs, banners, sails, stations' floor pads, a red-cloaked lamplighter and lit lamps that glow red. Dialogs, the title, tags, markers and prompts restyled in `src/styles/game.css`; red tokens added with contrast checks.
+- Performance (numbers in `docs/PERFORMANCE.md`): static meshes baked into one mesh per material (`src/game3d/bake.ts`), instanced lamp bulbs, seven render passes cut to two, bloom and noise removed, Lambert materials, point lights removed (one left), a 64,800-triangle sea cut to 20,000, pixel-ratio caps, cheaper shadows, a 60 fps quality target, fewer per-frame allocations. `scripts/profile3d.mjs` measures it.
+- Guidance: Objective tracker (`src/game/objective.ts`, pure, tested), a red chevron route on the ground that goes around obstacles (`src/game3d/route.ts`, A* over the player's own colliders), a goal marker (ring, pillar, diamond) with name and distance, an off-screen arrow, a four-step self-finishing tutorial with touch wording and Skip, an idle "Stuck?" hint, and updated Kernel intro and About/Accessibility text. The tracker also shows in the 2D game.
+- Fixed: pressing Escape twice quickly could leave the pause menu closed, because a dialog's late `close` event closed the next dialog; a dialog now only closes itself.
+- Tests: `tests/objective.test.ts`, `tests/bake.test.ts` (baking keeps geometry in place, leaves moving and kept things alone; route planning avoids obstacles); `playtest3d` now checks the tracker, the goal marker and distance, the in-room station goal and the whole tutorial.
+
+Not done or not verified
+- Frame rate on a real GPU, a real phone, and the audio: still not measured or heard. The profile was taken in software rendering.
+- The classic 2D game keeps the old inked art (its panels, buttons and the Objective box use the new look).
+- The title screen still shows the 2D harbor art behind the new panel.
+- TSA rules were not re-read this session; the open items in COMPLIANCE_CHECKLIST sections C and C2 stand.

@@ -92,14 +92,14 @@ async function closeTop() {
 await page.goto(`${base}/play/`);
 await check('title screen shows the game name, a Begin button and no sound before opt-in', async () => {
   await page.waitForSelector('.title');
-  expect((await page.locator('h1').first().innerText()).includes('Tideweight'), 'no title');
+  expect((await page.locator('h1').first().innerText()).toLowerCase().includes('tideweight'), 'no title');
   expect(await page.locator('button:has-text("Begin")').count() === 1, 'no Begin');
   expect(await page.evaluate(() => document.documentElement.dataset.audio) === undefined, 'audio context exists before opt-in');
 });
 await check('Begin opens Kernel\'s three-page introduction and closing it returns focus to the stage', async () => {
   await page.click('button:has-text("Begin")');
   await page.waitForSelector('dialog.gdialog[open]');
-  expect((await page.locator('dialog.gdialog[open] h2').innerText()) === 'Kernel', 'not Kernel');
+  expect((await page.locator('dialog.gdialog[open] h2').innerText()).toLowerCase() === 'kernel', 'not Kernel');
   await page.click('dialog.gdialog[open] button:has-text("Next")');
   await page.click('dialog.gdialog[open] button:has-text("Next")');
   await page.click('dialog.gdialog[open] button:has-text("Done")');
@@ -355,7 +355,7 @@ await check('K, J, M and Escape open Kernel, the journal, the chart and the paus
   for (const [key, title] of [['k', 'Kernel'], ['j', 'Journal'], ['m', 'The harbor chart'], ['Escape', 'Paused']]) {
     await page.keyboard.press(key);
     await page.waitForSelector('dialog.gdialog[open]');
-    expect((await page.locator('dialog.gdialog[open] h2').first().innerText()) === title, `${key} opened the wrong dialog`);
+    expect((await page.locator('dialog.gdialog[open] h2').first().innerText()).toLowerCase() === title.toLowerCase(), `${key} opened the wrong dialog`);
     await closeTop();
     expect(await page.locator('dialog.gdialog[open]').count() === 0, `${key} dialog did not close`);
   }
@@ -452,6 +452,7 @@ await check('on a phone: no sideways scroll, on-screen controls, tap to walk, st
   await m.tap('.game__tools button[aria-label^="Journal"]');
   await m.waitForSelector('dialog.gdialog[open]');
   expect(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'journal overflows');
+  await m.waitForTimeout(450); // the dialog slides in; measure it where it comes to rest
   const r = await m.locator('dialog.gdialog[open] .gdialog__box').boundingBox();
   expect(r.x >= 0 && r.x + r.width <= 391, 'dialog wider than the screen');
 });

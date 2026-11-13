@@ -15,6 +15,11 @@
   --paper-lo: #cac8c2;
   --paper-line: #8a8883;
 
+  /* The game's one hot colour (docs/STYLE_GUIDE.md). Red is for what matters: the goal, the path, active states. -fill carries small text. */
+  --red: #e3122a; /* graphics and large bold text */
+  --red-fill: #c4102a; /* fills that carry normal-size paper text */
+  --red-deep: #8e0b1a; /* red text on paper */
+
   /* Text. Pairs are checked by `pnpm contrast`. */
   --text: #0d0d0d; /* on paper */
   --text-2: #474644; /* secondary text on paper */

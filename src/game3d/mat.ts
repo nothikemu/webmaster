@@ -1,6 +1,7 @@
 /**
  * Materials and textures for the 3D world. Nothing is loaded: every texture is drawn on a canvas at start-up in gray.
- * (The look comes from the post-processing pass, so these only need to carry value and texture, never colour.)
+ * The look comes from the stylising pass (docs/STYLE_GUIDE.md): materials only carry a light value and, for the few things that
+ * matter, a red tint. Lambert (not PBR) materials: the picture is cut into flat bands anyway, so specular shading is wasted work.
  */
 import {
   AdditiveBlending,
@@ -9,7 +10,7 @@ import {
   DoubleSide,
   LinearMipmapLinearFilter,
   MeshBasicMaterial,
-  MeshStandardMaterial,
+  MeshLambertMaterial,
   RepeatWrapping,
   SRGBColorSpace,
   type Texture,
@@ -25,8 +26,9 @@ const rnd = (seed: number) => {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 };
+/** Texture detail is kept shallow so a surface stays inside one light band instead of breaking into noise. */
 const gray = (v: number) => {
-  const c = Math.max(0, Math.min(255, Math.round(v)));
+  const c = Math.max(0, Math.min(255, Math.round(128 + (v - 128) * 0.5)));
   return `rgb(${c},${c},${c})`;
 };
 
@@ -236,29 +238,35 @@ function once(key: string, make: () => Texture, repeat?: [number, number]): Text
   return c;
 }
 
-const std = (map: Texture | null, rough = 0.9, tint = 1, metal = 0) => new MeshStandardMaterial({ map, roughness: rough, metalness: metal, color: new Color(tint, tint, tint) });
+const std = (map: Texture | null, _rough = 0.9, tint = 1, _metal = 0) => new MeshLambertMaterial({ map, color: new Color(tint, tint, tint) });
+const tinted = (map: Texture | null, r: number, g: number, b: number) => new MeshLambertMaterial({ map, color: new Color(r, g, b) });
 
 export interface Mats {
-  stone(rx?: number, ry?: number): MeshStandardMaterial;
-  cobble(rx?: number, ry?: number): MeshStandardMaterial;
-  planks(rx?: number, ry?: number): MeshStandardMaterial;
-  plaster(rx?: number, ry?: number): MeshStandardMaterial;
-  tiles(rx?: number, ry?: number): MeshStandardMaterial;
-  brick(rx?: number, ry?: number): MeshStandardMaterial;
-  marble(rx?: number, ry?: number): MeshStandardMaterial;
-  cloth(rx?: number, ry?: number): MeshStandardMaterial;
-  paper: MeshStandardMaterial;
-  wood: MeshStandardMaterial;
-  darkWood: MeshStandardMaterial;
-  iron: MeshStandardMaterial;
-  brass: MeshStandardMaterial;
-  black: MeshStandardMaterial;
-  white: MeshStandardMaterial;
-  rock: MeshStandardMaterial;
+  stone(rx?: number, ry?: number): MeshLambertMaterial;
+  cobble(rx?: number, ry?: number): MeshLambertMaterial;
+  planks(rx?: number, ry?: number): MeshLambertMaterial;
+  plaster(rx?: number, ry?: number): MeshLambertMaterial;
+  tiles(rx?: number, ry?: number): MeshLambertMaterial;
+  brick(rx?: number, ry?: number): MeshLambertMaterial;
+  marble(rx?: number, ry?: number): MeshLambertMaterial;
+  cloth(rx?: number, ry?: number): MeshLambertMaterial;
+  /** Red: roofs, doors, banners, the things that matter. */
+  tilesRed(rx?: number, ry?: number): MeshLambertMaterial;
+  clothRed(rx?: number, ry?: number): MeshLambertMaterial;
+  red: MeshLambertMaterial;
+  redDeep: MeshLambertMaterial;
+  paper: MeshLambertMaterial;
+  wood: MeshLambertMaterial;
+  darkWood: MeshLambertMaterial;
+  iron: MeshLambertMaterial;
+  brass: MeshLambertMaterial;
+  black: MeshLambertMaterial;
+  white: MeshLambertMaterial;
+  rock: MeshLambertMaterial;
   glassWarm: MeshBasicMaterial;
-  glassDark: MeshStandardMaterial;
+  glassDark: MeshLambertMaterial;
   bulbLit: MeshBasicMaterial;
-  bulbDark: MeshStandardMaterial;
+  bulbDark: MeshLambertMaterial;
   fire: MeshBasicMaterial;
   glowSoft: MeshBasicMaterial;
 }
@@ -275,6 +283,10 @@ export function makeMats(): Mats {
     brick: (rx = 1, ry = 1) => std(once('brick', brick, [rx, ry]), 1, 1),
     marble: (rx = 1, ry = 1) => std(once('marble', marble, [rx, ry]), 0.5, 1),
     cloth: (rx = 1, ry = 1) => std(once('cloth', cloth, [rx, ry]), 1, 1),
+    tilesRed: (rx = 1, ry = 1) => tinted(once('tiles', tiles, [rx, ry]), 2.6, 0.12, 0.2),
+    clothRed: (rx = 1, ry = 1) => tinted(once('cloth', cloth, [rx, ry]), 1.6, 0.1, 0.16),
+    red: tinted(null, 1.5, 0.1, 0.16),
+    redDeep: tinted(null, 0.9, 0.06, 0.1),
     paper: std(once('paper', paper), 1, 1),
     wood: std(once('planks', planks, [1, 1]), 0.85, 0.8),
     darkWood: std(once('planks', planks, [1, 1]), 0.9, 0.38),
@@ -284,35 +296,50 @@ export function makeMats(): Mats {
     white: std(null, 0.8, 0.9),
     rock: std(once('stone', stone, [3, 3]), 1, 0.55),
     glassWarm: new MeshBasicMaterial({ color: hdr(2.6), toneMapped: false }),
-    glassDark: new MeshStandardMaterial({ color: new Color(0.04, 0.04, 0.045), roughness: 0.15, metalness: 0.4 }),
-    bulbLit: new MeshBasicMaterial({ color: hdr(5), toneMapped: false }),
-    bulbDark: new MeshStandardMaterial({ color: new Color(0.35, 0.35, 0.33), roughness: 0.3 }),
-    fire: new MeshBasicMaterial({ color: hdr(6), toneMapped: false }),
-    glowSoft: new MeshBasicMaterial({ color: hdr(1.4), transparent: true, opacity: 0.35, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false }),
+    glassDark: new MeshLambertMaterial({ color: new Color(0.04, 0.04, 0.045) }),
+    bulbLit: new MeshBasicMaterial({ color: new Color(6, 0.4, 0.5), toneMapped: false }),
+    bulbDark: new MeshLambertMaterial({ color: new Color(0.3, 0.3, 0.3) }),
+    fire: new MeshBasicMaterial({ color: new Color(7, 0.8, 0.5), toneMapped: false }),
+    glowSoft: new MeshBasicMaterial({ color: new Color(1.8, 0.25, 0.3), transparent: true, opacity: 0.35, blending: AdditiveBlending, depthWrite: false, side: DoubleSide, toneMapped: false }),
   };
 }
 
-/** A sign: a plank with lettering. */
+/** A sign: a slanted-corner plate with heavy lettering. Light plates have a red edge; dark plates are ink with a red bar. */
 export function labelTexture(text: string, w = 512, h = 128, dark = false): CanvasTexture {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
   const g = c.getContext('2d')!;
-  g.fillStyle = dark ? '#171717' : '#e4e2dd';
+  g.fillStyle = dark ? '#0b0b0d' : '#f5f2ea';
   g.fillRect(0, 0, w, h);
-  g.strokeStyle = dark ? '#e4e2dd' : '#171717';
-  g.lineWidth = 6;
-  g.strokeRect(6, 6, w - 12, h - 12);
-  g.fillStyle = dark ? '#f3f2ee' : '#0d0d0d';
+  g.fillStyle = '#e3122a';
+  if (dark) {
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.lineTo(34, 0);
+    g.lineTo(14, h);
+    g.lineTo(0, h);
+    g.closePath();
+    g.fill();
+  } else {
+    g.fillRect(0, 0, w, 10);
+    g.fillRect(0, h - 10, w, 10);
+  }
+  g.fillStyle = dark ? '#f5f2ea' : '#0b0b0d';
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  let size = 72;
-  g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`;
-  while (g.measureText(text).width > w - 40 && size > 20) {
+  let size = 80;
+  const font = (n: number) => `800 ${n}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  g.font = font(size);
+  while (g.measureText(text).width > w - 70 && size > 20) {
     size -= 4;
-    g.font = `700 ${size}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+    g.font = font(size);
   }
-  g.fillText(text, w / 2, h / 2 + 4);
+  g.save();
+  g.translate(w / 2 + (dark ? 12 : 0), h / 2 + 4);
+  g.transform(1, 0, -0.14, 1, 0, 0); // slanted lettering
+  g.fillText(text, 0, 0);
+  g.restore();
   const t = new CanvasTexture(c);
   t.colorSpace = SRGBColorSpace;
   t.anisotropy = 4;

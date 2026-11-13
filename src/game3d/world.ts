@@ -12,7 +12,7 @@ import {
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
+  MeshLambertMaterial,
   PlaneGeometry,
   PointLight,
   SRGBColorSpace,
@@ -21,6 +21,7 @@ import {
   type Camera,
 } from 'three';
 import { ball, box, cone, cyl, gable, group, mesh, plane, ring, roof } from './kit';
+import { bakeWorld, live, stripLights } from './bake';
 import { labelTexture, type Mats } from './mat';
 import { makeEmitter, makeFlag, makeGull, makeMotes, makeWater, spinner, type Animator } from './fx';
 import { BUILD_DEPTH, LAMP_COUNT, PLAZA_R, QUAY_Z, building, lampPos, onArc, type BuildingId } from './layout';
@@ -38,7 +39,8 @@ export interface Lamp {
   x: number;
   z: number;
   lit: boolean;
-  bulb: Mesh;
+  /** Index of its bulb in the instanced bulb mesh. */
+  index: number;
 }
 
 export interface Harbor {
@@ -64,7 +66,7 @@ function plazaTexture(): CanvasTexture {
   const c = document.createElement('canvas');
   c.width = c.height = S;
   const g = c.getContext('2d')!;
-  g.fillStyle = '#8f8f8d';
+  g.fillStyle = '#b9b8b3';
   g.fillRect(0, 0, S, S);
   const rnd = (() => {
     let a = 77;
@@ -74,12 +76,12 @@ function plazaTexture(): CanvasTexture {
     const x = rnd() * S;
     const y = rnd() * S;
     const r = 8 + rnd() * 9;
-    g.fillStyle = `rgb(${110 + rnd() * 70},${110 + rnd() * 70},${108 + rnd() * 70})`;
+    g.fillStyle = `rgb(${165 + rnd() * 30},${165 + rnd() * 30},${160 + rnd() * 30})`;
     g.beginPath();
     g.ellipse(x, y, r, r * (0.75 + rnd() * 0.25), rnd() * 3, 0, 6.3);
     g.fill();
-    g.strokeStyle = 'rgba(40,40,40,0.55)';
-    g.lineWidth = 2;
+    g.strokeStyle = 'rgba(70,70,70,0.22)';
+    g.lineWidth = 1.5;
     g.stroke();
   }
   // rings and a compass rose in dark and pale stone
@@ -93,19 +95,23 @@ function plazaTexture(): CanvasTexture {
   };
   ringAt(500, 8, '#2a2a2a');
   ringAt(478, 4, '#e8e6e0');
-  ringAt(330, 6, '#3a3a3a');
+  ringAt(330, 7, '#e3122a');
   ringAt(180, 5, '#e8e6e0');
   for (let i = 0; i < 16; i++) {
     g.save();
     g.rotate((i / 16) * Math.PI * 2);
     const long = i % 4 === 0;
-    g.fillStyle = i % 2 ? '#ecebe6' : '#171717';
+    // the compass rose is drawn as outlined spikes (paper with an ink edge), so the plaza stays bright and the red path can lead
+    g.fillStyle = '#f4f2ec';
+    g.strokeStyle = '#171717';
+    g.lineWidth = 6;
     g.beginPath();
     g.moveTo(0, -(long ? 330 : 240));
     g.lineTo(26, -60);
     g.lineTo(-26, -60);
     g.closePath();
     g.fill();
+    g.stroke();
     g.restore();
   }
   for (let i = 0; i < 48; i++) {
@@ -127,6 +133,9 @@ function plazaTexture(): CanvasTexture {
 
 export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Harbor {
   const root = new Group();
+  /** One chunk for the lamp posts, benches, crates and the signal post, so they merge together. */
+  const props = new Group();
+  root.add(props);
   const colliders: Collider[] = [];
   const anims: Animator[] = [];
   const lamps: Lamp[] = [];
@@ -134,7 +143,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   // ------------------------------------------------------------------------------------------ ground
   const groundMat = mats.cobble(40, 40);
   const ground = mesh(new PlaneGeometry(320, 190), groundMat, [0, -0.02, -59], [-Math.PI / 2, 0, 0], false);
-  const plazaMat = new MeshStandardMaterial({ map: plazaTexture(), roughness: 0.95 });
+  const plazaMat = new MeshLambertMaterial({ map: plazaTexture() });
   const plaza = mesh(new CircleGeometry(PLAZA_R + 4, 96), plazaMat, [0, 0.015, 0], [-Math.PI / 2, 0, 0], false);
   root.add(ground, plaza);
 
@@ -151,10 +160,10 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   // ------------------------------------------------------------------------------------------ the monument
   const mon = new Group();
   mon.add(cyl(7.4, 7.8, 0.6, mats.stone(6, 1), [0, 0, 0], 48), cyl(6.2, 6.6, 0.9, mats.stone(5, 1), [0, 0.6, 0], 48));
-  const basin = mesh(new CircleGeometry(5.6, 40), new MeshStandardMaterial({ color: new Color(0.05, 0.05, 0.06), roughness: 0.08, metalness: 0.6 }), [0, 1.42, 0], [-Math.PI / 2, 0, 0], false);
+  const basin = mesh(new CircleGeometry(5.6, 40), new MeshLambertMaterial({ color: new Color(0.03, 0.03, 0.035) }), [0, 1.42, 0], [-Math.PI / 2, 0, 0], false);
   mon.add(basin);
   mon.add(cyl(1.1, 1.5, 1.4, mats.marble(2, 2), [0, 1.4, 0], 20), cyl(0.7, 0.9, 4.6, mats.marble(1, 3), [0, 2.8, 0], 20), cyl(1.3, 0.8, 0.5, mats.marble(2, 1), [0, 7.2, 0], 20));
-  const cageGlow = new MeshBasicMaterial({ color: new Color(3.5, 3.5, 3.3), toneMapped: false });
+  const cageGlow = new MeshBasicMaterial({ color: new Color(6, 0.4, 0.5), toneMapped: false });
   const lanternHead = new Group();
   lanternHead.position.y = 7.7;
   lanternHead.add(mesh(new CylinderGeometry(1.2, 1.2, 2.4, 8), cageGlow, [0, 1.2, 0], [0, 0, 0], false));
@@ -167,18 +176,26 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   monLight.position.set(0, 9, 0);
   lanternHead.add(monLight);
   mon.add(lanternHead);
-  const hang: Mesh[] = [];
-  const hangMat = [mats.bulbDark, mats.bulbLit];
+  // every bulb in the harbor is one instance of one mesh: unlit ones are dark ink, lit ones glow red
+  const BULB_OFF = new Color(0.22, 0.22, 0.22);
+  const BULB_ON = new Color(6, 0.4, 0.5);
+  const bulbMat = new MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
+  const hangBulbs = new InstancedMesh(new SphereGeometry(0.2, 10, 8), bulbMat, LAMP_COUNT);
+  const lampBulbs = new InstancedMesh(new SphereGeometry(0.28, 12, 10), bulbMat, LAMP_COUNT);
+  const bm4 = new Matrix4();
   for (let i = 0; i < LAMP_COUNT; i++) {
     const a = (i / LAMP_COUNT) * Math.PI * 2;
     const arm = new Group();
-    arm.position.set(Math.cos(a) * 2.9, 6.4 - (i % 3) * 0.5, Math.sin(a) * 2.9);
+    const ax = Math.cos(a) * 2.9;
+    const ay = 6.4 - (i % 3) * 0.5;
+    const az = Math.sin(a) * 2.9;
+    arm.position.set(ax, ay, az);
     arm.add(cyl(0.015, 0.015, 1.2, mats.iron, [0, 0, 0]));
-    const b = mesh(new SphereGeometry(0.2, 10, 8), hangMat[0]!, [0, -0.1, 0], [0, 0, 0], false);
-    arm.add(b);
-    hang.push(b);
     mon.add(arm);
+    hangBulbs.setMatrixAt(i, bm4.makeTranslation(ax, ay - 0.1, az));
+    hangBulbs.setColorAt(i, BULB_OFF);
   }
+  root.add(hangBulbs);
   mon.add(ring(2.9, 0.05, mats.iron, [0, 7.0, 0], [Math.PI / 2, 0, 0], 32));
   root.add(mon);
   colliders.push(circle(0, 0, 7.7));
@@ -189,19 +206,20 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   root.add(spray.points);
 
   // ------------------------------------------------------------------------------------------ the lamps
-  const lampBulbs: Mesh[] = [];
   for (let i = 0; i < LAMP_COUNT; i++) {
     const p = lampPos(i);
     const l = new Group();
     l.position.set(p.x, 0, p.z);
     l.add(cyl(0.22, 0.3, 0.5, mats.iron, [0, 0, 0], 10), cyl(0.07, 0.1, 3.6, mats.iron, [0, 0.4, 0], 8));
-    const bulb = mesh(new SphereGeometry(0.28, 12, 10), mats.bulbDark, [0, 4.35, 0], [0, 0, 0], false);
-    l.add(bulb, cone(0.5, 0.45, mats.iron, [0, 4.55, 0], 8), ring(0.31, 0.03, mats.iron, [0, 4.15, 0], [Math.PI / 2, 0, 0], 10), cyl(0.3, 0.2, 0.2, mats.iron, [0, 3.85, 0], 8));
-    root.add(l);
-    lampBulbs.push(bulb);
-    lamps.push({ x: p.x, z: p.z, lit: false, bulb });
+    lampBulbs.setMatrixAt(i, bm4.makeTranslation(p.x, 4.35, p.z));
+    lampBulbs.setColorAt(i, BULB_OFF);
+    l.add(cone(0.5, 0.45, mats.iron, [0, 4.55, 0], 8), ring(0.31, 0.03, mats.iron, [0, 4.15, 0], [Math.PI / 2, 0, 0], 10), cyl(0.3, 0.2, 0.2, mats.iron, [0, 3.85, 0], 8));
+    props.add(l);
+    lamps.push({ x: p.x, z: p.z, lit: false, index: i });
     colliders.push(circle(p.x, p.z, 0.35));
   }
+
+  root.add(lampBulbs);
 
   // ------------------------------------------------------------------------------------------ buildings
   const buildingGroup = (id: BuildingId) => {
@@ -213,7 +231,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     return g;
   };
   const door = (g: Group, z: number, w = 2.8, h = 3.8, light = true) => {
-    g.add(box(w + 0.7, h + 0.45, 0.5, mats.marble(1, 1), [0, 0, z - 0.1]), box(w, h, 0.4, mats.darkWood, [0, 0, z + 0.05]), box(0.1, h, 0.1, mats.brass, [0, 0, z + 0.32]));
+    g.add(box(w + 0.7, h + 0.45, 0.5, mats.marble(1, 1), [0, 0, z - 0.1]), box(w, h, 0.4, mats.red, [0, 0, z + 0.05]), box(0.1, h, 0.1, mats.brass, [0, 0, z + 0.32]));
     g.add(mesh(new SphereGeometry(0.09, 8, 6), mats.brass, [w * 0.3, 1.7, z + 0.34], [0, 0, 0], false), mesh(new SphereGeometry(0.09, 8, 6), mats.brass, [-w * 0.3, 1.7, z + 0.34], [0, 0, 0], false));
     if (light) {
       for (const sx of [-1, 1]) {
@@ -232,7 +250,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     g.add(wg);
   };
   const sign = (g: Group, text: string, x: number, y: number, z: number, w = 5, dark = false) => {
-    const m = new MeshStandardMaterial({ map: labelTexture(text, 512, 128, dark), roughness: 0.9 });
+    const m = new MeshLambertMaterial({ map: labelTexture(text, 512, 128, dark) });
     g.add(mesh(new PlaneGeometry(w, w / 4), m, [x, y, z], [0, 0, 0], false), box(w + 0.3, 0.16, 0.16, mats.darkWood, [x, y + w / 8 + 0.12, z - 0.05]), box(w + 0.3, 0.16, 0.16, mats.darkWood, [x, y - w / 8 - 0.28, z - 0.05]));
   };
   const steps = (g: Group, w: number, z: number, n = 3, rise = 0.22, dep = 0.7, m = mats.stone(4, 1)) => {
@@ -248,7 +266,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     for (const x of [-W / 2, -4, 0, 4, W / 2]) g.add(box(0.4, 6.4, 0.4, mats.darkWood, [x, 0, D / 2 + 0.02]));
     g.add(box(W, 0.4, 0.4, mats.darkWood, [0, 3.2, D / 2 + 0.02]), box(W, 0.4, 0.4, mats.darkWood, [0, 6.2, D / 2 + 0.02]));
     g.add(box(0.3, 4.6, 0.3, mats.darkWood, [-2, 0, D / 2 + 0.05], [0, 0, 0.6]), box(0.3, 4.6, 0.3, mats.darkWood, [2, 0, D / 2 + 0.05], [0, 0, -0.6]));
-    g.add(roof(W, D, 4.4, mats.tiles(6, 3), [0, 6.4, 0], 1.1), gable(W + 0.2, 4.4, mats.plaster(3, 2), [0, 6.4, D / 2 + 0.02]), gable(W + 0.2, 4.4, mats.plaster(3, 2), [0, 6.4, -D / 2 - 0.02], true));
+    g.add(roof(W, D, 4.4, mats.tilesRed(6, 3), [0, 6.4, 0], 1.1), gable(W + 0.2, 4.4, mats.plaster(3, 2), [0, 6.4, D / 2 + 0.02]), gable(W + 0.2, 4.4, mats.plaster(3, 2), [0, 6.4, -D / 2 - 0.02], true));
     g.add(box(1.2, 4, 1.2, mats.brick(1, 2), [4.8, 8, -3]));
     door(g, D / 2 + 0.2, 2.8, 3.6);
     steps(g, 5, D / 2 + 0.2, 2);
@@ -288,7 +306,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
       anims.push((dt) => sm.update(dt, 0.6));
     }
     door(g, D / 2 + 0.2, 4.2, 4.6, false);
-    g.add(box(3.8, 4.4, 0.1, new MeshBasicMaterial({ color: new Color(4, 3.8, 3.4), toneMapped: false }), [0, 0, D / 2 + 0.3]));
+    g.add(box(3.8, 4.4, 0.1, new MeshBasicMaterial({ color: new Color(7, 0.8, 0.5), toneMapped: false }), [0, 0, D / 2 + 0.3]));
     g.add(box(4.4, 4.8, 0.2, mats.darkWood, [0, 0, D / 2 + 0.25]));
     g.add(box(0.14, 4.8, 0.14, mats.iron, [0, 0, D / 2 + 0.45]));
     steps(g, 6, D / 2 + 0.4, 2);
@@ -310,7 +328,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     colliders.push(rect(building('foundry').x, building('foundry').z, W, D, building('foundry').ry));
     const em = makeEmitter({ count: 30, origin: new Vector3(0, 0, 0), spread: 1.8, rise: 2.4, drift: 1.2, life: 2.2, size: 0.22, grow: 0, color: 0xffffff, alpha: 1, additive: true });
     em.points.position.copy(toWorld('foundry', 0, 1.2, D / 2 + 1));
-    em.material.uniforms.color!.value = new Color(4, 3.4, 2.6);
+    em.material.uniforms.color!.value = new Color(8, 1.2, 0.6);
     root.add(em.points);
     anims.push((dt) => em.update(dt));
   }
@@ -345,9 +363,9 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     g.add(box(W + 1, 0.6, D + 1, mats.stone(6, 1), [0, 7, 0]), roof(W, D, 2.2, mats.tiles(6, 2), [0, 7.6, 0], 0.8));
     g.add(box(5.4, 14, 5.4, mats.brick(2, 5), [0, 0, 1]), box(6.2, 0.6, 6.2, mats.stone(2, 1), [0, 14, 1]), cone(4.6, 5.5, mats.tiles(3, 3), [0, 14.6, 1], 4, [0, Math.PI / 4, 0]));
     g.add(cyl(1.9, 1.9, 0.3, mats.paper, [0, 10.4, 3.78], 32, [Math.PI / 2, 0, 0]), mesh(new CylinderGeometry(2, 2, 0.2, 32), mats.iron, [0, 12.2, 3.8], [Math.PI / 2, 0, 0]));
-    const h = box(0.16, 1.1, 0.1, mats.black, [0, 0, 0]);
-    const m = box(0.1, 1.6, 0.1, mats.black, [0, 0, 0]);
-    const hands = new Group();
+    const h = live(box(0.16, 1.1, 0.1, mats.black, [0, 0, 0]));
+    const m = live(box(0.1, 1.6, 0.1, mats.black, [0, 0, 0]));
+    const hands = live(new Group());
     hands.position.set(0, 12.2, 3.95);
     h.geometry.translate(0, 0.45, 0);
     m.geometry.translate(0, 0.7, 0);
@@ -368,8 +386,8 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     windowAt(g, 3.4, 1.8, D / 2 + 0.15, 1.6, 2.6);
     for (const sx of [-8, 8]) {
       const ban = mesh(new PlaneGeometry(1.3, 3.6), mats.cloth(1, 3), [sx, 3.2, D / 2 + 0.22], [0, 0, 0], false);
-      (ban.material as MeshStandardMaterial).color = new Color(0.12, 0.12, 0.14);
-      (ban.material as MeshStandardMaterial).side = DoubleSide;
+      (ban.material as MeshLambertMaterial).color = new Color(1.6, 0.1, 0.16);
+      (ban.material as MeshLambertMaterial).side = DoubleSide;
       g.add(ban);
     }
     sign(g, 'TRIAL HALL', 0, 5.9, D / 2 + 0.5, 4.4, true);
@@ -383,7 +401,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     const W = 11;
     const D = 8;
     const zShift = 0.5;
-    g.add(box(W, 4.6, D, mats.planks(3, 2), [0, 0, -zShift]), roof(W, D, 2.6, mats.tiles(4, 2), [0, 4.6, -zShift], 0.9), gable(W + 0.2, 2.6, mats.planks(3, 1), [0, 4.6, D / 2 - zShift + 0.02]));
+    g.add(box(W, 4.6, D, mats.planks(3, 2), [0, 0, -zShift]), roof(W, D, 2.6, mats.tilesRed(4, 2), [0, 4.6, -zShift], 0.9), gable(W + 0.2, 2.6, mats.planks(3, 1), [0, 4.6, D / 2 - zShift + 0.02]));
     g.add(box(W + 1, 0.4, 3.6, mats.wood, [0, 0, D / 2 - zShift + 1.6]));
     for (const x of [-4.4, 0, 4.4]) g.add(box(0.28, 3.4, 0.28, mats.darkWood, [x, 0.4, D / 2 - zShift + 3.2]));
     g.add(box(W + 1, 0.3, 3.8, mats.darkWood, [0, 3.8, D / 2 - zShift + 1.6], [0.12, 0, 0]));
@@ -394,7 +412,8 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     const pole = cyl(0.07, 0.09, 4.5, mats.darkWood, [-3.6, 6, -1], 8);
     g.add(pole);
     const flag = makeFlag(2.4, 1.3, mats.cloth(1, 1));
-    (flag.mesh.material as MeshStandardMaterial).color = new Color(0.1, 0.1, 0.12);
+    (flag.mesh.material as MeshLambertMaterial).color = new Color(1.6, 0.1, 0.16);
+    live(flag.mesh);
     flag.mesh.position.set(-2.4, 9.6, -1);
     g.add(flag.mesh);
     flagUpdate = flag.update;
@@ -410,7 +429,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
       g.add(cyl(r0 - 0.22, r0, 3.4, i % 2 ? mats.black : mats.white, [0, i * 3.4, cz], 28));
     }
     g.add(cyl(3.6, 3.0, 0.5, mats.iron, [0, 27.2, cz], 28), cyl(2.2, 2.4, 3.2, mats.iron, [0, 28.6, cz], 28));
-    const lens = new MeshBasicMaterial({ color: new Color(5, 5, 4.6), toneMapped: false });
+    const lens = new MeshBasicMaterial({ color: new Color(8, 1.0, 0.7), toneMapped: false });
     g.add(mesh(new CylinderGeometry(1.9, 1.9, 2.6, 20), lens, [0, 29.7, cz], [0, 0, 0], false));
     for (let i = 0; i < 8; i++) {
       const a = (i / 8) * Math.PI * 2;
@@ -432,7 +451,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     bl.position.set(0, 29.7, cz);
     g.add(bl);
     // the cottage in front
-    g.add(box(8, 3.8, 6, mats.plaster(3, 2), [0, 0, 3]), roof(8, 6, 2.4, mats.tiles(3, 2), [0, 3.8, 3], 0.8), gable(8.2, 2.4, mats.plaster(2, 1), [0, 3.8, 6.02]));
+    g.add(box(8, 3.8, 6, mats.plaster(3, 2), [0, 0, 3]), roof(8, 6, 2.4, mats.tilesRed(3, 2), [0, 3.8, 3], 0.8), gable(8.2, 2.4, mats.plaster(2, 1), [0, 3.8, 6.02]));
     door(g, 6.2, 2.2, 3, true);
     windowAt(g, -2.6, 1.2, 6.15, 1.3, 1.4);
     windowAt(g, 2.6, 1.2, 6.15, 1.3, 1.4);
@@ -511,27 +530,27 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   crates.add(box(1.8, 1.4, 1.5, mats.wood, [-1, 0, 0], [0, 0.2, 0]), box(1.5, 1.2, 1.5, mats.wood, [0.9, 0, 0.3], [0, -0.3, 0]), box(1.4, 1.2, 1.4, mats.wood, [-0.2, 1.4, 0], [0, 0.5, 0]), cyl(0.6, 0.6, 1.2, mats.darkWood, [2.4, 0, -0.6], 14));
   const torn = plane(0.5, 0.35, mats.paper, [0.9, 1.22, 0.6], [-Math.PI / 2, 0, 0.5], false);
   crates.add(torn);
-  root.add(crates);
+  props.add(crates);
   colliders.push(circle(-17.5, 30.5, 2.2));
   const post = new Group();
   post.position.set(21, 0, 25);
   post.add(cyl(0.2, 0.26, 5.2, mats.darkWood, [0, 0, 0], 8), box(2.2, 0.2, 0.2, mats.darkWood, [0, 4.3, 0]), mesh(new SphereGeometry(0.22, 10, 8), mats.bulbDark, [-1, 3.95, 0], [0, 0, 0], false), mesh(new SphereGeometry(0.22, 10, 8), mats.bulbDark, [1, 3.95, 0], [0, 0, 0], false), cyl(0.12, 0.16, 0.38, mats.glassDark, [0.7, 0, 0.4], 10));
-  root.add(post);
+  props.add(post);
   colliders.push(circle(21, 25, 0.5));
   for (const [x, z] of [[-26, 10], [26, 12], [-20, 18], [14, 30]]) {
     const b = group([box(2.2, 0.15, 0.7, mats.wood, [0, 0.5, 0]), box(0.15, 0.5, 0.6, mats.iron, [-0.9, 0, 0]), box(0.15, 0.5, 0.6, mats.iron, [0.9, 0, 0])], [x!, 0, z!], Math.atan2(-x!, z!) * 0 + (x! < 0 ? 0.4 : -0.4));
-    root.add(b);
+    props.add(b);
     colliders.push(circle(x!, z!, 1.2));
   }
   // boats beyond the wall
   const boats: Group[] = [];
   for (let i = 0; i < 4; i++) {
     const b = new Group();
-    const hull = mesh(new SphereGeometry(2.4, 14, 8), mats.darkWood, [0, 0.2, 0], [0, 0, 0]);
+    const hull = mesh(new SphereGeometry(2.4, 14, 8), mats.darkWood, [0, 0.2, 0], [0, 0, 0], false);
     hull.scale.set(0.55, 0.45, 1.5);
     b.add(hull, cyl(0.07, 0.1, 6.4, mats.darkWood, [0, 0.5, 0.4], 8), plane(0.05, 0.05, mats.black));
-    const sail = mesh(new PlaneGeometry(2.8, 4.8), mats.cloth(1, 2), [0.05, 3.3, 0.35], [0, Math.PI / 2, 0], true);
-    (sail.material as MeshStandardMaterial).side = DoubleSide;
+    const sail = mesh(new PlaneGeometry(2.8, 4.8), mats.clothRed(1, 2), [0.05, 3.3, 0.35], [0, Math.PI / 2, 0], false);
+    (sail.material as MeshLambertMaterial).side = DoubleSide;
     b.add(sail);
     const x = -34 + i * 24 + (i % 2) * 4;
     b.position.set(x, -0.9, 44 + (i % 3) * 7);
@@ -546,7 +565,7 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   }));
 
   // gulls
-  const gulls = Array.from({ length: 9 }, (_, i) => ({ g: makeGull(mats), r: 14 + (i % 4) * 9, h: 16 + (i % 3) * 7, sp: 0.18 + (i % 5) * 0.03, ph: i * 1.1 }));
+  const gulls = Array.from({ length: 6 }, (_, i) => ({ g: makeGull(mats), r: 14 + (i % 4) * 9, h: 16 + (i % 3) * 7, sp: 0.18 + (i % 5) * 0.03, ph: i * 1.1 }));
   gulls.forEach((o) => root.add(o.g.group));
   anims.push((_dt, t) => gulls.forEach((o) => {
     const a = t * o.sp + o.ph;
@@ -564,12 +583,14 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     let n = 0;
     lamps.forEach((l, i) => {
       l.lit = !!lit[i];
-      l.bulb.material = l.lit ? mats.bulbLit : mats.bulbDark;
+      lampBulbs.setColorAt(l.index, l.lit ? BULB_ON : BULB_OFF);
+      hangBulbs.setColorAt(l.index, l.lit ? BULB_ON : BULB_OFF);
       if (l.lit) n++;
     });
-    hang.forEach((b, i) => (b.material = lit[i] ? hangMat[1]! : hangMat[0]!));
+    if (lampBulbs.instanceColor) lampBulbs.instanceColor.needsUpdate = true;
+    if (hangBulbs.instanceColor) hangBulbs.instanceColor.needsUpdate = true;
     monLight.intensity = 30 + n * 5;
-    cageGlow.color.setScalar(1.6 + n * 0.25);
+    cageGlow.color.set(2.6 + n * 0.35, 0.18, 0.22);
   }
 
   const lampLights: PointLight[] = Array.from({ length: 4 }, () => {
@@ -578,6 +599,13 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     return l;
   });
   const tmp = new Vector3();
+
+  // the places are lit by the sun, the sky and emissive shapes, never by point lights; then merge everything that stands still
+  stripLights(root);
+  bakeWorld(root, (dt, t) => {
+    anims.forEach((a) => a(dt, t));
+    flagUpdate?.(t);
+  });
 
   return {
     group: root,

@@ -6,6 +6,7 @@ import {
   BoxGeometry,
   CanvasTexture,
   Color,
+  CircleGeometry,
   CylinderGeometry,
   DoubleSide,
   Group,
@@ -13,14 +14,16 @@ import {
   Matrix4,
   Mesh,
   MeshBasicMaterial,
-  MeshStandardMaterial,
+  MeshLambertMaterial,
   PlaneGeometry,
+  RingGeometry,
   PointLight,
   SphereGeometry,
   SRGBColorSpace,
   Vector3,
 } from 'three';
-import { ball, box, cone, cyl, mesh, ring } from './kit';
+import { ball, box, cone, cyl, mesh, plane, ring } from './kit';
+import { bakeWorld, keep, stripLights } from './bake';
 import { labelTexture, type Mats } from './mat';
 import { makeEmitter, spinner, type Animator } from './fx';
 import { INTERIOR, SPOTS, type BuildingId } from './layout';
@@ -134,7 +137,7 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
   };
 
   // shared geometry
-  const bookMat = new MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+  const bookMat = new MeshLambertMaterial({ color: 0xffffff });
   const books = new InstancedMesh(new BoxGeometry(1, 1, 1), bookMat, 700);
   books.castShadow = true;
   books.receiveShadow = true;
@@ -195,7 +198,7 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
     glints.push({ id: rid, m });
   };
   const paperAt = (x: number, y: number, z: number, pw: number, ph: number, ry = 0, rx = 0, seed = 1) => {
-    const m = new MeshStandardMaterial({ map: noteTex(seed), roughness: 1, side: DoubleSide });
+    const m = new MeshLambertMaterial({ map: noteTex(seed), side: DoubleSide });
     const p = mesh(new PlaneGeometry(pw, ph), m, [x, y, z], [rx, ry, 0], false);
     p.receiveShadow = false;
     add(p);
@@ -225,7 +228,7 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
   colliders.push({ x: 0, z: -d / 2, hx: w / 2, hz: 0.3, rot: 0 }, { x: -w / 2, z: 0, hx: 0.3, hz: d / 2, rot: 0 }, { x: w / 2, z: 0, hx: 0.3, hz: d / 2, rot: 0 });
   const entrance: Collider = { x: 0, z: d / 2, hx: w / 2, hz: 0.3, rot: 0 };
   // the door back to the quay: a bright opening in the south wall
-  add(mesh(new PlaneGeometry(3.8, 4.8), mats.darkWood, [0, 2.4, d / 2 - 0.04], [0, Math.PI, 0], false), mesh(new PlaneGeometry(3.2, 4.2), mats.glassWarm, [0, 2.1, d / 2 - 0.08], [0, Math.PI, 0], false));
+  add(mesh(new PlaneGeometry(3.8, 4.8), mats.red, [0, 2.4, d / 2 - 0.04], [0, Math.PI, 0], false), mesh(new PlaneGeometry(3.2, 4.2), mats.glassWarm, [0, 2.1, d / 2 - 0.08], [0, Math.PI, 0], false));
   colliders.push(entrance);
   light(0, 2.4, d / 2 - 2.5, 18, 12);
 
@@ -254,8 +257,8 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
     const cab = new Group();
     cab.position.set(-11.6, 0, -1);
     cab.rotation.y = Math.PI / 2;
-    cab.add(box(4.4, 2.6, 1.8, mats.darkWood, [0, 0, 0]), box(4.6, 0.2, 2, mats.wood, [0, 2.6, 0]), mesh(new PlaneGeometry(4, 1.5), new MeshStandardMaterial({ color: 0x121212, roughness: 0.2 }), [0, 2.75, 0], [-Math.PI / 2, 0, 0], false), mesh(new PlaneGeometry(4, 1.5), new MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.12, roughness: 0.05 }), [0, 2.98, 0], [-Math.PI / 2, 0, 0], false));
-    for (let i = 0; i < 12; i++) cab.add(mesh(new PlaneGeometry(0.42, 0.3), new MeshStandardMaterial({ map: mothTex(), transparent: true, roughness: 1, alphaTest: 0.3 }), [-1.7 + (i % 6) * 0.68, 2.78, -0.4 + Math.floor(i / 6) * 0.8], [-Math.PI / 2, 0, rnd() * 6], false));
+    cab.add(box(4.4, 2.6, 1.8, mats.darkWood, [0, 0, 0]), box(4.6, 0.2, 2, mats.wood, [0, 2.6, 0]), mesh(new PlaneGeometry(4, 1.5), new MeshLambertMaterial({ color: 0x121212 }), [0, 2.75, 0], [-Math.PI / 2, 0, 0], false), mesh(new PlaneGeometry(4, 1.5), new MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 }), [0, 2.98, 0], [-Math.PI / 2, 0, 0], false));
+    for (let i = 0; i < 12; i++) cab.add(mesh(new PlaneGeometry(0.42, 0.3), new MeshLambertMaterial({ map: mothTex(), transparent: true, alphaTest: 0.3 }), [-1.7 + (i % 6) * 0.68, 2.78, -0.4 + Math.floor(i / 6) * 0.8], [-Math.PI / 2, 0, rnd() * 6], false));
     for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) cab.add(box(1.3, 0.7, 0.05, mats.wood, [-1.4 + c * 1.4, 0.1 + r * 0.8, 0.92]), ball(0.06, mats.brass, [-1.4 + c * 1.4, 0.45 + r * 0.8, 0.96], 8));
     add(cab);
     col(-11.2, -1, 2, 4.6);
@@ -429,7 +432,7 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
     // the long table and the seven cards
     table(0, -2.5, 9, 2.4, 1.05, mats.wood);
     for (let i = 0; i < 7; i++) {
-      const m = new MeshStandardMaterial({ map: labelTexture(['1', '2', '3', '4', '5', '6', '7'][i]!, 128, 160, i % 2 === 0), roughness: 1, side: DoubleSide });
+      const m = new MeshLambertMaterial({ map: labelTexture(['1', '2', '3', '4', '5', '6', '7'][i]!, 128, 160, i % 2 === 0), side: DoubleSide });
       add(mesh(new PlaneGeometry(0.75, 0.95), m, [-3.6 + i * 1.2, 1.55, -2.5], [-0.25, 0, 0], false));
       add(box(0.6, 0.08, 0.5, mats.darkWood, [-3.6 + i * 1.2, 1.1, -2.2]));
     }
@@ -445,7 +448,7 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
     add(box(0.12, 6.2, 0.05, mats.wood, [-2.4, 0, -8], [0, 0, 0.18]), box(0.12, 6.2, 0.05, mats.wood, [-1.9, 0, -8], [0, 0, 0.18]));
     glint('eliza-slip', -4.4, 3.4, -8.3);
     // the display case with the chip
-    add(box(2.2, 1.1, 1.6, mats.darkWood, [9.5, 0, -5]), box(2.2, 1.7, 1.6, new MeshStandardMaterial({ color: 0xffffff, transparent: true, opacity: 0.14, roughness: 0.05 }), [9.5, 1.1, -5]), box(0.9, 0.08, 0.9, mats.black, [9.5, 1.15, -5]));
+    add(box(2.2, 1.1, 1.6, mats.darkWood, [9.5, 0, -5]), box(2.2, 1.7, 1.6, new MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.14 }), [9.5, 1.1, -5]), box(0.9, 0.08, 0.9, mats.black, [9.5, 1.15, -5]));
     for (let i = 0; i < 6; i++) add(box(0.9, 0.02, 0.02, mats.brass, [9.5, 1.25, -5.4 + i * 0.16]), box(0.02, 0.02, 0.9, mats.brass, [9.1 + i * 0.16, 1.25, -5]));
     light(9.5, 3.2, -5, 14, 8);
     col(9.5, -5, 2.4, 1.8);
@@ -511,7 +514,7 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
     for (let i = 0; i < 6; i++) add(cyl(0.12, 0.12, 0.7, mats.paper, [4.9 + (i % 3) * 1.1, 0.9 + Math.floor(i / 3) * 1.2, -d / 2 + 1.1], 8, [0, 0, Math.PI / 2]));
     // the chart table with a harbor chart
     table(6, 2, 4, 2.4, 1.05, mats.wood);
-    add(mesh(new PlaneGeometry(3.6, 2.1), new MeshStandardMaterial({ map: mapTex(), roughness: 1 }), [6, 1.13, 2], [-Math.PI / 2, 0, 0], false));
+    add(mesh(new PlaneGeometry(3.6, 2.1), new MeshLambertMaterial({ map: mapTex() }), [6, 1.13, 2], [-Math.PI / 2, 0, 0], false));
     // a stove, a rug and a cushion for Kernel
     add(cyl(0.7, 0.8, 1.6, mats.iron, [-8.2, 0, 4.8], 14), cyl(0.12, 0.12, 4, mats.iron, [-8.2, 1.6, 4.8], 8), mesh(new PlaneGeometry(0.6, 0.4), mats.fire, [-7.5, 0.8, 4.8], [0, Math.PI / 2, 0], false));
     const sl = light(-7.2, 0.9, 4.8, 18, 9);
@@ -526,15 +529,28 @@ export function buildInterior(id: BuildingId, mats: Mats): Interior {
     if (s.kind === 'npc') {
       const npc = makeNpc(s.id as 'wren' | 'brannock' | 'sedge', mats);
       npc.group.position.set(s.x, 0, s.z);
+      keep(npc.group);
       g.add(npc.group);
       npcs.push({ id: s.id, npc, x: s.x, z: s.z, ry: 0 });
       ccol(s.x, s.z, 0.7);
     }
   }
+  // red means "this matters": a floor pad under every station, a red banner on the back wall, a red lintel over the way out
+  for (const s of SPOTS[id]) {
+    if (s.kind !== 'station') continue;
+    add(mesh(new CircleGeometry(1.9, 40), mats.red, [s.x, 0.03, s.z], [-Math.PI / 2, 0, 0], false));
+    add(mesh(new RingGeometry(2.05, 2.3, 40), mats.black, [s.x, 0.035, s.z], [-Math.PI / 2, 0, 0], false));
+  }
+  for (const bx of [-w / 4, w / 4]) add(plane(2, h * 0.52, mats.clothRed(1, 2), [bx, h * 0.62, -d / 2 + 0.3], [0, 0, 0]));
+  add(box(5, 0.5, 0.4, mats.red, [0, 4.9, d / 2 - 0.3]));
+
   books.count = nb;
   books.instanceMatrix.needsUpdate = true;
   if (books.instanceColor) books.instanceColor.needsUpdate = true;
   g.add(books);
+
+  stripLights(g);
+  bakeWorld(g, (dt, t) => anims.forEach((a) => a(dt, t)));
 
   let sweep = 0;
   let foundSet: ReadonlySet<string> = new Set();
