@@ -61,27 +61,31 @@ pnpm playtest
 
 ## Deploy
 
-`dist/` is a complete static site. It runs on any static host (GitHub Pages, Netlify, Cloudflare Pages, a school server). Nothing needs a server or a database.
+`dist/` is a complete static site: every page is a real folder with its own `index.html`, plus a `404.html`. Nothing needs a server or a database, so any static host works. The project is set up for **Vercel**.
 
-### GitHub Pages (set up in this repository)
+### Vercel
 
-`.github/workflows/pages.yml` deploys the site on every push to the branches it lists. It runs lint, the tests and the contrast check first, so a failing check stops the deployment, then builds with the right base path and publishes `dist/`.
+`vercel.json` holds everything Vercel needs: the Vite framework preset, `pnpm install --frozen-lockfile`, the build command `pnpm lint && pnpm test && pnpm contrast && pnpm build` (a failing check stops the deployment), the output directory `dist`, and the headers (a strict Content-Security-Policy and friends on every page, and `Cache-Control: public, max-age=31536000, immutable` on the fingerprinted files in `/assets/`). The site is served from the root of its domain, so there is no base path.
 
-One-time setting, which only the repository owner can change: **Settings, Pages, Build and deployment, Source: GitHub Actions.** After that, pushes deploy by themselves, and you can also run the workflow by hand from the Actions tab.
+To publish it (once, by the repository owner):
 
-The site is then at `https://<owner>.github.io/<repository>/`. For this repository that is **https://nothikemu.github.io/webmaster/**.
+1. Sign in at <https://vercel.com> with GitHub, choose **Add New... > Project**, and **Import** `nothikemu/webmaster` (install the Vercel GitHub app for that repository if asked).
+2. Leave the detected settings as they are. They come from `vercel.json`: Framework **Vite**, Build Command `pnpm lint && pnpm test && pnpm contrast && pnpm build`, Output Directory `dist`, Install Command `pnpm install --frozen-lockfile`. No environment variables are needed.
+3. Under **Settings > Git > Production Branch**, name the branch to publish (this repository develops on `claude/wizardly-goldberg-fkot9u`; `main` is the usual choice once the work is merged). Every push to the production branch is a production deploy; every other branch and pull request gets its own preview URL.
+4. Press **Deploy**. When it finishes, Vercel shows the live URL (`https://<project>.vercel.app`). Open it in a private window, then open `/play/` and `/learn/understand/` directly to check deep links.
 
-To build the same sub-folder version locally:
+The build creates `sitemap.xml` automatically from Vercel's own `VERCEL_PROJECT_PRODUCTION_URL`; to set a different origin (a custom domain), add an environment variable `SITE_URL=https://your-domain` in the project settings. If Vercel cannot find pnpm 10, add the environment variable `ENABLE_EXPERIMENTAL_COREPACK=1` so it uses the version in `package.json`.
+
+The old GitHub Pages workflow has been removed. The copy already published at `https://nothikemu.github.io/webmaster/` stays online at its last version until the owner turns it off (**Settings > Pages**).
+
+To build and check the same thing locally:
 
 ```bash
-BASE=/webmaster/ SITE_URL=https://nothikemu.github.io pnpm build
+pnpm build
+pnpm preview
 ```
 
-```bash
-SMOKE_BASE=/webmaster/ pnpm smoke
-```
-
-`SITE_URL` adds a `sitemap.xml`. GitHub Pages cannot send custom headers, so `public/_headers` only takes effect on hosts that read it (Netlify, Cloudflare Pages).
+`SITE_URL` adds a `sitemap.xml` to a local build too.
 
 **The TSA submission is one website URL that must be public and not password-protected.** Open the deployed URL in a private window before you upload it.
 

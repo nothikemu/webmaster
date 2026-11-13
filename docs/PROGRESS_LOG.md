@@ -77,3 +77,19 @@ Not done or not verified
 - The classic 2D game keeps the old inked art (its panels, buttons and the Objective box use the new look).
 - The title screen still shows the 2D harbor art behind the new panel.
 - TSA rules were not re-read this session; the open items in COMPLIANCE_CHECKLIST sections C and C2 stand.
+
+## 2026-11-13 (later): move from GitHub Pages to Vercel
+
+Asked for (relayed from the project's coordinator chat): deploy on Vercel instead of GitHub Pages.
+
+Done
+- Removed `.github/workflows/pages.yml` and the Pages-only base-path settings: `vite.config.ts` always builds for the root (`base: '/'`, no `BASE` variable), and the `SMOKE_BASE` sub-folder mode is gone from the smoke, playtest and profile scripts.
+- Added `vercel.json`: Vite preset, `pnpm install --frozen-lockfile`, build command `pnpm lint && pnpm test && pnpm contrast && pnpm build` (the same gates the Pages workflow ran), output `dist`, the security headers that were in `public/_headers` (now deleted), and `Cache-Control: public, max-age=31536000, immutable` on `/assets/*`. Deep links keep working because the build writes a real `index.html` for every route and a `404.html`, which Vercel serves with a 404 status; no rewrite is needed.
+- The sitemap now takes its origin from `SITE_URL` or Vercel's `VERCEL_PROJECT_PRODUCTION_URL`.
+- README: the Deploy section is now the Vercel import steps.
+
+Not done
+- The Vercel project could not be created or connected from this session (no Vercel access). The owner has to import the repository (steps in the README); until then there is no live Vercel URL, and nothing has been checked on Vercel.
+- Not tested on Vercel's build machines: whether it picks pnpm 10 (the README names the `ENABLE_EXPERIMENTAL_COREPACK=1` fallback).
+- With the workflow removed there is no GitHub CI; the checks now run inside the Vercel build.
+- The old Pages copy stays online at its last version until Pages is switched off in the repository settings.

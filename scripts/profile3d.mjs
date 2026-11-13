@@ -2,7 +2,7 @@
 // the CPU time spent submitting a frame, and frames per second, in the harbor and in each of the six interiors.
 // Chromium here draws WebGL in software, so frames per second are only good for comparing one build with another, never as a
 // promise about a real GPU; draw calls, triangles and passes are exact and are what a real GPU's cost is built from.
-//   QUALITY=high|medium|low (default high)  OUT=path.json (optional)  SMOKE_BASE=/webmaster/ (optional)
+//   QUALITY=high|medium|low (default high)  OUT=path.json (optional)
 import { createServer } from 'node:http';
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
@@ -11,14 +11,9 @@ import { chromium } from 'playwright';
 
 const dist = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.json': 'application/json' };
-const sub = (process.env.SMOKE_BASE ?? '/').replace(/\/?$/, '/');
 const quality = process.env.QUALITY ?? 'high';
 const server = createServer(async (req, res) => {
   let p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
-  if (sub !== '/') {
-    if (!p.startsWith(sub) && p !== sub.slice(0, -1)) return void ((res.statusCode = 404), res.end('nf'));
-    p = p.slice(sub.length - 1) || '/';
-  }
   let file = join(dist, p);
   try {
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
@@ -35,7 +30,7 @@ const server = createServer(async (req, res) => {
   }
 });
 await new Promise((r) => server.listen(0, r));
-const base = `http://localhost:${server.address().port}${sub.slice(0, -1)}`;
+const base = `http://localhost:${server.address().port}`;
 
 const GL = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'];
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: GL });

@@ -11,13 +11,8 @@ import AxeBuilder from '@axe-core/playwright';
 
 const dist = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.woff': 'font/woff', '.json': 'application/json' };
-const sub = (process.env.SMOKE_BASE ?? '/').replace(/\/?$/, '/');
 const server = createServer(async (req, res) => {
   let p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
-  if (sub !== '/') {
-    if (!p.startsWith(sub) && p !== sub.slice(0, -1)) return void ((res.statusCode = 404), res.end('nf'));
-    p = p.slice(sub.length - 1) || '/';
-  }
   let file = join(dist, p);
   try {
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
@@ -34,7 +29,7 @@ const server = createServer(async (req, res) => {
   }
 });
 await new Promise((r) => server.listen(0, r));
-const base = `http://localhost:${server.address().port}${sub.slice(0, -1)}`;
+const base = `http://localhost:${server.address().port}`;
 console.log(`Playing ${base}/play/ in 3D`);
 
 const failures = [];
