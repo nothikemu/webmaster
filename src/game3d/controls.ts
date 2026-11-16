@@ -8,6 +8,8 @@ export interface Input {
   moveZ: number;
   run: boolean;
   jump: boolean;
+  /** Speed multiplier from the Stride dial. */
+  scale?: number;
 }
 
 export interface Body {
@@ -17,6 +19,10 @@ export interface Body {
   face: number;
   grounded: boolean;
   speed: number;
+  /** Seconds left in which a jump still works after stepping off an edge. */
+  coyote: number;
+  /** Seconds a jump press is remembered while still in the air, so a press just before landing is not lost. */
+  buffer: number;
 }
 
 export interface CamState {
@@ -33,7 +39,7 @@ const WALK = 4.3;
 const RUN = 7.6;
 
 export function newBody(x: number, z: number, face: number): Body {
-  return { pos: new Vector3(x, 0, z), vel: new Vector3(), face, grounded: true, speed: 0 };
+  return { pos: new Vector3(x, 0, z), vel: new Vector3(), face, grounded: true, speed: 0, coyote: 0, buffer: 0 };
 }
 
 /** Push a circle out of one collider. Returns true if it moved. */
@@ -77,7 +83,7 @@ export function step(b: Body, input: Input, camYaw: number, dt: number, collider
   const want = new Vector3().addScaledVector(f, input.moveZ).addScaledVector(r, input.moveX);
   const mag = Math.min(1, want.length());
   if (mag > 0) want.normalize();
-  const target = (input.run ? RUN : WALK) * mag;
+  const target = (input.run ? RUN : WALK) * mag * (input.scale ?? 1);
   const cur = Math.hypot(b.vel.x, b.vel.z);
   const nextSpeed = cur + (target - cur) * Math.min(1, dt * (target > cur ? 9 : 12));
   if (mag > 0) {
@@ -91,9 +97,13 @@ export function step(b: Body, input: Input, camYaw: number, dt: number, collider
     b.vel.x *= Math.max(0, 1 - dt * 12);
     b.vel.z *= Math.max(0, 1 - dt * 12);
   }
-  if (input.jump && b.grounded) {
+  b.coyote = b.grounded ? 0.12 : Math.max(0, b.coyote - dt);
+  b.buffer = input.jump ? 0.14 : Math.max(0, b.buffer - dt);
+  if (b.buffer > 0 && (b.grounded || b.coyote > 0)) {
     b.vel.y = 7.4;
     b.grounded = false;
+    b.coyote = 0;
+    b.buffer = 0;
   }
   b.vel.y -= 21 * dt;
   b.pos.y += b.vel.y * dt;

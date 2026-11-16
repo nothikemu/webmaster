@@ -102,6 +102,15 @@ export interface Settings {
   /** The player's name. Optional; shown in the logbook and on the certificate, and never leaves the device. */
   name: string;
 }
+/**
+ * Your lantern has three parameters, numbers you set by hand (a model's own parameters are set by training; here you see what turning one does).
+ * Points to spend come from finished work, so the game rewards learning, and they can be moved at any time, free.
+ */
+export const DIALS = ['reach', 'glow', 'stride'] as const;
+export type Dial = (typeof DIALS)[number];
+export type Tuning = Record<Dial, number>;
+export const DIAL_MAX = 5;
+export const emptyTuning = (): Tuning => ({ reach: 0, glow: 0, stride: 0 });
 /** The explorable game: which stations are cleared, which relics are found, where the player stands. */
 export interface GameState {
   /** Rounds cleared per station (1-based round numbers) and how many times it was played. */
@@ -118,9 +127,11 @@ export interface GameState {
   started: boolean;
   /** True once the closing scene (every station cleared) has been shown. */
   ended: boolean;
+  /** Where the player has set each lantern dial, 0 to DIAL_MAX. */
+  tuning: Tuning;
 }
 
-export const emptyGame = (): GameState => ({ stations: {}, relics: {}, visited: {}, at: 'quay', freeRoam: false, started: false, ended: false });
+export const emptyGame = (): GameState => ({ stations: {}, relics: {}, visited: {}, at: 'quay', freeRoam: false, started: false, ended: false, tuning: emptyTuning() });
 
 export interface PortalState {
   v: number;
@@ -291,7 +302,9 @@ export type GameEvent =
   | { type: 'round'; station: string; round: number }
   | { type: 'relic'; id: string }
   | { type: 'visit'; room: string }
-  | { type: 'game'; patch: Partial<Pick<GameState, 'at' | 'freeRoam' | 'started' | 'ended'>> };
+  | { type: 'game'; patch: Partial<Pick<GameState, 'at' | 'freeRoam' | 'started' | 'ended'>> }
+  | { type: 'tune'; dial: Dial; level: number }
+  | { type: 'tune-reset' };
 
 export type Reward =
   | { kind: 'xp'; amount: number; label: string }
@@ -447,6 +460,16 @@ export function applyEvent(prev: PortalState, ev: GameEvent, now: number): Apply
       if (typeof p.ended === 'boolean') s.game.ended = p.ended;
       break;
     }
+    case 'tune': {
+      if (!DIALS.includes(ev.dial)) break;
+      const others = DIALS.filter((d) => d !== ev.dial).reduce((a, d) => a + s.game.tuning[d], 0);
+      // never more than the points earned, never more than the top of a dial
+      s.game.tuning[ev.dial] = clamp(ev.level, 0, Math.min(DIAL_MAX, Math.max(0, tuningPoints(s) - others)));
+      break;
+    }
+    case 'tune-reset':
+      s.game.tuning = emptyTuning();
+      break;
     case 'settings': {
       s.settings = { ...s.settings, ...ev.patch };
       for (const k of ['volume', 'sfxVolume', 'musicVolume'] as const) s.settings[k] = Math.min(1, Math.max(0, s.settings[k]));
@@ -500,6 +523,16 @@ export function nextGoal(s: PortalState): { room: RoomId; text: string } {
   if (locked) return { room: 'quay', text: locked.unlock!.hint };
   return { room: 'hall', text: 'Take the final examination in the Trial Hall' };
 }
+
+/** One point per two station rounds, per four relics and per five lessons finished, and one for the certification. */
+export function tuningPoints(s: PortalState): number {
+  const rounds = STATIONS.reduce((a, st) => a + Math.min(st.rounds, roundsCleared(s, st.id)), 0);
+  const relics = RELICS.filter((r) => s.game.relics[r.id]).length;
+  const lessons = Object.values(s.lessons).filter((l) => l.done).length;
+  return Math.floor(rounds / 2) + Math.floor(relics / 4) + Math.floor(lessons / 5) + (s.challenges['certification']?.passed ? 1 : 0);
+}
+export const tuningSpent = (t: Tuning): number => DIALS.reduce((a, d) => a + t[d], 0);
+export const tuningLeft = (s: PortalState): number => Math.max(0, tuningPoints(s) - tuningSpent(s.game.tuning));
 
 export function gameProgress(s: PortalState): { rounds: number; roundsTotal: number; relics: number; relicsTotal: number; stations: number; stationsTotal: number } {
   return {

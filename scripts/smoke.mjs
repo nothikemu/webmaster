@@ -91,11 +91,12 @@ console.log('\nLesson flow');
   if (!(await xpText()).includes('20 XP')) fail(`after reading expected 20 XP, saw "${await xpText()}"`);
   await page.getByRole('button', { name: /I have read this lesson/ }).count().then((n) => n === 0 || fail('read button should disappear once done'));
 
-  // experiment: keep the default rules, predict "learned", run both
+  // reading the lesson moves on to the experiment by itself: keep the default rules, predict "learned", run both
   await page.getByLabel('The learned filter').check();
   await page.getByRole('button', { name: 'Run both filters' }).click();
   await page.getByText(/Learned filter: \d of 8/).waitFor();
   if (!(await xpText()).includes('80 XP')) fail(`after experiment expected 80 XP, saw "${await xpText()}"`);
+  await page.getByRole('button', { name: /Continue to the check/ }).click();
 
   // knowledge check: q1 option 2, q2 False, q3 options 1 and 3
   const next = async (label) => {
@@ -112,6 +113,9 @@ console.log('\nLesson flow');
   await next('Check answer');
   await next('Finish check');
   await page.getByText(/You answered 3 of 3/).waitFor();
+  // finishing the check can raise a level, whose moment must be closed first
+  for (let i = 0; i < 4 && (await page.locator('dialog.dialog[open]').count()); i++) await page.getByRole('button', { name: 'Keep going' }).click();
+  await page.getByRole('button', { name: /Finish the lesson/ }).click();
 
   const done = await xpText();
   if (!done.includes('210 XP')) fail(`finished lesson expected 210 XP, saw "${done}"`);
@@ -151,7 +155,10 @@ console.log('\nKeyboard and navigation');
   if (sound !== 'false') fail('sound must be off by default');
   else ok('sound is off by default');
 
-  await page.getByRole('link', { name: 'Tool Atlas' }).first().click();
+  // the header has four places; the Tool Atlas is one of the things under Practice
+  await page.getByRole('navigation', { name: 'Main', exact: true }).getByRole('link', { name: 'Practice' }).click();
+  await page.waitForURL('**/practice/');
+  await page.getByRole('link', { name: /Tool Atlas/ }).first().click();
   await page.waitForURL('**/tools/');
   if (!(await page.title()).includes('Tool Atlas')) fail('SPA navigation should update the document title');
   else ok('SPA navigation updates URL and title');
@@ -160,7 +167,7 @@ console.log('\nKeyboard and navigation');
   else ok('focus moves to main after navigation');
 
   await page.goto(base + '/learn/responsible/r2/', { waitUntil: 'networkidle' });
-  if ((await page.locator('h1').innerText()).trim() !== 'When AI makes things up') fail('deep link to a lesson should render that lesson');
+  if ((await page.locator('h1').innerText()).trim().toLowerCase() !== 'when ai makes things up') fail('deep link to a lesson should render that lesson');
   else ok('deep link renders the right lesson');
 
   // tool atlas search and filter
@@ -191,12 +198,12 @@ console.log('\nProgress pictures, rank moment, drill and warm-up');
     challenges: {}, badges: {}, pathsDone: {}, codex: ['ai', 'algorithm'], activity: [], xpByDay: {}, lastLesson: null,
     settings: { sound: false, volume: 0.6, name: '' },
   };
-  await ctx.addInitScript((v) => { if (!localStorage.getItem('tideweight/v1')) localStorage.setItem('tideweight/v1', v); }, JSON.stringify(seeded));
+  await ctx.addInitScript((v) => { if (!localStorage.getItem('parameter/v1')) localStorage.setItem('parameter/v1', v); }, JSON.stringify(seeded));
 
   await page.goto(base + '/', { waitUntil: 'networkidle' });
   const lanterns = await page.locator('.festoon__lantern').count();
-  const litText = (await page.locator('.strip__facts').innerText()).replace(/\s+/g, ' ');
-  if (lanterns !== 15 || !/1 of 15/.test(litText)) fail(`harbor should hang 15 lanterns and report 1 lit (found ${lanterns}, "${litText}")`);
+  const litText = (await page.locator('.home-progress__lamps').innerText()).replace(/\s+/g, ' ');
+  if (lanterns !== 15 || !/1 of 15/i.test(litText)) fail(`harbor should hang 15 lanterns and report 1 lit (found ${lanterns}, "${litText}")`);
   else ok('harbor hangs 15 lanterns and reports 1 lit');
   if ((await page.locator('.hero-pin').count()) !== 3) fail('harbor should link to the three places');
   else ok('harbor links to the three places');
@@ -223,9 +230,9 @@ console.log('\nProgress pictures, rank moment, drill and warm-up');
   const missions = await page.locator('.mission').count();
   if (missions !== 18) fail(`mission board should list 18 missions (found ${missions})`);
   else ok('mission board lists 18 missions in five groups');
-  await page.goto(base + '/', { waitUntil: 'networkidle' });
+  await page.goto(base + '/practice/', { waitUntil: 'networkidle' });
 
-  // myth or fact: answer it, get a reason and a lesson link
+  // myth or fact (on the Practice page): answer it, get a reason and a lesson link
   await page.getByRole('button', { name: 'It is a myth' }).click();
   if ((await page.locator('.myth__answer a.btn').count()) !== 1) fail('myth card should give a reason and a lesson link');
   else ok('myth card answers with a reason and a lesson link');

@@ -62,8 +62,8 @@
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 11;
-  border: 3px solid var(--ink);
-  box-shadow: 6px 6px 0 var(--ink);
+  border: 1px solid var(--field-line);
+  box-shadow: none;
 }
 .district__art .chip {
   position: absolute;
@@ -128,7 +128,7 @@
   width: 3rem;
   height: 3rem;
   background: var(--paper-hi);
-  border: 3px solid var(--ink);
+  border: 1px solid var(--field-line);
   border-radius: 50%;
   font: 400 1.25rem / 1 var(--font-display);
 }
@@ -154,18 +154,18 @@
   color: var(--text);
   text-decoration: none;
   background: var(--paper-hi);
-  border: 2px solid var(--ink);
-  box-shadow: 4px 4px 0 var(--ink);
+  border: 1px solid var(--field-line);
+  box-shadow: none;
   transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
 .stop__link:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--ink);
+  box-shadow: none;
   text-decoration: none;
 }
 .stop__link:active {
   transform: translate(3px, 3px);
-  box-shadow: 1px 1px 0 var(--ink);
+  box-shadow: none;
 }
 .stop__title {
   font: 700 1.3rem / 1.2 var(--font-ui);
@@ -189,7 +189,7 @@
   color: var(--text-2);
 }
 .stop__steps span.on {
-  border: 2px solid var(--ink);
+  border: 1px solid var(--field-line);
   background: var(--ink);
   color: var(--paper-hi);
 }
@@ -354,7 +354,7 @@
   place-items: center;
   width: 1.7rem;
   height: 1.7rem;
-  border: 3px solid var(--ink);
+  border: 1px solid var(--field-line);
   border-radius: 50%;
   background: var(--paper-hi);
 }
@@ -748,7 +748,7 @@
   height: 20px;
   margin-left: -7px;
   background: var(--seal);
-  border: 2px solid var(--ink);
+  border: 1px solid var(--field-line);
   transition: left var(--dur-mid) var(--ease);
 }
 @media (max-width: 560px) {
@@ -834,7 +834,7 @@
   width: 100%;
   height: auto;
   background: var(--paper-hi);
-  border: 3px solid var(--ink);
+  border: 1px solid var(--field-line);
 }
 .xp-chart__t,
 .xp-chart__v {
@@ -891,7 +891,7 @@
 .moment__medal--bust {
   width: 8rem;
   border: 3px solid var(--ink-line);
-  box-shadow: 6px 6px 0 var(--ink);
+  box-shadow: none;
 }
 @keyframes stamp {
   from {

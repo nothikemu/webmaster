@@ -51,14 +51,15 @@ const expect = (cond, msg) => {
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
 // this script plays the classic 2D game; playtest3d.mjs plays the 3D one
-await ctx.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '2d', quality: 'auto' })));
+await ctx.addInitScript(() => localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '2d', quality: 'auto' })));
 const page = await ctx.newPage();
 page.on('console', (m) => m.type() === 'error' && consoleErrors.push(m.text()));
 page.on('pageerror', (e) => consoleErrors.push('PAGEERROR ' + e.message));
 
 const room = () => page.evaluate(() => document.documentElement.dataset.gameRoom);
 const xp = async () => parseInt(await page.locator('.game__xp .small').first().innerText(), 10);
-const counts = () => page.locator('.game__counts').first().getAttribute('aria-label');
+// the Tasks button carries the counts for a screen reader: "Tasks (T). 16 of 16 station rounds and ..."
+const counts = async () => ((await page.locator('.game__tools button[aria-label^="Tasks"]').first().getAttribute('aria-label')) ?? '').replace(/^Tasks \(T\)\. /, '');
 const playerX = () => page.evaluate(() => Number(/translate3d\(([-\d.]+)px/.exec(document.querySelector('.player').style.transform)?.[1] ?? 0));
 async function dismissRewards() {
   for (let i = 0; i < 8; i++) {
@@ -87,7 +88,7 @@ async function closeTop() {
 await page.goto(`${base}/play/`);
 await check('title screen shows the game name, a Begin button and no sound before opt-in', async () => {
   await page.waitForSelector('.title');
-  expect((await page.locator('h1').first().innerText()).toLowerCase().includes('tideweight'), 'no title');
+  expect((await page.locator('h1').first().innerText()).toLowerCase().includes('parameter'), 'no title');
   expect(await page.locator('button:has-text("Begin")').count() === 1, 'no Begin');
   expect(await page.evaluate(() => document.documentElement.dataset.audio) === undefined, 'audio context exists before opt-in');
 });
@@ -300,19 +301,17 @@ await check('clearing the last station shows the closing scene, once', async () 
   expect((await page.locator('dialog.gdialog[open]').innerText()).includes('final examination'), 'no pointer to the examination');
   await page.locator('dialog.gdialog[open]').getByRole('button', { name: 'Keep exploring' }).click();
 });
-await check('the Trial Hall is open now (level 3), and its links leave the game cleanly', async () => {
+await check('the Trial Hall is open now (level 3), and its links open inside the game, not on another page', async () => {
   await goTo('The Quay', 'quay');
   await goTo('The Trial Hall', 'hall');
   await useFromList('case files');
-  await page.waitForFunction(() => location.pathname.endsWith('/scenarios/'));
-  await page.waitForSelector('h1');
-  await page.waitForFunction(() => /scenarios/i.test(document.querySelector('main h1')?.textContent ?? ''));
-  await page.goBack();
-  await page.waitForSelector('.title');
+  await page.waitForSelector('dialog.gdialog--hub[open]', { timeout: 15000 });
+  await page.waitForFunction(() => /scenarios/i.test(document.querySelector('.hub__page')?.textContent ?? ''), null, { timeout: 15000 });
+  expect(await page.evaluate(() => location.pathname.endsWith('/play/')), 'the address left the game');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => !document.querySelector('dialog[open]'), null, { timeout: 5000 });
 });
 await check('entering the last building completes Deep Time', async () => {
-  await page.click('button:has-text("Continue")');
-  await page.waitForSelector('.room__view');
   await goTo('The Quay', 'quay');
   await goTo('Harbor Office', 'office');
   await page.waitForSelector('dialog.dialog[open]', { timeout: 4000 });
@@ -419,7 +418,7 @@ await check('Erase all progress returns to a fresh game', async () => {
 
 // ---------------------------------------------------------------- 8. a phone
 const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
-await phone.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '2d', quality: 'auto' })));
+await phone.addInitScript(() => localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '2d', quality: 'auto' })));
 const m = await phone.newPage();
 m.on('console', (x) => x.type() === 'error' && consoleErrors.push('phone: ' + x.text()));
 m.on('pageerror', (e) => consoleErrors.push('phone PAGEERROR ' + e.message));
@@ -444,7 +443,7 @@ await check('on a phone: no sideways scroll, on-screen controls, tap to walk, st
   await m.locator('.room__pad .padbtn').first().dispatchEvent('pointerdown');
   await m.waitForTimeout(200);
   await m.locator('.room__pad .padbtn').first().dispatchEvent('pointerup');
-  await m.tap('.game__tools button[aria-label^="Journal"]');
+  await m.tap('.game__tools button[aria-label^="Tasks"]');
   await m.waitForSelector('dialog.gdialog[open]');
   expect(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'journal overflows');
   await m.waitForTimeout(450); // the dialog slides in; measure it where it comes to rest

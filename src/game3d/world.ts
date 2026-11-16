@@ -7,6 +7,10 @@ import {
   ConeGeometry,
   CylinderGeometry,
   DoubleSide,
+  Float32BufferAttribute,
+  BufferGeometry,
+  LineBasicMaterial,
+  LineSegments,
   Group,
   InstancedMesh,
   Matrix4,
@@ -578,6 +582,27 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
   const motes = makeMotes(260);
   root.add(motes.points);
 
+
+  // ------------------------------------------------------------------------------------------ market stalls on the quay
+  // three stalls with striped awnings in red and paper: somewhere to look at, and a reason the quay feels lived in
+  const stall = (x: number, z: number, ry: number) => {
+    const g = new Group();
+    g.position.set(x, 0, z);
+    g.rotation.y = ry;
+    g.add(box(3.4, 1.0, 1.3, mats.wood, [0, 0, 0]), box(3.6, 0.14, 1.5, mats.darkWood, [0, 1.0, 0]));
+    for (const sx of [-1.7, 1.7]) for (const sz of [-0.62, 0.62]) g.add(cyl(0.06, 0.06, 2.6, mats.darkWood, [sx, 0, sz], 6));
+    // the awning: seven slats, alternately red and paper, sloping toward the customer
+    for (let i = 0; i < 7; i++) g.add(box(0.5, 0.06, 1.9, i % 2 ? mats.white : mats.red, [-1.5 + i * 0.5, 2.55 - 0.0, 0.0], [0.22, 0, 0]));
+    // goods: crates of round things, and a hanging lantern
+    for (let i = 0; i < 4; i++) g.add(ball(0.18, i % 2 ? mats.red : mats.white, [-1.2 + i * 0.8, 1.32, 0.1], 8));
+    g.add(box(0.5, 0.5, 0.5, mats.darkWood, [1.2, 0, 0.95], [0, 0.3, 0]));
+    root.add(g);
+    colliders.push(rect(x, z, 3.6, 1.6, ry));
+  };
+  stall(-9, 31, 0.15);
+  stall(6.5, 32, -0.1);
+  stall(27, 27, -0.7);
+
   // ------------------------------------------------------------------------------------------ the lit lamps follow the lessons
   function setLit(lit: boolean[]) {
     let n = 0;
@@ -606,6 +631,48 @@ export function buildHarbor(mats: Mats, sunDir: Vector3, fogDensity: number): Ha
     anims.forEach((a) => a(dt, t));
     flagUpdate?.(t);
   });
+
+  // bunting strung between the lamp posts: one mesh of small flags and one set of strings, added after the merge
+  {
+    const pos: number[] = [];
+    const col: number[] = [];
+    const strings: number[] = [];
+    const RED = [6, 0.35, 0.45];
+    const PAPER = [1.9, 1.9, 1.8];
+    for (let i = 0; i < LAMP_COUNT - 1; i++) {
+      const a = lampPos(i);
+      const b = lampPos(i + 1);
+      const sag = 1.5;
+      const at = (t: number): [number, number, number] => [a.x + (b.x - a.x) * t, 4.3 - Math.sin(Math.PI * t) * sag, a.z + (b.z - a.z) * t];
+      const N = 12;
+      for (let k = 0; k < N; k++) {
+        const p = at(k / N);
+        const q = at((k + 1) / N);
+        strings.push(...p, ...q);
+        if (k % 1 === 0 && k > 0) {
+          const m = at((k + 0.5) / N);
+          const dx = q[0] - p[0];
+          const dz = q[2] - p[2];
+          const len = Math.hypot(dx, dz) || 1;
+          const hx = (dx / len) * 0.3;
+          const hz = (dz / len) * 0.3;
+          pos.push(m[0] - hx, m[1], m[2] - hz, m[0] + hx, m[1], m[2] + hz, m[0], m[1] - 0.62, m[2]);
+          const c = k % 2 ? RED : PAPER;
+          for (let v = 0; v < 3; v++) col.push(...c);
+        }
+      }
+    }
+    const fg = new BufferGeometry();
+    fg.setAttribute('position', new Float32BufferAttribute(pos, 3));
+    fg.setAttribute('color', new Float32BufferAttribute(col, 3));
+    const flags = new Mesh(fg, new MeshBasicMaterial({ vertexColors: true, side: DoubleSide, toneMapped: false }));
+    flags.frustumCulled = false;
+    const sg = new BufferGeometry();
+    sg.setAttribute('position', new Float32BufferAttribute(strings, 3));
+    const lines = new LineSegments(sg, new LineBasicMaterial({ color: 0x0b0b0d }));
+    lines.frustumCulled = false;
+    root.add(flags, lines);
+  }
 
   return {
     group: root,

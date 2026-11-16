@@ -93,3 +93,25 @@ Not done
 - Not tested on Vercel's build machines: whether it picks pnpm 10 (the README names the `ENABLE_EXPERIMENTAL_COREPACK=1` fallback).
 - With the workflow removed there is no GitHub CI; the checks now run inside the Vercel build.
 - The old Pages copy stays online at its last version until Pages is switched off in the repository settings.
+
+## 2026-11-16: Parameter, rebuilt end to end
+
+Asked for (relayed from the project's coordinator chat, verified before acting): rename the project to "Parameter" and rebuild it: name everywhere, every task inside the game, a full remake of the game and website UI after reading Apple's Human Interface Guidelines, natural-sounding text, richer and smoother gameplay, lighter performance, more detailed and consistent art, and deploy without waiting.
+
+Done
+- **Name.** "Parameter" in the site title, header logo, page titles, metadata, game title and screens, README and docs. Saved progress moved from `tideweight/*` to `parameter/*` keys with a read fallback to the old keys, so nobody loses a save (`tests/rename.test.ts`).
+- **Design research and system.** A web search for summaries of Apple's HIG (third-party summaries, not Apple's own pages; sources in `docs/DESIGN_SYSTEM.md`). We copied principles only: clarity, deference, depth, hierarchy, whitespace, fewer elements, 44 pt+ targets, 4.5:1 contrast, Reduce Motion. The system is ink, paper and one red, on an 8-point grid, with Barlow Condensed capitals and Atkinson text.
+- **Site remade.** New shell (light header, four places, a bottom tab bar on phones, a one-row footer), a four-part Home, a new Practice page that holds the lab, scenarios, tools, codex and certification, a calmer Learn index and Missions page, and a lesson page that shows one step at a time (read, experiment, check). `components.css` and `shell.css` were rewritten, and `calm.css` re-skins the older pages.
+- **Art consistency.** An SVG filter (`#poster`) prints all the site's inked illustrations in the game's three colours.
+- **Tasks inside the game.** See GAME_DESIGN.md: the Tasks window with four tabs, links that open in it, a bar reduced to three buttons.
+- **Gameplay.** Lantern dials (Reach, Glow, Stride; five levels each) spent from points earned by finished work, coyote time, jump buffering, and bunting and market stalls in the 3D harbor. Tests in `tests/tuning.test.ts`.
+- **Tests.** Unit tests (about 180), contrast checker, the smoke test, and the 2D and 3D playtests were all updated to the new UI and pass on the build before the scenery was added.
+
+Copy
+- Text was edited by hand for plain, direct wording. No "AI humanizer" or detector-evasion tool was used. If TSA's rules require disclosing AI-assisted drafting, that is still an open item in `docs/COMPLIANCE_CHECKLIST.md`.
+
+Not done or not verified
+- Frame rate on a real GPU or phone, and the live Vercel URL, were not measured or opened from this session (the sandbox cannot reach vercel.com).
+- The widgets, the older page CSS and the lesson text were re-skinned rather than rewritten, and the classic 2D game keeps its older inked art.
+- The audio has still not been heard.
+

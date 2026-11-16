@@ -8,7 +8,8 @@ export interface GfxPref {
   quality: QualityPref;
 }
 
-const KEY = 'tideweight/gfx';
+const KEY = 'parameter/gfx';
+const LEGACY_KEY = 'tideweight/gfx';
 
 export function webglSupported(): boolean {
   try {
@@ -23,7 +24,7 @@ export function webglSupported(): boolean {
 export function readGfx(): GfxPref {
   let saved: Partial<GfxPref> = {};
   try {
-    saved = JSON.parse(window.localStorage.getItem(KEY) ?? '{}') as Partial<GfxPref>;
+    saved = JSON.parse(window.localStorage.getItem(KEY) ?? window.localStorage.getItem(LEGACY_KEY) ?? '{}') as Partial<GfxPref>;
   } catch {
     saved = {};
   }

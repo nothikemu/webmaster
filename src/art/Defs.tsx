@@ -11,6 +11,15 @@ export function ArtDefs() {
   return (
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
       <defs>
+        {/* the poster: any gray artwork is printed in the game's three colours (ink, red, paper) by its light value */}
+        <filter id="poster" x="0" y="0" width="100%" height="100%" colorInterpolationFilters="sRGB">
+          <feColorMatrix type="matrix" values="0.33 0.5 0.17 0 0  0.33 0.5 0.17 0 0  0.33 0.5 0.17 0 0  0 0 0 1 0" />
+          <feComponentTransfer>
+            <feFuncR type="discrete" tableValues="0.05 0.05 0.89 0.96 0.96" />
+            <feFuncG type="discrete" tableValues="0.05 0.05 0.07 0.95 0.95" />
+            <feFuncB type="discrete" tableValues="0.06 0.06 0.16 0.93 0.93" />
+          </feComponentTransfer>
+        </filter>
         <pattern id="tone" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
           <circle cx="4.5" cy="4.5" r="2" fill={C.ink} />
         </pattern>

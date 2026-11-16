@@ -118,12 +118,13 @@ export const SPOTS: Record<RoomId, Spot[]> = {
   ],
 };
 
-export function nearestSpot(room: RoomId, x: number, z: number): Spot | undefined {
+/** The nearest thing within reach. `scale` is the Reach dial: 1 at level 0, a little more for each level. */
+export function nearestSpot(room: RoomId, x: number, z: number, scale = 1): Spot | undefined {
   let best: Spot | undefined;
   let bd = Infinity;
   for (const s of SPOTS[room]) {
     const d = Math.hypot(s.x - x, s.z - z);
-    if (d <= s.reach && d < bd) {
+    if (d <= s.reach * scale && d < bd) {
       bd = d;
       best = s;
     }

@@ -57,10 +57,13 @@ describe('the objective tracker', () => {
     // level 1: the archive is locked, so the stations that can be done are done; relics in open rooms are next
     expect(objective(s, 'quay').id).toMatch(/^relics/);
     for (const r of RELICS) s.game.relics[r.id] = 1;
-    expect(objective(s, 'quay').id).toMatch(/^level:/);
+    const lv = objective(s, 'quay');
+    expect(lv.id).toMatch(/^level:/);
+    expect(lv.open?.to).toMatch(/^\/learn\//); // a lesson can be done in the game's window
     s.game.freeRoam = true;
     clearAll(s);
     expect(objective(s, 'quay').target).toEqual({ room: 'quay', spot: 'door:hall' });
     expect(objective(s, 'hall').target).toEqual({ room: 'hall', spot: 'exam' });
+    expect(objective(s, 'hall').open?.to).toBe('/certification');
   });
 });

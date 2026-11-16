@@ -4,7 +4,7 @@ The semifinal interview asks you to show and explain the knowledge you gained bu
 
 ## The 60-second pitch
 
-Tideweight teaches grades 9-12 how AI works, how to use it well, and how to use it responsibly. Each of 15 lessons has a short explanation with a diagram, a real-world example, an experiment you run yourself, and a three-question check. XP, levels, nine badges and a dashboard track real work. Progress is saved only in the browser.
+Parameter teaches grades 9-12 how AI works, how to use it well, and how to use it responsibly. Each of 15 lessons has a short explanation with a diagram, a real-world example, an experiment you run yourself, and a three-question check. XP, levels, nine badges and a dashboard track real work. Progress is saved only in the browser.
 
 ## Architecture in one picture
 

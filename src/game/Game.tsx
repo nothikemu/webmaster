@@ -4,13 +4,14 @@
  */
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { useGfx, type GfxPref } from '@/game3d/support';
-import { navigate } from '@/router';
+import { EmbedContext, navigate, type EmbedApi } from '@/router';
+import { opensInGame } from '@/routes';
+import { TaskHub } from './TaskHub';
 import { Harbor, type HarborPlace } from '@/art/Harbor';
 import { RankCrest } from '@/art/Ranks';
-import { Icon } from '@/art/Icons';
 import { LESSONS, PATHS } from '@/content/paths';
 import { dispatch, resetAll, useProgress } from '@/engine/store';
-import { gameProgress, isUnlocked, levelInfo, stationDone } from '@/engine/progress';
+import { gameProgress, isUnlocked, levelInfo, stationDone, tuningLeft } from '@/engine/progress';
 import { objective } from './objective';
 import { ObjectiveTracker } from './Objective';
 import { play } from '@/audio/sfx';
@@ -24,7 +25,7 @@ import { QuayFar, QuayNear } from './art/Quay';
 import { ArchiveNear, HallNear, OfficeNear } from './art/Interiors2';
 import { BeaconNear, FoundryNear, LoomNear } from './art/Interiors';
 import { FAR } from './art/Far';
-import { AudioSettings, EndingDialog, GraphicsSettings, GameDialog, HelpDialog, JournalDialog, kernelIntro, MapDialog, PauseDialog, RelicCard, StationDialog, TalkDialog, kernelHint, type Talk } from './overlays';
+import { AudioSettings, EndingDialog, GraphicsSettings, GameDialog, HelpDialog, JournalDialog, kernelIntro, MapDialog, PauseDialog, RelicCard, StationDialog, TalkDialog, TuneDialog, kernelHint, type Talk } from './overlays';
 
 const Stage3D = lazy(() => import('@/game3d/Stage3D').then((m) => ({ default: m.Stage3D })));
 interface StageHandle {
@@ -39,6 +40,8 @@ type Overlay =
   | { k: 'pause' }
   | { k: 'map' }
   | { k: 'journal' }
+  | { k: 'tune' }
+  | { k: 'hub'; path: string }
   | { k: 'help' }
   | { k: 'station'; id: StationId }
   | { k: 'talk'; talk: Talk }
@@ -66,7 +69,7 @@ function Title({ onBegin, onHelp, onSettings }: { onBegin: () => void; onHelp: (
       <div className="wrap title__inner">
         <div className="title__panel" data-surface="ink">
           <p className="label">A game for grades 9 to 12</p>
-          <h1 id="title-h">Tideweight</h1>
+          <h1 id="title-h">Parameter</h1>
           <p className="title__sub">The lamplighter&apos;s harbor</p>
           <p className="title__lead">The lanterns have gone dark. Walk the harbor, work the stations, find what is hidden, and learn how AI works, how to use it well, and when not to trust it.</p>
           <div className="title__menu">
@@ -131,6 +134,13 @@ export default function Game() {
   const def = ROOMS[room];
   const loc = locationById(room)!;
   const goal = useMemo(() => objective(state, room), [state, room]);
+  const points = tuningLeft(state);
+
+  // While the game is open the site's footer and tab bar step aside, so the game has the whole page.
+  useEffect(() => {
+    document.documentElement.classList.add('is-play');
+    return () => document.documentElement.classList.remove('is-play');
+  }, []);
 
   // Tell the tests and the page where we are.
   useEffect(() => {
@@ -193,6 +203,15 @@ export default function Game() {
     if (first) setOverlay({ k: 'talk', talk: { who: 'Kernel', lines: kernelIntro(gfx.mode) } });
   };
 
+  /** Pages open in a window over the game. Only the site's own home, about and credits leave it. */
+  const openPage = useCallback((to: string) => {
+    const p = to.split('#')[0] || '/';
+    if (opensInGame(p)) setOverlay({ k: 'hub', path: p });
+    else if (p.startsWith('/play')) setOverlay(null);
+    else navigate(to);
+  }, []);
+  const embed = useMemo<EmbedApi>(() => ({ go: openPage }), [openPage]);
+
   const onInteract = useCallback(
     (h: Hotspot) => {
       const s = stateRef.current;
@@ -232,11 +251,11 @@ export default function Game() {
           break;
         case 'link':
           play('nav');
-          navigate(h.ref ?? '/');
+          openPage(h.ref ?? '/missions');
           break;
       }
     },
-    [room, travel],
+    [room, travel, openPage],
   );
 
   // Keyboard shortcuts for the whole game. They are ignored while a dialog is open or while typing.
@@ -257,6 +276,8 @@ export default function Game() {
       else if (k === 'k') setOverlay({ k: 'talk', talk: kernelHint(stateRef.current) });
       else if (k === 'm') setOverlay({ k: 'map' });
       else if (k === 'j') setOverlay({ k: 'journal' });
+      else if (k === 't') setOverlay({ k: 'hub', path: '/missions' });
+      else if (k === 'u') setOverlay({ k: 'tune' });
       else if (k === 'l') {
         play('sweep');
         setSweep(Date.now());
@@ -292,15 +313,16 @@ export default function Game() {
 
   if (screen === 'title') {
     return (
-      <>
+      <EmbedContext.Provider value={embed}>
         <Title onBegin={begin} onHelp={() => setOverlay({ k: 'help' })} onSettings={() => setOverlay({ k: 'pause' })} />
         {overlay?.k === 'help' ? <HelpDialog onClose={close} mode={gfx.mode} /> : null}
         {overlay?.k === 'pause' ? <TitleSettings onClose={close} gfx={gfx} onGfx={setGfx} /> : null}
-      </>
+      </EmbedContext.Provider>
     );
   }
 
   return (
+    <EmbedContext.Provider value={embed}>
     <div className="game">
       <div className="wrap game__bar" data-surface="ink">
         <div className="game__where">
@@ -313,28 +335,24 @@ export default function Game() {
             <span className="small">{state.xp} XP{lv.next ? `, ${lv.remaining} to level ${lv.level + 1}` : ''}</span>
             <Meter value={lv.pct} label={`Progress to the next level, ${lv.pct} percent`} />
           </span>
-          <span className="game__counts small" aria-label={`${prog.rounds} of ${prog.roundsTotal} station rounds, ${prog.relics} of ${prog.relicsTotal} relics`}>
-            <Icon name="target" /> {prog.rounds}/{prog.roundsTotal} <Icon name="seal" /> {prog.relics}/{prog.relicsTotal}
-          </span>
         </div>
         <div className="game__tools" role="toolbar" aria-label="Game controls">
-          <Btn small variant="quiet" icon="eye" aria-label="Lift your lantern to show what is hidden (L)" onClick={() => { play('sweep'); setSweep(Date.now()); }} />
-          <Btn small variant="quiet" icon="chat" aria-label="Ask Kernel (K)" onClick={() => setOverlay({ k: 'talk', talk: kernelHint(state) })} />
-          <Btn small variant="quiet" icon="map" aria-label="Chart and travel (M)" onClick={() => setOverlay({ k: 'map' })} />
-          <Btn small variant="quiet" icon="scroll" aria-label="Journal (J)" onClick={() => setOverlay({ k: 'journal' })} />
-          <Btn small variant="quiet" icon="pause" aria-label="Pause (Escape)" onClick={() => setOverlay({ k: 'pause' })} />
+          <Btn small variant="quiet" icon="flag" aria-label={`Tasks (T). ${prog.rounds} of ${prog.roundsTotal} station rounds and ${prog.relics} of ${prog.relicsTotal} relics so far`} onClick={() => setOverlay({ k: 'hub', path: '/missions' })}>Tasks</Btn>
+          <Btn small variant="quiet" icon="map" aria-label="Map: chart and travel (M)" onClick={() => setOverlay({ k: 'map' })}>Map</Btn>
+          <Btn small variant="quiet" icon="pause" aria-label={`Menu (Escape)${points > 0 ? `. ${points} tuning point${points === 1 ? '' : 's'} to spend` : ''}`} data-dot={points > 0 ? 'on' : undefined} onClick={() => setOverlay({ k: 'pause' })}>Menu</Btn>
         </div>
       </div>
       <div className="wrap game__stage">
         {use3d ? (
           <Suspense fallback={<div className="stage3d-loading" role="status">Raising the harbor…</div>}>
-            <Stage3D ref={roomRef} room={room} from={from} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} lit={lit} quality={gfx.quality} objective={goal} onInteract={onInteract} onFail={() => setGfx({ mode: '2d' })} />
+            <Stage3D ref={roomRef} room={room} from={from} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} lit={lit} quality={gfx.quality} objective={goal} tuning={g.tuning} onInteract={onInteract} onFail={() => setGfx({ mode: '2d' })} />
           </Suspense>
         ) : (
           <Room key={room} ref={roomRef} def={def} Far={FARS[room]} Near={NEAR[room]} startX={startX} frozen={frozen} found={found} done={done} locked={locked} sweep={sweep} onInteract={onInteract} />
         )}
         <div className={`game__fade${fade ? ' is-on' : ''}`} aria-hidden="true" />
         {use3d ? null : <ObjectiveTracker obj={goal} />}
+        <Btn className="lantern-btn" variant="primary" small icon="eye" aria-label="Lift your lantern to show what is hidden (L)" onClick={() => { play('sweep'); setSweep(Date.now()); }}>Lantern</Btn>
       </div>
 
       {overlay?.k === 'pause' ? (
@@ -344,6 +362,7 @@ export default function Game() {
           onClose={close}
           onResume={close}
           onJournal={chain({ k: 'journal' })}
+          onTune={chain({ k: 'tune' })}
           onMap={chain({ k: 'map' })}
           onHelp={chain({ k: 'help' })}
           onTitle={() => {
@@ -363,12 +382,15 @@ export default function Game() {
         />
       ) : null}
       {overlay?.k === 'journal' ? <JournalDialog onClose={close} /> : null}
+      {overlay?.k === 'tune' ? <TuneDialog onClose={close} /> : null}
+      {overlay?.k === 'hub' ? <TaskHub start={overlay.path} onClose={close} /> : null}
       {overlay?.k === 'help' ? <HelpDialog onClose={close} mode={gfx.mode} /> : null}
       {overlay?.k === 'station' ? <StationDialog id={overlay.id} onClose={close} /> : null}
       {overlay?.k === 'talk' ? <TalkDialog talk={overlay.talk} onClose={close} /> : null}
       {overlay?.k === 'ending' ? <EndingDialog onClose={close} /> : null}
       {overlay?.k === 'relic' ? <RelicCard relic={relicById(overlay.id)!} fresh={overlay.fresh} onClose={close} /> : null}
     </div>
+    </EmbedContext.Provider>
   );
 }
 

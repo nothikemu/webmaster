@@ -1,4 +1,4 @@
-# Tideweight
+# Parameter
 
 A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA Webmaster 2026-27** challenge: *design and develop an interactive Artificial Intelligence (AI) learning portal*.
 
@@ -6,16 +6,16 @@ A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA
 - **Real experiments**: train a neural network, teach a classifier, watch a language model predict words, audit a biased screener.
 - **Gamification that tracks real work**: XP, ten ranks with their own insignia, nine badges, a day streak, a progress dashboard, a final certification with a printable certificate.
 - **Twelve missions** in four groups, each a run of real objectives checked against finished work, with a one-time XP bonus.
-- **A black, white and red world** drawn in code: the site's pages use ink-on-paper etching, stippling and screentone, and the 3D game is a moving comic poster (cel bands, halftone dots, thick ink outlines, one hot red; see [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)), with original synthesized music and sound effects (both off until you switch them on).
+- **One look, ink, paper and one red** (see [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md), built on principles from Apple's Human Interface Guidelines: clarity, deference, hierarchy, whitespace, few elements per screen). The site's illustrations are inked in code and printed in the game's three colours, and the 3D game is a moving comic poster (cel bands, halftone dots, thick ink outlines, one hot red; see [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)), with original synthesized music and sound effects (both off until you switch them on).
 - **A world that fills in as you learn**: a lantern lights over the harbor for every finished lesson, the sea chart inks in your route, and the Codex cabinet gains a scroll for every term.
-- **Extras**: Prompt Lab, Tool Atlas (dated, sourced), six scenarios, a Codex with a drill, a daily myth-or-fact card, optional synthesized sound.
+- **Practice**: one page for the Prompt Lab, six scenarios, the Tool Atlas (dated, sourced), a Codex with a drill, a daily myth-or-fact card and the final certification. Optional synthesized sound.
 - All progress stays in the browser. No accounts, no server, no tracking.
 
 > **Read before submitting:** [`docs/COMPLIANCE_CHECKLIST.md`](docs/COMPLIANCE_CHECKLIST.md) lists what is met, what is still open and what your advisor has to confirm. The sources are in [`docs/RESEARCH_2026-27.md`](docs/RESEARCH_2026-27.md).
 
 ## The game
 
-`/play` is a playable 3D browser game on top of the portal (with a classic 2D version for devices that cannot draw 3D): walk a harbor plaza drawn as a moving comic poster in black, white and red, follow the red path and the Objective box to the next goal, enter six buildings, work six small stations (each teaches one idea and pays XP), and find seventeen hidden relics. Arrow keys or A/D walk, E uses, L lifts the lantern, Esc pauses; touch and mouse work too. Design, mapping to the three required learning areas, and accessibility notes are in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). `pnpm playtest` plays the built game in a real browser.
+`/play` is a playable 3D browser game on top of the portal (with a classic 2D version for devices that cannot draw 3D): walk a harbor plaza drawn as a moving comic poster in black, white and red, follow the red path and the Objective box to the next goal, enter six buildings, work six small stations (each teaches one idea and pays XP), and find seventeen hidden relics. Arrow keys or A/D walk, E uses, L lifts the lantern, T opens Tasks, U tunes the lantern, Esc pauses; touch and mouse work too. **Every task is done inside the game**: the Tasks window holds the missions, lessons, experiments, quizzes, practice tools and your progress, so you never leave the harbor to start or finish one. Finished work earns points to spend on the lantern's three parameters (Reach, Glow, Stride). Design, mapping to the three required learning areas, and accessibility notes are in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). `pnpm playtest` plays the built game in a real browser.
 
 ## Run it
 

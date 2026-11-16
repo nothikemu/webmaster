@@ -89,3 +89,17 @@ can oscillate and look unstable, so the game steps *down* a quality tier once in
 * [Changing pixelRatio based on fps: good or bad idea? (three.js forum)](https://discourse.threejs.org/t/changing-pixelratio-based-on-fps-good-or-bad-idea/34563)
 * Way-finding and tutorials: [Game Accessibility Guidelines](https://gameaccessibilityguidelines.com/?p=2321), [Quest marker and objective tracker (Bugnet)](https://bugnet.io/blog/how-to-implement-a-quest-marker-and-objective-tracker), [Level design basics: guiding players without telling them (Unity)](https://unity.com/blog/level-design-basics), [Efficient objective markers and waypoints (UEFN Central)](https://uefncentral.com/pl/blog/efficient-objective-markers-waypoints-uefn)
 * Art direction: see [STYLE_GUIDE.md](STYLE_GUIDE.md)
+
+## After the Parameter rebuild (2026-11-16)
+
+The rebuild added bunting between the lamp posts (two small draws) and three market stalls on the quay (baked into the shared world meshes). Profile on the built game (`node scripts/profile3d.mjs`, software WebGL, so frame rates are only comparable between builds):
+
+| Place | Draw calls (high) | Draw calls (low) | Triangles (high) | Passes |
+| --- | --- | --- | --- | --- |
+| Harbor (quay) | 134 (was 132) | 89 | 91,493 | 2 |
+| Loom House | 100 | 100 | 17,901 | 2 |
+| Foundry | 73 | 73 | 12,973 | 2 |
+| Beacon | 67 | 67 | 16,977 | 2 |
+| Harbor Office | 60 | 60 | 10,259 | 2 |
+
+CPU time per frame stays under about 2.5 ms. The Archive and Trial Hall are skipped by the profile script because they are level-locked on a new save. The other changes in the rebuild (windows, tuning, controls) are not part of the render loop. The site pages add one SVG filter (`#poster`) to the illustrations; it is applied once per image and has not been measured on a low-end phone.

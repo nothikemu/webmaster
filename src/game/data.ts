@@ -2,7 +2,7 @@
  * The game's content map: where things are, what each place teaches, and what can be found there.
  * Pure data, no React, so the progress engine, the tests and the build can all import it.
  *
- * World: Tideweight harbor, walked left to right along the Quay. Six buildings hang off it.
+ * World: Parameter harbor, walked left to right along the Quay. Six buildings hang off it.
  * Each building maps to one of the three required TSA learning areas (or to the player's own records).
  */
 import type { PathId } from '@/content/types';

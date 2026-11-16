@@ -55,8 +55,8 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const ctx = await browser.newContext({ viewport: { width: 900, height: 700 } });
 await ctx.addInitScript(() => {
   if (!sessionStorage.getItem('gfxset')) {
-    localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: 'low' }));
-    if (!location.search.includes('tut=1')) localStorage.setItem('tideweight/tutorial', '1');
+    localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '3d', quality: 'low' }));
+    if (!location.search.includes('tut=1')) localStorage.setItem('parameter/tutorial', '1');
     sessionStorage.setItem('gfxset', '1');
   }
 });
@@ -314,7 +314,7 @@ await check('without WebGL the classic 2D game starts by itself, with a note in 
 await noGl.close();
 
 const phone = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 });
-await phone.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: 'low' })));
+await phone.addInitScript(() => localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '3d', quality: 'low' })));
 const m = await phone.newPage();
 watch(m, 'phone');
 await check('on a phone: a stick and a Use button, no sideways scroll, and the stick walks the player', async () => {
@@ -346,7 +346,7 @@ await phone.close();
 
 await check('a first-time player is taught in four steps that finish by themselves, and can skip; it is remembered', async () => {
   const c2 = await browser.newContext({ viewport: { width: 900, height: 700 } });
-  await c2.addInitScript(() => localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: 'low' })));
+  await c2.addInitScript(() => localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '3d', quality: 'low' })));
   const p2 = await c2.newPage();
   watch(p2, 'tutorial');
   await p2.goto(`${base}/play/`);
@@ -374,7 +374,7 @@ await check('a first-time player is taught in four steps that finish by themselv
   expect((await step()).includes('4/4'), 'not on the last step');
   await p2.locator('.coach__skip').click();
   await p2.waitForFunction(() => !document.querySelector('.coach'), null, { timeout: 5000 });
-  expect((await p2.evaluate(() => localStorage.getItem('tideweight/tutorial'))) === '1', 'skipping was not remembered');
+  expect((await p2.evaluate(() => localStorage.getItem('parameter/tutorial'))) === '1', 'skipping was not remembered');
   await p2.reload();
   await p2.waitForSelector('.title');
   await p2.click('button:has-text("Continue")').catch(() => p2.click('button:has-text("Begin")'));

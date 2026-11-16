@@ -21,6 +21,7 @@ import { bakeWorld } from './bake';
 import { INTERIOR, PLAZA_R, QUAY_Z, SPOTS, START, WALK_R, doorFront, interiorSpawn, nearestSpot, type BuildingId, type Spot } from './layout';
 import { Icon } from '@/art/Icons';
 import type { Objective } from '@/game/objective';
+import type { Tuning } from '@/engine/progress';
 import { ObjectiveTracker } from '@/game/Objective';
 import { makeGuide, type Guide } from './guide';
 
@@ -40,6 +41,8 @@ interface Props {
   lit: boolean[];
   /** What the player should do next; the stage draws the path and the marker for it. */
   objective: Objective | null;
+  /** The lantern dials the player has set. */
+  tuning: Tuning;
   quality: Quality | 'auto';
   onInteract: (h: Hotspot) => void;
   /** Called if the 3D view cannot start or is lost, so the game can fall back to 2D. */
@@ -54,10 +57,11 @@ export const toHotspot = (s: Spot): Hotspot => ({ id: s.id, kind: s.kind, x: s.x
 const QUAY_LIGHT = { sun: 18, hemi: 4.8, fill: 3.5 };
 const ROOM_LIGHT = { hemi: 4.4, fill: 7 };
 
-const TUTORIAL_KEY = 'tideweight/tutorial';
+const TUTORIAL_KEY = 'parameter/tutorial';
+const LEGACY_TUTORIAL_KEY = 'tideweight/tutorial';
 function tutorialSeen(): boolean {
   try {
-    return localStorage.getItem(TUTORIAL_KEY) === '1';
+    return localStorage.getItem(TUTORIAL_KEY) === '1' || localStorage.getItem(LEGACY_TUTORIAL_KEY) === '1';
   } catch {
     return false;
   }
@@ -81,7 +85,7 @@ const COACH: ((touch: boolean) => JSX.Element)[] = [
 ];
 
 export const Stage3D = memo(
-  forwardRef<Stage3DHandle, Props>(function Stage3D({ room, from, frozen, found, done, locked, sweep, lit, quality, objective, onInteract, onFail }, ref) {
+  forwardRef<Stage3DHandle, Props>(function Stage3D({ room, from, frozen, found, done, locked, sweep, lit, quality, objective, tuning, onInteract, onFail }, ref) {
     const wrap = useRef<HTMLDivElement>(null);
     const canvas = useRef<HTMLCanvasElement>(null);
     const labels = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -100,8 +104,8 @@ export const Stage3D = memo(
       if (to === -1) rememberTutorial();
     }, []);
 
-    const latest = useRef({ room, from, frozen, found, done, locked, lit, quality, objective, onInteract });
-    latest.current = { room, from, frozen, found, done, locked, lit, quality, objective, onInteract };
+    const latest = useRef({ room, from, frozen, found, done, locked, lit, quality, objective, tuning, onInteract });
+    latest.current = { room, from, frozen, found, done, locked, lit, quality, objective, tuning, onInteract };
     const sweepRef = useRef(false);
     const failRef = useRef(onFail);
     failRef.current = onFail;
@@ -127,7 +131,7 @@ export const Stage3D = memo(
       const t = window.setTimeout(() => {
         setSweeping(false);
         sweepRef.current = false;
-      }, 3600);
+      }, 3600 + 700 * latest.current.tuning.glow);
       return () => window.clearTimeout(t);
     }, [sweep]);
 
@@ -298,7 +302,7 @@ export const Stage3D = memo(
         }
         if ((k === 'e' || (k === 'enter' && e.target === el)) && !e.repeat) {
           e.preventDefault();
-          const s = nearestSpot(roomNow, body.pos.x, body.pos.z);
+          const s = nearestSpot(roomNow, body.pos.x, body.pos.z, 1 + 0.1 * latest.current.tuning.reach);
           if (s && !latest.current.frozen) latest.current.onInteract(toHotspot(s));
         }
       };
@@ -482,7 +486,7 @@ export const Stage3D = memo(
         }
         const jump = jumpQueued && !frozen;
         jumpQueued = false;
-        step(body, { moveX: mx, moveZ: mz, run, jump }, cam.yaw, dt, colliders, inside);
+        step(body, { moveX: mx, moveZ: mz, run, jump, scale: 1 + 0.06 * L.tuning.stride }, cam.yaw, dt, colliders, inside);
         if (!frozen) {
           moveAcc += body.speed * dt;
           if (keys.has('shift') && body.speed > 3) ranAcc += dt;
@@ -515,16 +519,17 @@ export const Stage3D = memo(
         look.set(body.pos.x + Math.sin(body.face) * 3, 1.5, body.pos.z + Math.cos(body.face) * 3);
         kOff.set(-1.0, 1.9 + Math.sin(t * 1.3) * 0.12, -0.9).applyAxisAngle(UP, body.face);
         kernel.update(dt, t, kTarget.set(body.pos.x + kOff.x, kOff.y, body.pos.z + kOff.z), look, false);
-        const near = nearestSpot(roomNow, body.pos.x, body.pos.z);
+        const near = nearestSpot(roomNow, body.pos.x, body.pos.z, 1 + 0.1 * L.tuning.reach);
         if ((near?.id ?? null) !== nearNow) {
           nearNow = near?.id ?? null;
           setNearId(nearNow);
           if (nearNow) play('tick');
         }
         sweepK += ((sweepRef.current ? 1 : 0) - sweepK) * Math.min(1, dt * 4);
+        player.light.intensity *= 1 + 0.18 * L.tuning.glow;
         if (current) {
           current.setFound(L.found);
-          current.setSweep(sweepK);
+          current.setSweep(sweepK * (1 + 0.2 * L.tuning.glow));
           current.setPlayer(body.pos);
           current.update(dt, t);
           for (const n of current.npcs) n.npc.update(dt, t, near?.id === n.id, body.pos);
@@ -587,7 +592,7 @@ export const Stage3D = memo(
           proj.set(s.x, s.y, s.z).project(gfx.camera);
           const d = Math.hypot(s.x - body.pos.x, s.z - body.pos.z);
           const isFound = s.kind === 'relic' && L.found.has(s.ref ?? '');
-          const reveal = s.kind !== 'relic' || (sweepRef.current && !isFound) || (!isFound && d < s.reach * 2.4);
+          const reveal = s.kind !== 'relic' || (sweepRef.current && !isFound) || (!isFound && d < s.reach * (2.4 + 0.5 * L.tuning.reach));
           const visible = reveal && proj.z < 1 && Math.abs(proj.x) < 1.1 && Math.abs(proj.y) < 1.1 && d < (s.kind === 'relic' ? 22 : 110);
           b.style.display = visible ? '' : 'none';
           if (visible && s.id === goalKey) b.dataset.dist = `${Math.round(guide.distance ?? 0)} m`;

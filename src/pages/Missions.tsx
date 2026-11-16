@@ -1,10 +1,8 @@
 import { Link } from '@/router';
 import { Icon } from '@/art/Icons';
-import { Divider } from '@/art/Dividers';
-import { MissionOffice } from '@/art/MoreScenes';
 import { MISSIONS, MISSION_CATEGORIES, missionProgress, type MissionCategory, type MissionDef } from '@/engine/progress';
 import { useProgress } from '@/engine/store';
-import { LinkBtn } from '@/ui/primitives';
+import { LinkBtn, PageHead } from '@/ui/primitives';
 
 const BLURB: Record<MissionCategory, string> = {
   Fundamentals: 'How AI works, from rules and examples to networks and next-word guessing.',
@@ -13,7 +11,6 @@ const BLURB: Record<MissionCategory, string> = {
   Exploration: 'Missions played in the game: walk the harbor, find what is hidden, and work the stations.',
   Capstone: 'Proving the whole course.',
 };
-const DIVIDER: Record<MissionCategory, 'waves' | 'rope' | 'cogs' | 'chain' | 'rigging'> = { Fundamentals: 'rope', 'Field work': 'cogs', Integrity: 'waves', Exploration: 'chain', Capstone: 'rigging' };
 
 function Mission({ m }: { m: MissionDef }) {
   const state = useProgress((s) => s);
@@ -53,40 +50,36 @@ export default function Missions() {
   const next = MISSIONS.find((m) => !state.missions[m.id]);
   return (
     <div className="wrap page missions-page">
-      <header className="split-head">
-        <div className="split-head__copy">
-          <h1>Missions</h1>
-          <p className="page-head__lead">Short runs of real objectives. Each one is checked against work you have actually finished, so nothing here can be done by visiting or clicking. Finish one and its XP bonus is paid once.</p>
-          <p className="fact">
-            <Icon name="flag" />
-            <span>
-              <strong>{done} of {MISSIONS.length}</strong> missions complete{paid ? `, ${paid} bonus XP earned` : ''}.
-            </span>
-          </p>
-          {next ? (
-            <div className="row">
-              <LinkBtn to={next.objectives.find((o) => !o.done(state))?.to ?? '/learn'} variant="primary" go>Next: {next.title}</LinkBtn>
-            </div>
-          ) : null}
-        </div>
-        <MissionOffice done={done} className="plate split-head__art" />
-      </header>
-      {MISSION_CATEGORIES.map((cat) => (
-        <section key={cat} className="mission-group" aria-labelledby={`mg-${cat}`}>
-          <Divider kind={DIVIDER[cat]} className="divider" />
-          <div className="mission-group__grid">
-            <div className="mission-group__title">
-              <h2 id={`mg-${cat}`}>{cat}</h2>
-              <p>{BLURB[cat]}</p>
-            </div>
+      <PageHead title="Missions" lead="Short runs of real objectives. Each one is checked against work you finished, so nothing here can be done by clicking around.">
+        <p className="fact">
+          <Icon name="flag" />
+          <span>
+            <strong>{done} of {MISSIONS.length}</strong> complete{paid ? `, ${paid} bonus XP earned` : ''}
+          </span>
+        </p>
+        {next ? (
+          <div className="row">
+            <LinkBtn to={next.objectives.find((o) => !o.done(state))?.to ?? '/learn'} variant="primary" go>Next: {next.title}</LinkBtn>
+          </div>
+        ) : null}
+      </PageHead>
+      {MISSION_CATEGORIES.map((cat) => {
+        const list = MISSIONS.filter((m) => m.category === cat);
+        const n = list.filter((m) => state.missions[m.id]).length;
+        return (
+          <section key={cat} className="mission-group" aria-labelledby={`mg-${cat}`}>
+            <h2 id={`mg-${cat}`}>
+              {cat} <span className="mission-group__count">{n} of {list.length}</span>
+            </h2>
+            <p className="mission-group__blurb">{BLURB[cat]}</p>
             <ol className="missions">
-              {MISSIONS.filter((m) => m.category === cat).map((m) => (
+              {list.map((m) => (
                 <Mission key={m.id} m={m} />
               ))}
             </ol>
-          </div>
-        </section>
-      ))}
+          </section>
+        );
+      })}
     </div>
   );
 }

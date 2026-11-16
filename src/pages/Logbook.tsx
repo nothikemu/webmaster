@@ -38,7 +38,7 @@ export default function Logbook() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'tideweight-progress.json';
+    a.download = 'parameter-progress.json';
     a.click();
     URL.revokeObjectURL(url);
     setMsg('Progress file downloaded.');

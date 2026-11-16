@@ -42,7 +42,7 @@ function Doc({ title, lead, art, toc, children }: { title: string; lead: string;
 export function About() {
   return (
     <Doc
-      title="About Tideweight"
+      title="About Parameter"
       lead="A free, game-inspired AI learning portal for students in grades 9 to 12, built for the TSA Webmaster event, 2026-27."
       art={<NoticeBoard className="plate" />}
       toc={[
@@ -68,7 +68,7 @@ export function About() {
       <section className="prose" aria-labelledby="game">
         <h2 id="game">The game</h2>
         <p>
-          <Link to="/play">Tideweight: the lamplighter&apos;s harbor</Link> is the hands-on side of the same three learning areas. It is a 3D game, drawn in the browser as a moving comic poster in black, white and one hot red: flat cel shading, halftone dots and thick ink outlines. A red path and an Objective box always show where to go next. You walk a harbor plaza, step into six buildings, work small games called stations, and find hidden relics that each explain one idea. A classic 2D version of the same game runs on devices that cannot draw 3D, and you can choose it from the pause menu. Every station has an objective, a way to clear it, feedback that says why, and an XP reward, and every one of them is tied to a lesson.
+          <Link to="/play">Parameter: the lamplighter&apos;s harbor</Link> is the hands-on side of the same three learning areas. It is a 3D game, drawn in the browser as a moving comic poster in black, white and one hot red: flat cel shading, halftone dots and thick ink outlines. A red path and an Objective box always show where to go next. You walk a harbor plaza, step into six buildings, work small games called stations, and find hidden relics that each explain one idea. A classic 2D version of the same game runs on devices that cannot draw 3D, and you can choose it from the pause menu. Every station has an objective, a way to clear it, feedback that says why, and an XP reward, and every one of them is tied to a lesson.
         </p>
         <ul>
           <li><strong>Fundamental AI concepts.</strong> The Loom House: the Curator&apos;s Cabinet (learning from labeled examples, and why coverage matters) and the Weight Frame (weights, bias and training). The Archive: the Timeline of Minds (the history of AI). Lessons: Understand AI.</li>
@@ -101,7 +101,7 @@ export function About() {
       </section>
       <section className="prose" aria-labelledby="built">
         <h2 id="built">How the site is built</h2>
-        <p>Tideweight is a single-page site written in TypeScript with React, a user-interface library, and built with Vite. No website builder, page template or theme was used. The layout, the styles and every illustration were made for this project.</p>
+        <p>Parameter is a single-page site written in TypeScript with React, a user-interface library, and built with Vite. No website builder, page template or theme was used. The layout, the styles and every illustration were made for this project.</p>
         <p>The pictures are drawn by code. A small brush engine in the project turns a few points into tapered ink strokes, hatching and dry-brush marks, so every picture on the site shares one pen. The experiments are small real programs: the neural network trains in your browser, and you can read its code in the project.</p>
         <p>There is no server. Your progress is kept in your browser&apos;s own storage, and you can download it or erase it from the <Link to="/logbook">Logbook</Link>.</p>
       </section>

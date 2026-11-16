@@ -7,7 +7,8 @@
  * locked; and last the final examination.
  */
 import { LOCATIONS, RELICS, STATIONS, locationById, type RoomId } from './data';
-import { isUnlocked, levelInfo, stationDone, type PortalState } from '@/engine/progress';
+import { isUnlocked, levelInfo, recommendNext, stationDone, type PortalState } from '@/engine/progress';
+import { lessonById } from '@/content/paths';
 
 export interface Objective {
   /** Stable key: changes when the objective changes, so the tracker can animate. */
@@ -18,6 +19,8 @@ export interface Objective {
   hint: string;
   /** Where to go, if it is a place: the room it is in and the id of the thing in the stage (a door, a station). */
   target: { room: RoomId; spot: string } | null;
+  /** A task that is done in a window, not at a place: the tracker offers a button for it. */
+  open?: { to: string; label: string };
 }
 
 const doorSpot = (room: RoomId): string => `door:${room}`;
@@ -60,11 +63,19 @@ export function objective(s: PortalState, here: RoomId): Objective {
   if (locked) {
     const need = locked.unlock!.level;
     const lv = levelInfo(s.xp);
-    return { id: `level:${need}`, title: `Reach level ${need} to open ${locked.name}`, hint: `You are level ${lv.level}${lv.next ? `, ${lv.remaining} XP to go` : ''}. Lessons on the Learn page pay XP too.`, target: null };
+    const rec = recommendNext(s);
+    const lesson = rec.lesson ? lessonById(rec.lesson) : undefined;
+    return {
+      id: `level:${need}`,
+      title: `Reach level ${need} to open ${locked.name}`,
+      hint: `You are level ${lv.level}${lv.next ? `, ${lv.remaining} XP to go` : ''}. A lesson pays XP too, and you can do one right here.`,
+      target: null,
+      open: lesson ? { to: `/learn/${lesson.path}/${lesson.id}`, label: `Open: ${lesson.title}` } : undefined,
+    };
   }
 
   const r = route(here, 'hall');
-  if (r.leg === 'there') return { id: 'exam', title: 'Take the final examination', hint: 'Go to the sign for the final examination and press E.', target: { room: 'hall', spot: 'exam' } };
+  if (r.leg === 'there') return { id: 'exam', title: 'Take the final examination', hint: 'Go to the sign for the final examination and press E.', target: { room: 'hall', spot: 'exam' }, open: { to: '/certification', label: 'Open the examination' } };
   if (r.leg === 'door') return { id: 'exam-go', title: 'Take the final examination in the Trial Hall', hint: 'Follow the red path to the Trial Hall door.', target: { room: 'quay', spot: r.spot } };
   return { id: 'exam-out', title: 'Head back out to the Quay', hint: 'The Trial Hall is next door. The red door leads out.', target: { room: here, spot: r.spot } };
 }

@@ -11,6 +11,9 @@ import { dispatch, useProgress } from '@/engine/store';
 import { lessonById, lessonNumber, neighbours, pathById } from '@/content/paths';
 import { glossaryById } from '@/content/glossary';
 import { Btn, Callout, Chip, LinkBtn, Panel } from '@/ui/primitives';
+
+const STEPS = ['learn', 'try', 'check', 'seal'] as const;
+const STEP_LABEL = { learn: 'Learn', try: 'Try', check: 'Check', seal: 'Finish' } as const;
 import { Widget } from '@/widgets/Widget';
 import { Quiz } from '@/widgets/Quiz';
 import NotFound from './NotFound';
@@ -29,6 +32,8 @@ function LessonView({ lessonId }: { lessonId: string }) {
   const steps = useProgress((s) => lessonSteps(s, lesson.id));
   const saved = useProgress((s) => s.lessons[lesson.id]);
   const { prev, next } = neighbours(lesson.id);
+  const first = !steps.learn ? 'learn' : !steps.try ? 'try' : !steps.check ? 'check' : 'seal';
+  const [step, setStep] = useState<'learn' | 'try' | 'check' | 'seal'>(first);
   const [quizKey, setQuizKey] = useState(0);
   const [result, setResult] = useState<number | null>(null);
 
@@ -52,33 +57,28 @@ function LessonView({ lessonId }: { lessonId: string }) {
       </header>
 
       <div className="wrap lesson-body">
-        <aside className="rail" aria-label="Lesson steps">
-          <Panel className="rail__panel">
-            <p className="label">Objective</p>
-            <p className="rail__objective">{lesson.objective}</p>
-            <ol className="stepper">
-              {[
-                { id: 'learn', label: 'Learn', done: steps.learn },
-                { id: 'try', label: 'Try', done: steps.try },
-                { id: 'check', label: 'Check', done: steps.check },
-                { id: 'seal', label: 'Seal', done: steps.done },
-              ].map((s) => (
-                <li key={s.id} className={s.done ? 'is-done' : ''}>
-                  <a href={`#${s.id}`} onClick={(e) => { e.preventDefault(); document.getElementById(s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); document.getElementById(s.id)?.focus({ preventScroll: true }); }}>
-                    <span className="stepper__dot" aria-hidden="true">{s.done ? <Icon name="check" /> : null}</span>
-                    <span>{s.label}</span>
-                    <span className="visually-hidden">{s.done ? ' (done)' : ' (not done yet)'}</span>
-                  </a>
+        <nav className="steps" aria-label="Lesson steps">
+          <ol>
+            {STEPS.map((id, i) => {
+              const done = id === 'learn' ? steps.learn : id === 'try' ? steps.try : id === 'check' ? steps.check : steps.done;
+              return (
+                <li key={id}>
+                  <button type="button" className="steps__btn" aria-current={step === id ? 'step' : undefined} onClick={() => setStep(id)}>
+                    <span className="steps__dot" aria-hidden="true">{done ? <Icon name="check" /> : i + 1}</span>
+                    <span>{STEP_LABEL[id]}</span>
+                    <span className="visually-hidden">{done ? ' (done)' : ' (not done yet)'}</span>
+                  </button>
                 </li>
-              ))}
-            </ol>
-            <p className="small rail__fw">{lesson.framework}</p>
-          </Panel>
-        </aside>
+              );
+            })}
+          </ol>
+        </nav>
 
         <div className="lesson-main">
+          {step === 'learn' ? (
           <section id="learn" tabIndex={-1} aria-labelledby="learn-h" className="lesson-sec">
             <h2 id="learn-h" className="sec-title"><span className="sec-title__tag">Learn</span></h2>
+            <p className="lesson-objective"><strong>You will be able to:</strong> {lesson.objective}</p>
             {hook ? (
               <figure className="hook">
                 <MentorBust who={path.id} className="hook__bust" />
@@ -111,13 +111,16 @@ function LessonView({ lessonId }: { lessonId: string }) {
               {steps.learn ? (
                 <Chip tone="hue" icon="check">Learn step done</Chip>
               ) : (
-                <Btn variant="primary" go onClick={() => dispatch({ type: 'learned', lesson: lesson.id })}>
+                <Btn variant="primary" go onClick={() => { dispatch({ type: 'learned', lesson: lesson.id }); setStep('try'); }}>
                   I have read this lesson (+{XP.learn} XP)
                 </Btn>
               )}
+              {steps.learn ? <Btn variant="primary" go onClick={() => setStep('try')}>Continue to the experiment</Btn> : null}
             </div>
           </section>
+          ) : null}
 
+          {step === 'try' ? (
           <section id="try" tabIndex={-1} aria-labelledby="try-h" className="lesson-sec">
             <h2 id="try-h" className="sec-title"><span className="sec-title__tag">Try</span> {lesson.widget.title}</h2>
             <p className="lesson-sec__intro">{lesson.widget.intro}</p>
@@ -131,8 +134,11 @@ function LessonView({ lessonId }: { lessonId: string }) {
                 <>Reach <strong>{lesson.widget.pass}</strong> to solve this experiment. Your best so far: <strong>{best}</strong>. You earn up to {XP.tryMax} XP in proportion to your score.</>
               )}
             </p>
+            {best >= lesson.widget.pass ? <div className="row"><Btn variant="primary" go onClick={() => setStep('check')}>Continue to the check</Btn></div> : null}
           </section>
+          ) : null}
 
+          {step === 'check' ? (
           <section id="check" tabIndex={-1} aria-labelledby="check-h" className="lesson-sec">
             <h2 id="check-h" className="sec-title"><span className="sec-title__tag">Check</span> Knowledge check</h2>
             {result === null ? (
@@ -155,13 +161,18 @@ function LessonView({ lessonId }: { lessonId: string }) {
                 <p>
                   {result >= CHECK_PASS ? 'That passes the check.' : `You need ${CHECK_PASS} of ${lesson.check.length} to pass. Re-read the part that tripped you up, then try again.`}
                 </p>
-                <Btn variant="quiet" icon="reset" onClick={() => { setResult(null); setQuizKey((k) => k + 1); }}>Try the check again</Btn>
+                <div className="row">
+                  {result >= CHECK_PASS ? <Btn variant="primary" go onClick={() => setStep('seal')}>Finish the lesson</Btn> : null}
+                  <Btn variant="quiet" icon="reset" onClick={() => { setResult(null); setQuizKey((k) => k + 1); }}>Try the check again</Btn>
+                </div>
               </Panel>
             )}
           </section>
+          ) : null}
 
+          {step === 'seal' ? (
           <section id="seal" tabIndex={-1} aria-labelledby="seal-h" className="lesson-sec">
-            <h2 id="seal-h" className="sec-title"><span className="sec-title__tag">Seal</span> {steps.done ? 'Lesson complete' : 'What is left'}</h2>
+            <h2 id="seal-h" className="sec-title"><span className="sec-title__tag">Finish</span> {steps.done ? 'Lesson complete' : 'What is left'}</h2>
             {steps.done ? (
               <Panel tone="ink" className="seal-panel">
                 <Kernel mood="cheer" className="seal-panel__kernel" />
@@ -199,6 +210,7 @@ function LessonView({ lessonId }: { lessonId: string }) {
               </Panel>
             )}
           </section>
+          ) : null}
 
           <nav className="lesson-nav" aria-label="Lesson navigation">
             {prev ? <LinkBtn to={`/learn/${prev.path}/${prev.id}`} icon="arrow-left" variant="quiet">Previous: {prev.title}</LinkBtn> : <span />}

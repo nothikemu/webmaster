@@ -36,8 +36,8 @@ const GL = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: GL });
 const ctx = await browser.newContext({ viewport: { width: 1000, height: 640 } });
 await ctx.addInitScript((q) => {
-  localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: q }));
-  localStorage.setItem('tideweight/tutorial', '1');
+  localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '3d', quality: q }));
+  localStorage.setItem('parameter/tutorial', '1');
 }, quality);
 const page = await ctx.newPage();
 const errors = [];

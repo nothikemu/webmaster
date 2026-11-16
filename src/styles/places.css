@@ -242,9 +242,9 @@
   width: 100%;
   min-height: 5.6rem;
   padding: 0 var(--s-5) 0 0;
-  border: 2px solid var(--ink);
+  border: 1px solid var(--field-line);
   background: var(--paper-hi);
-  box-shadow: 5px 5px 0 var(--ink);
+  box-shadow: none;
   color: var(--text);
   text-align: left;
   cursor: pointer;
@@ -252,11 +252,11 @@
 }
 .file:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 var(--ink);
+  box-shadow: none;
 }
 .file:active {
   transform: translate(4px, 4px);
-  box-shadow: 1px 1px 0 var(--ink);
+  box-shadow: none;
   transition-duration: var(--dur-press);
 }
 .file__no {
@@ -394,7 +394,7 @@
   width: 100%;
   height: auto;
   border: 3px solid var(--ink-line);
-  box-shadow: 8px 8px 0 var(--ink-3);
+  box-shadow: none;
 }
 @media (max-width: 900px) {
   .rankband__grid {
@@ -509,8 +509,8 @@
   display: block;
   width: 100%;
   height: auto;
-  border: 3px solid var(--ink);
-  box-shadow: 8px 8px 0 var(--hue);
+  border: 1px solid var(--field-line);
+  box-shadow: none;
 }
 .triptych__name {
   margin: var(--s-4) 0 var(--s-1);
@@ -549,7 +549,7 @@
   }
   .triptych__art {
     grid-row: 1 / span 2;
-    box-shadow: 5px 5px 0 var(--hue);
+    box-shadow: none;
   }
   .triptych__name {
     margin-top: 0;
@@ -571,10 +571,10 @@
   gap: var(--s-3);
   padding: var(--s-8) var(--s-7) var(--s-7);
   background: var(--paper-hi);
-  border: 3px solid var(--ink);
+  border: 1px solid var(--field-line);
   outline: 2px solid var(--ink);
   outline-offset: -13px;
-  box-shadow: 10px 10px 0 var(--ink);
+  box-shadow: none;
   text-align: center;
 }
 .certificate .logo {
@@ -806,8 +806,8 @@
   overflow-x: auto;
   margin: 0 0 var(--s-4);
   background: var(--paper-hi);
-  border: 3px solid var(--ink);
-  box-shadow: 8px 8px 0 var(--ink);
+  border: 1px solid var(--field-line);
+  box-shadow: none;
 }
 .chartmap__svg {
   display: block;
@@ -882,15 +882,15 @@
   margin: 0 0 var(--s-7);
   padding: var(--s-4) var(--s-5) var(--s-4) var(--s-4);
   background: var(--paper-hi);
-  border: 2px solid var(--ink);
-  box-shadow: 6px 6px 0 var(--hue);
+  border: 1px solid var(--field-line);
+  box-shadow: none;
 }
 .hook__bust {
   grid-row: 1 / span 2;
   display: block;
   width: 100%;
   height: auto;
-  border: 2px solid var(--ink);
+  border: 1px solid var(--field-line);
 }
 .hook__words {
   margin: 0;
@@ -1114,8 +1114,8 @@ html {
   margin: 0;
   padding: var(--s-4) var(--s-5);
   background: var(--paper-hi);
-  border: 2px solid var(--ink);
-  box-shadow: 5px 5px 0 var(--ink);
+  border: 1px solid var(--field-line);
+  box-shadow: none;
 }
 .mission__head {
   display: flex;
@@ -1149,7 +1149,7 @@ html {
 }
 .mission--complete {
   background: var(--paper-lo);
-  box-shadow: 2px 2px 0 var(--ink);
+  box-shadow: none;
 }
 .mission--complete .mission__stamp {
   border-style: solid;

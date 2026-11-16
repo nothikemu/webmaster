@@ -1,4 +1,4 @@
-# The game: Tideweight, the lamplighter's harbor
+# The game: Parameter, the lamplighter's harbor
 
 The game is the hands-on half of the AI Learning Portal. It is not a replacement for the portal: every lesson, the Codex, the Tool Atlas and the final certification remain ordinary pages, reachable from the menu, and nothing in them is locked by the game.
 
@@ -47,7 +47,7 @@ Seventeen small objects, each a short explanation (an idea, not a trophy), hidde
 
 ## Progression
 
-XP is paid for doing the thing, once. Rounds pay 40, relics 12, a first visit to a building 10. It all feeds the same level ladder as the lessons. Six new missions read from finished work: The curator's eye, Struck and tested, The honest lamp, Deep time, Relic hunter, Harbor master. Everything is saved in the browser (`tideweight/v1`, key `game`), sanitized on load, and erased from the pause menu.
+XP is paid for doing the thing, once. Rounds pay 40, relics 12, a first visit to a building 10. It all feeds the same level ladder as the lessons. Six new missions read from finished work: The curator's eye, Struck and tested, The honest lamp, Deep time, Relic hunter, Harbor master. Everything is saved in the browser (`parameter/v1`, key `game`), sanitized on load, and erased from the pause menu.
 
 ## Mapping to the required content
 
@@ -102,3 +102,35 @@ Research (see the sources in docs/PERFORMANCE.md and docs/STYLE_GUIDE.md): good 
 - **A tutorial** in four steps that finish by themselves when the player does the thing (walk, look around, run or jump, follow the red path), with touch wording on touch devices, a Skip button, and a flag in `localStorage` so it shows once. Kernel's introduction also names the Objective box and the red path.
 - **Hints**: a prompt at the bottom says what E does at the thing you are near; after sixteen seconds of standing still a "Stuck?" card repeats the objective. Reduced motion stops the marching and pulsing but keeps the path and the marker.
 - The "Places and objects" list under the picture still lists everything and travels there, so no part of the game depends on walking or seeing.
+
+
+## Tasks live in the game (the Parameter rebuild)
+
+Every task is now done without leaving `/play/`. The bar at the top holds three buttons: **Tasks** (T), **Map** (M) and **Menu** (Esc).
+
+- **The Tasks window** (`src/game/TaskHub.tsx`) is a large dialog with four tabs: Missions, Lessons, Practice and Progress. It shows the site's own pages, so a lesson, an experiment, a quiz, a mission or the certification all run inside it. Links inside those pages stay in the window (`EmbedContext` in `src/router.tsx`); the address bar never leaves `/play/`.
+- **Everything points into it.** Link hotspots in the world, the mentors, relics, the journal and the Objective box's "Open" button all open the window on the right page. When the next goal is a lesson (for example, while level-locked), the Objective box offers it directly.
+- **Close and you are back where you stood.** The player, the room and the camera are not reset.
+
+### Lantern parameters (more to do between stations)
+
+Finished work earns **tuning points** (`tuningPoints` in `src/engine/progress.ts`): one for every two station rounds cleared, one for every four relics found, one for every five lessons finished, and one for passing the certification. The lantern (U, or the lantern button) opens a window with three dials, each with five levels (`DIAL_MAX`):
+
+| Dial | Each level adds |
+| --- | --- |
+| Reach | You notice hidden things 20% farther away and can use things from 10% farther |
+| Glow | 18% more light from the lantern, and a lift of it lasts 0.7 seconds longer |
+| Stride | 6% faster walking and running |
+
+Points are spent one level at a time and a reset returns them all. The name is deliberate: a model's parameters are set by training, and here the player sets three by hand and sees what each does. The save stores only the dial levels and is checked on load (`sanitize` in `src/engine/persistence.ts`): a save that spends more than it has earned is reset to zero.
+
+### Movement feel
+
+- **Coyote time and jump buffering** (`src/game3d/controls.ts`): the jump still works for a few frames after walking off an edge, and a press just before landing is remembered.
+- **Input scale**: the Stride dial scales speed without changing acceleration, so a faster walk still starts and stops smoothly.
+- The camera, the wipe between places and every window use the same short ease-out curve (`--ease-out`), and all of it collapses under reduced motion.
+
+### Scenery added for the rebuild
+
+Bunting (red and paper flags on a thin string) hangs between the lamp posts around the plaza, and three market stalls with striped awnings stand on the quay (with colliders, so the route planner goes around them). Both are cheap: the stalls bake into the world meshes and the bunting is two small draws.
+

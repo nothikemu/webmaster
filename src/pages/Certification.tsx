@@ -135,7 +135,7 @@ export default function Certification() {
                   <p className="certificate__lead">This certifies that</p>
                   <p className="certificate__name">{name.trim() || 'Learner'}</p>
                   <p>
-                    passed the Tideweight final certification, twenty-four questions across Understand AI, Use AI and Use AI Responsibly, with <strong>{score} percent</strong>, having finished {lessonsDone} of {LESSONS.length} lessons.
+                    passed the Parameter final certification, twenty-four questions across Understand AI, Use AI and Use AI Responsibly, with <strong>{score} percent</strong>, having finished {lessonsDone} of {LESSONS.length} lessons.
                   </p>
                   <div className="certificate__foot">
                     <ul className="certificate__signs">

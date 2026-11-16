@@ -4,7 +4,7 @@ import { Icon } from '@/art/Icons';
 import { play } from '@/audio/sfx';
 import { setAudio } from '@/audio/control';
 import { dispatch, resetAll, useProgress } from '@/engine/store';
-import { gameProgress, isUnlocked, levelInfo, nextGoal, roundsCleared, stationDone, type PortalState } from '@/engine/progress';
+import { DIALS, DIAL_MAX, gameProgress, isUnlocked, levelInfo, nextGoal, roundsCleared, stationDone, tuningLeft, tuningPoints, type Dial, type PortalState } from '@/engine/progress';
 import { Btn, Callout, LinkBtn, Meter } from '@/ui/primitives';
 import { webglSupported, type GfxPref } from '@/game3d/support';
 import { GAME_XP, LOCATIONS, RELICS, STATIONS, locationById, stationById, stationsIn, type Relic, type RoomId, type StationId } from './data';
@@ -204,6 +204,60 @@ export function JournalDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ---------------------------------------------------------------------------------------------- tune
+const DIAL_TEXT: Record<Dial, { name: string; what: string; per: string }> = {
+  reach: { name: 'Reach', what: 'How far you notice hidden things, and how far from something you can still use it.', per: 'Each level: you notice hidden things 20% farther away, and you can use things from 10% farther.' },
+  glow: { name: 'Glow', what: 'How bright your lantern burns and how long a lift of it lasts.', per: 'Each level: 18% more light, and the lift lasts 0.7 seconds longer.' },
+  stride: { name: 'Stride', what: 'How fast you walk and run.', per: 'Each level: 6% faster.' },
+};
+
+/** The three parameters of the lantern. A model's parameters are set by training; here you set three by hand, spend points you earned, and see what each does. */
+export function TuneDialog({ onClose }: { onClose: () => void }) {
+  const state = useProgress((s) => s);
+  const t = state.game.tuning;
+  const left = tuningLeft(state);
+  const total = tuningPoints(state);
+  return (
+    <GameDialog title="Tune your lantern" onClose={onClose} paper className="gdialog--tune">
+      <p className="talk__line">
+        Your lantern has three parameters. Real AI models have millions to billions of them, and training turns them for you. Here you turn three by hand and feel what each one does.
+      </p>
+      <p className="tune__points" role="status">
+        <strong>{left}</strong> of {total} points to spend. Finish stations, find relics and complete lessons to earn more. Move them whenever you like.
+      </p>
+      <ul className="dials">
+        {DIALS.map((d) => {
+          const info = DIAL_TEXT[d];
+          const level = t[d];
+          return (
+            <li key={d} className="dial">
+              <div className="dial__head">
+                <h3>{info.name}</h3>
+                <span className="dial__pips" aria-hidden="true">
+                  {Array.from({ length: DIAL_MAX }, (_, i) => (
+                    <span key={i} className={i < level ? 'is-on' : ''} />
+                  ))}
+                </span>
+                <span className="dial__level" aria-label={`${info.name}: level ${level} of ${DIAL_MAX}`}>{level} of {DIAL_MAX}</span>
+              </div>
+              <p>{info.what}</p>
+              <p className="small muted">{info.per}</p>
+              <div className="row">
+                <Btn small variant="secondary" aria-label={`Lower ${info.name}`} disabled={level <= 0} onClick={() => dispatch({ type: 'tune', dial: d, level: level - 1 })}>&minus;</Btn>
+                <Btn small variant="secondary" aria-label={`Raise ${info.name}`} disabled={level >= DIAL_MAX || left <= 0} onClick={() => dispatch({ type: 'tune', dial: d, level: level + 1 })}>+</Btn>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+      <div className="row">
+        <Btn variant="primary" onClick={onClose}>Done</Btn>
+        <Btn variant="quiet" icon="reset" onClick={() => dispatch({ type: 'tune-reset' })}>Reset all three</Btn>
+      </div>
+    </GameDialog>
+  );
+}
+
 // ---------------------------------------------------------------------------------------------- map
 export function MapDialog({ onGo, onClose, here }: { onGo: (room: RoomId) => void; onClose: () => void; here: RoomId }) {
   const state = useProgress((s) => s);
@@ -320,7 +374,7 @@ export function AudioSettings() {
   );
 }
 
-export function PauseDialog({ gfx, onGfx, onClose, onResume, onJournal, onMap, onHelp, onTitle }: { gfx: GfxPref; onGfx: (p: Partial<GfxPref>) => void; onClose: () => void; onResume: () => void; onJournal: () => void; onMap: () => void; onHelp: () => void; onTitle: () => void }) {
+export function PauseDialog({ gfx, onGfx, onClose, onResume, onJournal, onMap, onHelp, onTune, onTitle }: { gfx: GfxPref; onGfx: (p: Partial<GfxPref>) => void; onClose: () => void; onResume: () => void; onJournal: () => void; onTune: () => void; onMap: () => void; onHelp: () => void; onTitle: () => void }) {
   const free = useProgress((s) => s.game.freeRoam);
   const [sure, setSure] = useState(false);
   return (
@@ -329,6 +383,7 @@ export function PauseDialog({ gfx, onGfx, onClose, onResume, onJournal, onMap, o
         <div className="pause__menu">
           <Btn variant="primary" go onClick={onResume}>Resume</Btn>
           <Btn variant="secondary" icon="scroll" onClick={onJournal}>Journal</Btn>
+          <Btn variant="secondary" icon="target" onClick={onTune}>Tune your lantern</Btn>
           <Btn variant="secondary" icon="map" onClick={onMap}>Chart and travel</Btn>
           <Btn variant="secondary" icon="info" onClick={onHelp}>How to play</Btn>
           <Btn variant="secondary" onClick={onTitle}>Title screen</Btn>
@@ -382,7 +437,7 @@ export function EndingDialog({ onClose }: { onClose: () => void }) {
 }
 
 export const kernelIntro = (mode: '2d' | '3d'): string[] => [
-  'Welcome to Tideweight. The lanterns around the harbor have gone dark, and you are the new lamplighter. I am Kernel. I will keep you company.',
+  'Welcome to Parameter. The lanterns around the harbor have gone dark, and you are the new lamplighter. I am Kernel. I will keep you company.',
   mode === '3d'
     ? 'Walk with W, A, S and D, drag to turn the camera, and hold Shift to run. The Objective box at the top left always says what to do next, and a red path and a red marker lead you there. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, steer with the stick and drag to look.'
     : 'Walk with the arrow keys or A and D, and hold Shift to hurry. The Objective box always says what to do next. Press E at anything that has a marker. Press L to lift your lantern and see what is hidden. Press Esc to pause. On a touch screen, use the buttons under the picture or tap where you want to go.',

@@ -12,35 +12,41 @@ import { configureAudio } from '@/audio/engine';
 import { setAudio } from '@/audio/control';
 import { Kernel } from '@/art/Kernel';
 import { Btn, LinkBtn } from './primitives';
-import { PATHS, pathById } from '@/content/paths';
+import { pathById } from '@/content/paths';
 
 const NAV = [
-  { to: '/play', label: 'Play' },
-  { to: '/learn', label: 'Learn' },
-  { to: '/missions', label: 'Missions' },
-  { to: '/lab', label: 'Prompt Lab' },
-  { to: '/tools', label: 'Tool Atlas' },
-  { to: '/scenarios', label: 'Scenarios' },
-  { to: '/codex', label: 'Codex' },
-  { to: '/logbook', label: 'Logbook' },
+  { to: '/play', label: 'Play', also: [] as string[] },
+  { to: '/learn', label: 'Learn', also: [] as string[] },
+  { to: '/practice', label: 'Practice', also: ['/lab', '/scenarios', '/tools', '/codex', '/certification', '/missions'] },
+  { to: '/logbook', label: 'Progress', also: [] as string[] },
 ] as const;
 
+const isHere = (path: string, to: string, also: readonly string[]) => [to, ...also].some((t) => path === t || path.startsWith(t + '/'));
+
+/** The mark: three sliders at different settings, because a parameter is a setting that gets tuned. */
 export function Logo({ small }: { small?: boolean }) {
   return (
     <span className={`logo${small ? ' logo--sm' : ''}`}>
       <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false" className="logo__mark">
-        <circle cx="20" cy="20" r="18" fill="var(--seal)" stroke="var(--paper-hi)" strokeWidth="2.5" />
-        <path d="M6 24c4-4 7-4 11 0s7 4 11 0 5-3 6-2" fill="none" stroke="var(--paper-hi)" strokeWidth="3" strokeLinecap="round" />
-        <path d="M12 16l8-6 8 6" fill="none" stroke="var(--paper-hi)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="20" cy="20" r="19" fill="var(--seal)" />
+        {[
+          [12, 14],
+          [20, 26],
+          [28, 19],
+        ].map(([y, x]) => (
+          <g key={y}>
+            <path d={`M9 ${y}H31`} stroke="var(--paper-hi)" strokeWidth="2.4" strokeLinecap="round" />
+            <circle cx={x} cy={y} r="3.6" fill="var(--paper-hi)" stroke="var(--seal)" strokeWidth="2" />
+          </g>
+        ))}
       </svg>
-      <span className="logo__word">Tideweight</span>
+      <span className="logo__word">Parameter</span>
     </span>
   );
 }
 
 export function Header() {
   const path = usePath();
-  const [open, setOpen] = useState(false);
   const xp = useProgress((s) => s.xp);
   const sound = useProgress((s) => s.settings.sound);
   const music = useProgress((s) => s.settings.music);
@@ -48,129 +54,82 @@ export function Header() {
   const sfxVolume = useProgress((s) => s.settings.sfxVolume);
   const musicVolume = useProgress((s) => s.settings.musicVolume);
   const lv = levelInfo(xp);
-  const menuBtn = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => setOpen(false), [path]);
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false);
-        menuBtn.current?.focus();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open]);
   useEffect(() => configureAudio({ sound, music, volume, sfxVolume, musicVolume }), [sound, music, volume, sfxVolume, musicVolume]);
 
   return (
-    <header className="site-header" data-surface="ink">
-      <div className="wrap site-header__bar">
-        <Link to="/" className="site-header__home" aria-label="Tideweight home">
-          <Logo />
-        </Link>
-        <nav className={`site-nav${open ? ' is-open' : ''}`} id="site-nav" aria-label="Main">
-          <ul>
-            {NAV.map((n) => (
-              <li key={n.to}>
-                <Link to={n.to} className="key" aria-current={path === n.to || path.startsWith(n.to + '/') ? 'page' : undefined}>
-                  {n.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <div className="site-header__tools">
-          <Link to="/logbook" className="xp-chip">
-            <span className="xp-chip__lv">Lv {lv.level}</span> <span className="xp-chip__xp">{xp} XP</span>
-            <span className="visually-hidden">, {lv.name}. Open your logbook.</span>
+    <>
+      <header className="site-header">
+        <div className="wrap site-header__bar">
+          <Link to="/" className="site-header__home" aria-label="Parameter home">
+            <Logo />
           </Link>
-          <button
-            type="button"
-            className="btn btn--quiet btn--icon btn--sm"
-            aria-pressed={sound}
-            aria-label={sound ? 'Sound on. Turn sound off.' : 'Sound off. Turn sound on.'}
-            onClick={() => setAudio({ sound: !sound }, !sound ? 'xp' : undefined)}
-          >
-            <Icon name={sound ? 'sound-on' : 'sound-off'} />
-          </button>
-          <button
-            type="button"
-            className="btn btn--quiet btn--icon btn--sm"
-            aria-pressed={music}
-            aria-label={music ? 'Music on. Turn music off.' : 'Music off. Turn music on.'}
-            onClick={() => setAudio({ music: !music }, sound ? 'select' : undefined)}
-          >
-            <Icon name="music" />
-          </button>
-          <button
-            ref={menuBtn}
-            type="button"
-            className="btn btn--quiet btn--icon btn--sm site-header__menu"
-            aria-expanded={open}
-            aria-controls="site-nav"
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            onClick={() => setOpen((o) => !o)}
-          >
-            <Icon name={open ? 'x' : 'menu'} />
-          </button>
+          <nav className="site-nav" id="site-nav" aria-label="Main">
+            <ul>
+              {NAV.map((n) => (
+                <li key={n.to}>
+                  <Link to={n.to} className="site-nav__link" aria-current={isHere(path, n.to, n.also) ? 'page' : undefined}>
+                    {n.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <div className="site-header__tools">
+            <Link to="/logbook" className="xp-chip">
+              <span className="xp-chip__lv">Lv {lv.level}</span> <span className="xp-chip__xp">{xp} XP</span>
+              <span className="visually-hidden">, {lv.name}. Open your logbook.</span>
+            </Link>
+            <button
+              type="button"
+              className="btn btn--quiet btn--icon btn--sm"
+              aria-pressed={sound}
+              aria-label={sound ? 'Sound on. Turn sound off.' : 'Sound off. Turn sound on.'}
+              onClick={() => setAudio({ sound: !sound }, !sound ? 'xp' : undefined)}
+            >
+              <Icon name={sound ? 'sound-on' : 'sound-off'} />
+            </button>
+            <button
+              type="button"
+              className="btn btn--quiet btn--icon btn--sm"
+              aria-pressed={music}
+              aria-label={music ? 'Music on. Turn music off.' : 'Music off. Turn music on.'}
+              onClick={() => setAudio({ music: !music }, sound ? 'select' : undefined)}
+            >
+              <Icon name="music" />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      {/* On a phone the four places move to a tab bar at the bottom, where the thumb is. */}
+      <nav className="tabbar" aria-label="Main (tabs)">
+        <ul>
+          {NAV.map((n) => (
+            <li key={n.to}>
+              <Link to={n.to} className="tabbar__link" aria-current={isHere(path, n.to, n.also) ? 'page' : undefined}>
+                {n.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </>
   );
 }
 
 export function Footer() {
   return (
-    <footer className="site-footer" data-surface="ink">
-      <svg className="site-footer__waves" viewBox="0 0 1200 28" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <path d={`M0 28 ${Array.from({ length: 40 }, () => 'a15 15 0 0 1 30 0').join(' ')}`} fill="var(--ink)" stroke="var(--ink-line)" strokeWidth="2" transform="translate(0 -2)" />
-      </svg>
-      <div className="wrap site-footer__grid">
-        <div className="site-footer__brand">
-          <Logo small />
-          <p className="site-footer__note">
-            A free AI learning portal for grades 9 to 12. There are no accounts. Your progress is saved only in this browser, and nothing you do is sent anywhere.
-          </p>
-        </div>
+    <footer className="site-footer">
+      <div className="wrap site-footer__row">
+        <Logo small />
         <nav aria-label="Footer" className="site-footer__nav">
-          <div>
-            <p className="label">Learn</p>
-            <ul>
-              <li><Link to="/learn">The chart</Link></li>
-              {PATHS.map((p) => (
-                <li key={p.id}><Link to={`/learn/${p.id}`}>{p.title}</Link></li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="label">Practice</p>
-            <ul>
-              <li><Link to="/play">Play the game</Link></li>
-              <li><Link to="/lab">Prompt Lab</Link></li>
-              <li><Link to="/scenarios">Scenarios</Link></li>
-              <li><Link to="/certification">Final certification</Link></li>
-            </ul>
-          </div>
-          <div>
-            <p className="label">Look up</p>
-            <ul>
-              <li><Link to="/tools">Tool Atlas</Link></li>
-              <li><Link to="/codex">Codex</Link></li>
-              <li><Link to="/logbook">Logbook</Link></li>
-            </ul>
-          </div>
-          <div>
-            <p className="label">About</p>
-            <ul>
-              <li><Link to="/about">About and sources</Link></li>
-              <li><Link to="/accessibility">Accessibility</Link></li>
-              <li><Link to="/credits">Credits</Link></li>
-            </ul>
-          </div>
+          <ul>
+            <li><Link to="/about">About and sources</Link></li>
+            <li><Link to="/accessibility">Accessibility</Link></li>
+            <li><Link to="/credits">Credits</Link></li>
+          </ul>
         </nav>
-        <p className="site-footer__tsa">Built for the TSA Webmaster event, 2026-27.</p>
+        <p className="site-footer__note">Free, with no accounts. Your progress stays in this browser and nothing you do is sent anywhere. Built for the TSA Webmaster event, 2026-27.</p>
       </div>
     </footer>
   );

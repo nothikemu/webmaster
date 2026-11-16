@@ -1,80 +1,24 @@
-import { Suspense, lazy, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { usePath } from '@/router';
 import { ArtDefs } from '@/art/Defs';
 import { play } from '@/audio/sfx';
 import { Footer, Header, RewardHost } from '@/ui/Shell';
 import { ErrorBoundary } from '@/ui/ErrorBoundary';
-import { isPathId, lessonById, pathById } from '@/content/paths';
-
-const Home = lazy(() => import('./pages/Home'));
-const LessonPage = lazy(() => import('./pages/Lesson'));
-const Lab = lazy(() => import('./pages/Lab'));
-const Missions = lazy(() => import('./pages/Missions'));
-const Game = lazy(() => import('./game/Game'));
-const Tools = lazy(() => import('./pages/Tools'));
-const Scenarios = lazy(() => import('./pages/Scenarios'));
-const Codex = lazy(() => import('./pages/Codex'));
-const Logbook = lazy(() => import('./pages/Logbook'));
-const Certification = lazy(() => import('./pages/Certification'));
-const NotFound = lazy(() => import('./pages/NotFound'));
-const LearnIndex = lazy(() => import('./pages/Learn').then((m) => ({ default: m.LearnIndex })));
-const PathPage = lazy(() => import('./pages/Learn').then((m) => ({ default: m.PathPage })));
-const About = lazy(() => import('./pages/Static').then((m) => ({ default: m.About })));
-const Accessibility = lazy(() => import('./pages/Static').then((m) => ({ default: m.Accessibility })));
-const Credits = lazy(() => import('./pages/Static').then((m) => ({ default: m.Credits })));
-
-const TITLES: Record<string, string> = {
-  '/': 'Tideweight: Learn how AI works, use it well, and know its limits',
-  '/learn': 'The chart',
-  '/play': 'Play the game',
-  '/missions': 'Missions',
-  '/lab': 'Prompt Lab',
-  '/tools': 'Tool Atlas',
-  '/scenarios': 'Scenarios',
-  '/codex': 'Codex',
-  '/logbook': 'Logbook',
-  '/certification': 'Final certification',
-  '/about': 'About and sources',
-  '/accessibility': 'Accessibility',
-  '/credits': 'Credits',
-};
-
-function Route({ path }: { path: string }) {
-  if (path === '/') return <Home />;
-  const parts = path.split('/').filter(Boolean);
-  if (parts[0] === 'learn') {
-    if (parts.length === 1) return <LearnIndex />;
-    if (parts.length === 2 && isPathId(parts[1]!)) return <PathPage pathId={parts[1]!} />;
-    if (parts.length === 3) return <LessonPage pathId={parts[1]!} lessonId={parts[2]!} />;
-  }
-  switch (path) {
-    case '/play': return <Game />;
-    case '/missions': return <Missions />;
-    case '/lab': return <Lab />;
-    case '/tools': return <Tools />;
-    case '/scenarios': return <Scenarios />;
-    case '/codex': return <Codex />;
-    case '/logbook': return <Logbook />;
-    case '/certification': return <Certification />;
-    case '/about': return <About />;
-    case '/accessibility': return <Accessibility />;
-    case '/credits': return <Credits />;
-    default: return <NotFound />;
-  }
-}
+import { lessonById, pathById } from '@/content/paths';
+import { RouteView, TITLES } from '@/routes';
 
 function titleFor(path: string): string {
-  if (TITLES[path]) return path === '/' ? TITLES[path]! : `${TITLES[path]} · Tideweight`;
+  if (TITLES[path]) return path === '/' ? TITLES[path]! : `${TITLES[path]} · Parameter`;
   const parts = path.split('/').filter(Boolean);
   if (parts[0] === 'learn' && parts.length === 3) {
     const l = lessonById(parts[2]!);
-    if (l) return `${l.title} · Tideweight`;
+    if (l) return `${l.title} · Parameter`;
   }
   if (parts[0] === 'learn' && parts.length === 2) {
     const p = pathById(parts[1]!);
-    if (p) return `${p.title} · Tideweight`;
+    if (p) return `${p.title} · Parameter`;
   }
-  return 'Page not found · Tideweight';
+  return 'Page not found · Parameter';
 }
 
 export default function App() {
@@ -105,7 +49,7 @@ export default function App() {
         <ErrorBoundary resetKey={path}>
           <Suspense fallback={<div className="wrap page loading" role="status">Loading the page…</div>}>
             <div key={path} className="page-enter">
-              <Route path={path} />
+              <RouteView path={path} />
             </div>
           </Suspense>
         </ErrorBoundary>

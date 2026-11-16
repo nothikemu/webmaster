@@ -36,8 +36,8 @@ const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PAT
 const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
 await ctx.addInitScript((q) => {
   if (location.search.includes('tut=1')) window.__noTut = true;
-  localStorage.setItem('tideweight/gfx', JSON.stringify({ mode: '3d', quality: q }));
-  if (!localStorage.getItem('tideweight/tutorial') && !window.__noTut) localStorage.setItem('tideweight/tutorial', '1');
+  localStorage.setItem('parameter/gfx', JSON.stringify({ mode: '3d', quality: q }));
+  if (!localStorage.getItem('parameter/tutorial') && !window.__noTut) localStorage.setItem('parameter/tutorial', '1');
 }, process.env.QUALITY ?? 'high');
 const page = await ctx.newPage();
 const errors = [];

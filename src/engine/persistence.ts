@@ -3,13 +3,16 @@
  * `sanitize` rebuilds a clean state from untrusted JSON, so a corrupted or hand-edited save can never crash the app.
  * It is a learning tracker, not a security boundary: anyone can edit their own browser storage.
  */
-import { BADGES, MISSIONS, STATE_VERSION, createState, type ActivityItem, type ChallengeResult, type LessonProgress, type PortalState } from './progress';
+import { BADGES, DIALS, DIAL_MAX, MISSIONS, STATE_VERSION, createState, emptyTuning, tuningPoints, tuningSpent, type ActivityItem, type ChallengeResult, type LessonProgress, type PortalState } from './progress';
 import { LESSONS, PATHS } from '@/content/paths';
 import { LOCATIONS, RELIC_IDS, STATIONS, isRoomId } from '@/game/data';
 import { GLOSSARY } from '@/content/glossary';
 
-export const STORAGE_KEY = 'tideweight/v1';
-export const EXPORT_FORMAT = 'tideweight-progress';
+export const STORAGE_KEY = 'parameter/v1';
+export const EXPORT_FORMAT = 'parameter-progress';
+/** The project used to be called Tideweight. Saves and exports made under that name still load. */
+export const LEGACY_STORAGE_KEY = 'tideweight/v1';
+const LEGACY_EXPORT_FORMAT = 'tideweight-progress';
 
 export interface StorageLike {
   getItem(key: string): string | null;
@@ -25,7 +28,7 @@ export function memoryStorage(): StorageLike {
 /** localStorage if it works (it can throw in private windows or when blocked), otherwise memory. */
 export function pickStorage(): { storage: StorageLike; persistent: boolean } {
   try {
-    const probe = '__tideweight_probe__';
+    const probe = '__parameter_probe__';
     window.localStorage.setItem(probe, '1');
     window.localStorage.removeItem(probe);
     return { storage: window.localStorage, persistent: true };
@@ -46,7 +49,7 @@ const ROOM_SET = new Set(LOCATIONS.map((l) => l.id as string));
 const CHALLENGE_KEY = /^[a-z0-9-]{1,40}$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Rebuild a valid state from unknown JSON, or return null if it is not a Tideweight save at all. */
+/** Rebuild a valid state from unknown JSON, or return null if it is not a Parameter save at all. */
 export function sanitize(raw: unknown, now: number): PortalState | null {
   if (!isObj(raw) || raw.v !== STATE_VERSION) return null;
   const s = createState(now);
@@ -118,7 +121,10 @@ export function sanitize(raw: unknown, now: number): PortalState | null {
     s.game.freeRoam = g.freeRoam === true;
     s.game.started = g.started === true;
     s.game.ended = g.ended === true;
+    if (isObj(g.tuning)) for (const d of DIALS) s.game.tuning[d] = num(g.tuning[d], 0, DIAL_MAX);
   }
+  // a hand-edited save cannot spend points it never earned
+  if (tuningSpent(s.game.tuning) > tuningPoints(s)) s.game.tuning = emptyTuning();
   return s;
 }
 
@@ -127,7 +133,7 @@ export type LoadStatus = 'fresh' | 'ok' | 'recovered';
 export function load(storage: StorageLike, now: number): { state: PortalState; status: LoadStatus } {
   let text: string | null = null;
   try {
-    text = storage.getItem(STORAGE_KEY);
+    text = storage.getItem(STORAGE_KEY) ?? storage.getItem(LEGACY_STORAGE_KEY);
   } catch {
     text = null;
   }
@@ -159,6 +165,7 @@ export function save(storage: StorageLike, state: PortalState): boolean {
 export function clear(storage: StorageLike): void {
   try {
     storage.removeItem(STORAGE_KEY);
+    storage.removeItem(LEGACY_STORAGE_KEY); // or an erased save would come back from the old name
   } catch {
     // ignore
   }
@@ -177,7 +184,7 @@ export function importJson(text: string, now: number): ImportResult {
   } catch {
     return { ok: false, reason: 'That file is not valid JSON.' };
   }
-  if (!isObj(parsed) || parsed.format !== EXPORT_FORMAT) return { ok: false, reason: 'That file is not a Tideweight progress export.' };
+  if (!isObj(parsed) || (parsed.format !== EXPORT_FORMAT && parsed.format !== LEGACY_EXPORT_FORMAT)) return { ok: false, reason: 'That file is not a Parameter progress export.' };
   const state = sanitize(parsed.state, now);
   return state ? { ok: true, state } : { ok: false, reason: 'The progress data in that file could not be read.' };
 }

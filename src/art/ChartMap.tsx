@@ -1,5 +1,5 @@
 /**
- * The chart of Tideweight: the three places as a sea chart, with a route through fifteen stops.
+ * The chart of Parameter: the three places as a sea chart, with a route through fifteen stops.
  * The paper, coasts and landmarks are drawn once. The stops on top are real links whose look follows the player's progress,
  * so the chart is navigation and progress display at the same time. Nothing on it is locked.
  */
@@ -165,7 +165,7 @@ const ChartPaper = memo(function ChartPaper() {
       <Lettering x={140} y={588} size={13}>ONE STOP, ABOUT TEN MINUTES</Lettering>
       <Shape pts={[[40, 34], [356, 30], [372, 56], [356, 84], [40, 88], [24, 60]]} fill={C.bone} w={3} seed={83} />
       <Shape pts={[[50, 42], [348, 38], [360, 56], [348, 76], [50, 80], [38, 60]]} w={1.2} seed={84} />
-      <Lettering x={198} y={58} size={21} spacing={0.12}>THE CHART OF TIDEWEIGHT</Lettering>
+      <Lettering x={198} y={58} size={21} spacing={0.12}>THE CHART OF PARAMETER</Lettering>
       <Lettering x={198} y={76} size={12} fill={C.ink3} spacing={0.14}>THREE PLACES · FIFTEEN STOPS · ALL OPEN</Lettering>
 
       {/* place names */}
@@ -237,7 +237,7 @@ interface ChartProps {
 export function ChartMap({ stops, certified, certTo, className }: ChartProps) {
   const order = stops.filter((s) => SPOT[s.id]);
   return (
-    <svg className={className} viewBox={`0 0 ${W} ${H}`} role="group" aria-label="The chart of Tideweight: fifteen lesson stops in three places, and the final seal at the lighthouse." focusable="false">
+    <svg className={className} viewBox={`0 0 ${W} ${H}`} role="group" aria-label="The chart of Parameter: fifteen lesson stops in three places, and the final seal at the lighthouse." focusable="false">
       <ChartPaper />
       {/* the route: dashed until both ends are finished, then inked solid in the path's colour */}
       {order.map((s, i) => {

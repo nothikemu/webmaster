@@ -1,9 +1,9 @@
 {
-  "name": "tideweight",
+  "name": "parameter",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Tideweight: an interactive, game-inspired AI learning portal for grades 9-12 (TSA Webmaster 2026-27).",
+  "description": "Parameter: an interactive, game-inspired AI learning portal for grades 9-12 (TSA Webmaster 2026-27).",
   "license": "MIT",
   "packageManager": "pnpm@10.28.0",
   "engines": {
