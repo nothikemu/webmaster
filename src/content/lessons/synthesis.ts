@@ -349,7 +349,7 @@ export const synthesisLessons: Lesson[] = [
     widget: {
       id: 'next-token',
       title: 'Next-word lab',
-      intro: 'This tiny model learned from a short story about a harbor town. Watch its probabilities, then see what temperature does.',
+      intro: 'This tiny model learned from a short story about a school and its library. Watch its probabilities, then see what temperature does.',
     },
     check: [
       {
@@ -392,7 +392,7 @@ export const synthesisLessons: Lesson[] = [
         paragraphs: [
           'Models do not read letters or whole words. They read tokens: chunks of text, often a short word or part of a longer one. In English a token is roughly four characters, or about three quarters of a word, though it varies by model.',
         ],
-        visual: { kind: 'tokens', caption: 'One way a sentence might be split. Real tokenizers differ.', tokens: ['The', ' harbor', ' at', ' dawn', ' is', ' qu', 'iet', '.'] },
+        visual: { kind: 'tokens', caption: 'One way a sentence might be split. Real tokenizers differ.', tokens: ['The', ' library', ' at', ' dawn', ' is', ' qu', 'iet', '.'] },
       },
       {
         heading: 'The context window is the desk',

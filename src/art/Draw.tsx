@@ -71,7 +71,7 @@ export function Flecks({ marks, w = 1.8, color = INK, seed = 3, opacity }: { mar
   return <path d={d} fill={color} fillOpacity={opacity} />;
 }
 
-/** A dry-brush mark: broken bristle lines, for sky streaks, sheen on water, light across a floor. */
+/** A dry-brush mark: broken bristle lines, for streaks and sheen. */
 export function Dry({ pts, w = 12, seed, color = INK, opacity, bristles = 5, ragged = 0.6, smooth = true }: { pts: readonly Pt[]; w?: number; seed?: number; color?: string; opacity?: number; bristles?: number; ragged?: number; smooth?: boolean }) {
   const sd = seed ?? hash(pts);
   const base = smooth ? spline(pts, false, 7) : densify(pts, 8, false);

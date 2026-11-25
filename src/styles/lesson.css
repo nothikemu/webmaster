@@ -284,3 +284,13 @@
 .margin-note--src p {
   margin: 0;
 }
+
+/* keep lines of reading text to a comfortable length at every width */
+.beat p,
+.beat h2,
+.worked p,
+.check-block > .note,
+.experiment__intro,
+.summary__list {
+  max-width: var(--measure);
+}

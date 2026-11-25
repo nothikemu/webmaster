@@ -63,7 +63,7 @@ describe('U3 neural network', () => {
 
 describe('U4 language model', () => {
   it('probabilities are sorted and sum to at most 1', () => {
-    const c = candidates(['the', 'harbor', 'at'], 1);
+    const c = candidates(['the', 'library', 'in'], 1);
     expect(c.length).toBeGreaterThan(0);
     expect(c.reduce((s, x) => s + x.p, 0)).toBeLessThanOrEqual(1.0001);
     for (let i = 1; i < c.length; i++) expect(c[i - 1]!.p).toBeGreaterThanOrEqual(c[i]!.p);

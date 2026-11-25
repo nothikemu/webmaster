@@ -31,6 +31,6 @@ export function fit(text: string, window = WINDOW): { kept: string[]; dropped: s
 export const INSTRUCTION = 'answer in one sentence';
 
 export const STARTER_TEXT =
-  'Answer in one sentence: what is the main idea of this passage? The harbor town of Parameter sits at the mouth of a wide, slow river. Fishing boats leave before dawn and return after dark, and the lighthouse keeper writes down every ship that passes. In spring the tide climbs higher than anyone remembers, and the children of the harbor school learn to read the water the way other children read books.';
+  'Answer in one sentence: what is the main idea of this passage? The town library sits at the corner of a wide, quiet street. The doors open before the first bell and close after dark, and the librarian writes down every book that comes back. In spring the reading room fills with students, and the children of the town learn to read the shelves the way other children read maps.';
 
 export const instructionVisible = (text: string, window = WINDOW): boolean => fit(text, window).kept.join('').toLowerCase().replace(/\s+/g, ' ').includes(INSTRUCTION);

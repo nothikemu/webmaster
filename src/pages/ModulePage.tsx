@@ -4,8 +4,9 @@ import { MODULES, coreLessons, furtherLessons, lessonPath, moduleById } from '@/
 import type { Lesson, ModuleId } from '@/content/types';
 import { useLearning } from '@/learning/store';
 import { moduleProgress, statusOf } from '@/learning/state';
-import { GoLink, LinkBtn, Status } from '@/ui/primitives';
+import { Btn, GoLink, LinkBtn, Status } from '@/ui/primitives';
 import { ModulePlate } from '@/art/field/ModulePlates';
+import { ErrorBoundary } from '@/ui/ErrorBoundary';
 
 const NeuralTopology = lazy(() => import('@/explainers/NeuralTopology'));
 const PromptConsole = lazy(() => import('@/explainers/PromptConsole'));
@@ -39,10 +40,32 @@ function LessonRow({ lesson, n }: { lesson: Lesson; n: string }) {
 }
 
 function Instrument({ id }: { id: ModuleId }) {
+  const m = moduleById(id)!;
+  const lessons = coreLessons(m).slice(0, 3);
   return (
-    <Suspense fallback={<p className="page-loading" role="status">Loading the instrument…</p>}>
-      {id === 'foundations' ? <NeuralTopology /> : id === 'synthesis' ? <PromptConsole /> : <VulnerabilityMatrix />}
-    </Suspense>
+    <ErrorBoundary
+      resetKey={id}
+      fallback={
+        <div className="empty" role="alert">
+          <h3>The instrument could not load</h3>
+          <p>
+            This can happen when a connection drops. Nothing you have finished is affected, and every idea the instrument shows is also written out in the lessons: {lessons.map((l, i) => (
+              <span key={l.id}>
+                {i ? ', ' : ''}
+                <Link to={lessonPath(l)}>{l.title}</Link>
+              </span>
+            ))}.
+          </p>
+          <Btn variant="primary" icon="reset" onClick={() => window.location.reload()}>
+            Try loading it again
+          </Btn>
+        </div>
+      }
+    >
+      <Suspense fallback={<p className="page-loading" role="status">Loading the instrument…</p>}>
+        {id === 'foundations' ? <NeuralTopology /> : id === 'synthesis' ? <PromptConsole /> : <VulnerabilityMatrix />}
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 

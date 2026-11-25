@@ -420,6 +420,28 @@ await check('vulnerability matrix: each failure shows a before and after, in wor
 });
 
 // -------------------------------------------------------------------------------------------------------------- other interactions
+await check('if an instrument fails to download, a clear fallback replaces it (no endless loading message) and the rest of the page works', async () => {
+  const { ctx, page } = await fresh();
+  await page.route(/NeuralTopology-.*\.js/, (r) => r.abort());
+  await page.goto(base + '/modules/foundations/', { waitUntil: 'networkidle' });
+  await page.waitForSelector('main h1');
+  await page.getByText('The instrument could not load').waitFor({ timeout: 8000 });
+  assert((await page.getByText('Loading the instrument').count()) === 0, 'still showing a loading message');
+  assert((await page.getByRole('button', { name: 'Try loading it again' }).count()) === 1, 'no way to retry');
+  assert((await page.locator('.lesson-row').count()) >= 5, 'the rest of the page is gone');
+  await ctx.close();
+});
+await check('without JavaScript the page still says what the site is and what it holds', async () => {
+  const ctx = await browser.newContext({ javaScriptEnabled: false });
+  const page = await ctx.newPage();
+  await page.goto(base + '/modules/ethics/', { waitUntil: 'load' });
+  const text = await page.locator('noscript').first().textContent().catch(() => '');
+  const html = await page.content();
+  assert(/needs JavaScript|need\s+JavaScript/i.test(html) || /JavaScript/.test(text), 'no explanation without JavaScript');
+  assert(/Foundations/.test(html) && /Synthesis/.test(html) && /Ethics/.test(html), 'the three modules are not named');
+  await ctx.close();
+});
+
 console.log('\nOther pages');
 await check('glossary search and module filter narrow the list, announce the count, and have a not-found state', async () => {
   const { ctx, page } = await fresh();

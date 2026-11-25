@@ -1,5 +1,8 @@
+import { useMemo } from 'react';
 import type { Visual } from '@/content/types';
 import { Icon } from './Icons';
+import { Pen, Round } from './field/ink';
+import { C } from './palette';
 
 /**
  * One renderer for every lesson visual, so diagrams all share the same inked look. It draws the figure's contents only;
@@ -39,24 +42,8 @@ export function Diagram({ visual }: { visual: Visual }) {
           ))}
         </div>
       );
-    case 'layers': {
-      const W = 460;
-      const H = 220;
-      const maxN = Math.max(...visual.sizes);
-      const xs = visual.sizes.map((_, i) => 60 + (i * (W - 120)) / (visual.sizes.length - 1));
-      const pos = visual.sizes.map((n, li) => Array.from({ length: n }, (_, j) => ({ x: xs[li]!, y: 30 + ((j + 0.5) * (H - 80)) / n + ((maxN - n) * (H - 80)) / maxN / 2 })));
-      return (
-        <svg viewBox={`0 0 ${W} ${H}`} className="dia-net" role="img" aria-label={`Network with layers of ${visual.sizes.join(', ')} units: ${visual.labels.join(', ')}.`}>
-          {pos.slice(0, -1).flatMap((layer, li) => layer.flatMap((a, ai) => pos[li + 1]!.map((b, bi) => <line key={`${li}-${ai}-${bi}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="currentColor" strokeWidth={1.2 + ((ai * 7 + bi * 3 + li) % 4) * 0.7} strokeOpacity={0.55} />)))}
-          {pos.flatMap((layer, li) => layer.map((p, i) => <circle key={`${li}-${i}`} cx={p.x} cy={p.y} r="11" fill="var(--bone-hi)" stroke="var(--graphite)" strokeWidth="2.4" />))}
-          {visual.labels.map((l, i) => (
-            <text key={l} x={xs[i]} y={H - 12} textAnchor="middle" className="dia-label">
-              {l}
-            </text>
-          ))}
-        </svg>
-      );
-    }
+    case 'layers':
+      return <Layers sizes={visual.sizes} labels={visual.labels} />;
     case 'tokens':
       return (
         <p className="dia-tokens" aria-label={`Split into tokens: ${visual.tokens.join(' | ')}`}>
@@ -68,4 +55,36 @@ export function Diagram({ visual }: { visual: Visual }) {
         </p>
       );
   }
+}
+
+/** A small network drawn by hand: inked rings for units, pen lines whose thickness varies like weights. */
+function Layers({ sizes, labels }: { sizes: number[]; labels: string[] }) {
+  const W = 460;
+  const H = 230;
+  const art = useMemo(() => {
+    const maxN = Math.max(...sizes);
+    const xs = sizes.map((_, i) => 64 + (i * (W - 128)) / (sizes.length - 1));
+    const pos = sizes.map((n, li) => Array.from({ length: n }, (_, j) => ({ x: xs[li]!, y: 34 + ((j + 0.5) * (H - 84)) / n + ((maxN - n) * (H - 84)) / maxN / 2 })));
+    const out: JSX.Element[] = [];
+    pos.slice(0, -1).forEach((layer, li) =>
+      layer.forEach((a, ai) =>
+        pos[li + 1]!.forEach((b, bi) => {
+          const w = 0.8 + ((ai * 7 + bi * 3 + li * 5) % 5) * 0.8;
+          out.push(<Pen key={`l${li}-${ai}-${bi}`} pts={[[a.x + 12, a.y], [b.x - 12, b.y]]} w={w} color={C.cobalt} opacity={0.6} smooth={false} wob={0.6} taper={0.15} seed={li * 50 + ai * 7 + bi} />);
+        }),
+      ),
+    );
+    pos.forEach((layer, li) => layer.forEach((p, i) => out.push(<Round key={`u${li}-${i}`} cx={p.x} cy={p.y} r={12} w={2.2} fill={C.boneHi} seed={li * 10 + i + 2} irr={0.04} />)));
+    return { out, xs };
+  }, [sizes]);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="dia-net" role="img" aria-label={`Network with layers of ${sizes.join(', ')} units: ${labels.join(', ')}.`}>
+      {art.out}
+      {labels.map((l, i) => (
+        <text key={l} x={art.xs[i]} y={H - 12} textAnchor="middle" className="dia-label">
+          {l}
+        </text>
+      ))}
+    </svg>
+  );
 }

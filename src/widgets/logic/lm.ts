@@ -4,13 +4,13 @@
  * bigger, learned version of the same job: predict the next token.
  */
 export const CORPUS = `
-The harbor at dawn is quiet. The fishing boats rock on the water. The lighthouse keeper climbs the stairs and lights the lamp.
-The harbor at dawn is busy. The students walk to school along the dock. The students carry their books and their lunches.
-The teacher at the harbor school asks a question. The students raise their hands. The teacher smiles and calls on a student.
-The harbor at night is calm. The lighthouse beam sweeps across the water. The boats return to the dock before the storm.
-The students at the school build a small robot. The robot learns to carry a lantern. The robot waves at the boats on the water.
-The lighthouse keeper writes in a notebook. The keeper checks the lamp and the bell. The keeper watches the boats on the water.
-The students at the harbor school read about the sea. The teacher explains how the tide moves. The students ask a question about the moon.
+The library in the morning is quiet. The students walk to class along the hall. The students carry their books and their lunches.
+The library in the morning is busy. The librarian sorts the returned books. The librarian smiles and helps a student.
+The teacher at the school asks a question. The students raise their hands. The teacher smiles and calls on a student.
+The library at night is calm. The lights hum above the shelves. The books wait on the shelves until the morning.
+The students at the school build a small robot. The robot learns to carry a book. The robot waves at the students in the hall.
+The librarian writes in a notebook. The librarian checks the shelves and the door. The librarian watches the students in the hall.
+The students at the school read about the sea. The teacher explains how the tide moves. The students ask a question about the moon.
 `;
 
 const tokenize = (text: string): string[] => text.replace(/\s+/g, ' ').trim().match(/[A-Za-z']+|[.,]/g) ?? [];
@@ -67,9 +67,9 @@ export function generate(start: readonly string[], words: number, temperature: n
 }
 
 export const STARTS: { label: string; tokens: string[] }[] = [
-  { label: 'The harbor at', tokens: ['The', 'harbor', 'at'] },
+  { label: 'The library in', tokens: ['The', 'library', 'in'] },
   { label: 'The students', tokens: ['The', 'students'] },
-  { label: 'The lighthouse keeper', tokens: ['The', 'lighthouse', 'keeper'] },
+  { label: 'The librarian', tokens: ['The', 'librarian'] },
 ];
 
 /** Join tokens into readable text. */
