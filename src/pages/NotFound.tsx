@@ -1,20 +1,33 @@
-import { Adrift } from '@/art/PageScenes';
-import { LinkBtn, Panel } from '@/ui/primitives';
+import { LinkBtn } from '@/ui/primitives';
+import { Link } from '@/router';
+import { MODULES } from '@/content/modules';
 
 export default function NotFound() {
   return (
-    <section className="lost" aria-labelledby="lost-h">
-      <Adrift className="lost__art" />
-      <div className="wrap lost__inner">
-        <Panel lift className="lost__copy">
-          <h1 id="lost-h">That route is not on the chart</h1>
-          <p>The link may be old or mistyped, and Kernel has rowed off the edge of the map looking for it. These places are always open.</p>
-          <div className="row">
-            <LinkBtn to="/" variant="primary" go>Go to the home page</LinkBtn>
-            <LinkBtn to="/learn" variant="secondary">Open the chart</LinkBtn>
-          </div>
-        </Panel>
+    <div className="wrap page notfound">
+      <p className="kicker">Page not found</p>
+      <h1>
+        That page is not in the <em>guide</em>
+      </h1>
+      <p className="page-head__lead">The address may be mistyped, or the page may have moved. These are the places that do exist.</p>
+      <div className="row">
+        <LinkBtn to="/" variant="primary" go>
+          Go to the home page
+        </LinkBtn>
+        <LinkBtn to="/modules">See the three modules</LinkBtn>
       </div>
-    </section>
+      <ul className="notfound__list">
+        {MODULES.map((m) => (
+          <li key={m.id}>
+            <Link to={`/modules/${m.id}`}>
+              {String(m.number).padStart(2, '0')} · {m.title}
+            </Link>
+          </li>
+        ))}
+        <li>
+          <Link to="/glossary">Glossary</Link>
+        </li>
+      </ul>
+    </div>
   );
 }

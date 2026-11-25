@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from '@/router';
 import { Callout } from '@/ui/primitives';
-import { PATHS } from '@/content/paths';
-import { Gangway, NoticeBoard, PrintTable } from '@/art/PageScenes';
+import { MODULES, coreLessons, furtherLessons } from '@/content/modules';
 
 const ext = (href: string, label: string) => (
   <a href={href} target="_blank" rel="noopener noreferrer">
@@ -11,18 +10,17 @@ const ext = (href: string, label: string) => (
   </a>
 );
 
-/** The shape the three reference pages share: a title, the text, and beside it a picture and a list of what is on the page. */
-function Doc({ title, lead, art, toc, children }: { title: string; lead: string; art: ReactNode; toc: [id: string, label: string][]; children: ReactNode }) {
+/** The shape the three reference pages share: a title, the text, and beside it a list of what is on the page. */
+function Doc({ kicker, title, lead, toc, children }: { kicker: string; title: ReactNode; lead: string; toc: [id: string, label: string][]; children: ReactNode }) {
   return (
     <div className="wrap page doc">
-      <header className="doc__head">
+      <header className="page-head">
+        <p className="kicker">{kicker}</p>
         <h1>{title}</h1>
         <p className="page-head__lead">{lead}</p>
       </header>
       <div className="doc__grid">
-        <div className="doc__body prose-page">{children}</div>
         <aside className="doc__side">
-          {art}
           <nav aria-label="On this page" className="doc__toc">
             <p className="label">On this page</p>
             <ul>
@@ -34,6 +32,7 @@ function Doc({ title, lead, art, toc, children }: { title: string; lead: string;
             </ul>
           </nav>
         </aside>
+        <div className="doc__body prose">{children}</div>
       </div>
     </div>
   );
@@ -42,47 +41,50 @@ function Doc({ title, lead, art, toc, children }: { title: string; lead: string;
 export function About() {
   return (
     <Doc
-      title="About Parameter"
-      lead="A free, game-inspired AI learning portal for students in grades 9 to 12, built for the TSA Webmaster event, 2026-27."
-      art={<NoticeBoard className="plate" />}
+      kicker="About and sources"
+      title={
+        <>
+          About <em>Parameter</em>
+        </>
+      }
+      lead="A free, illustrated guide to how AI works, for students in grades 9 to 12, built for the TSA Webmaster event, 2026–27."
       toc={[
         ['what', 'What it teaches'],
-        ['game', 'The game'],
+        ['use', 'How to use it'],
+        ['data', 'Your data'],
         ['research', 'How the content was researched'],
         ['built', 'How the site is built'],
         ['limits', 'What we are upfront about'],
       ]}
     >
-      <section className="prose" aria-labelledby="what">
+      <section aria-labelledby="what">
         <h2 id="what">What it teaches</h2>
-        <p>The portal answers the three parts of the challenge: fundamental AI concepts, practical AI tools and techniques, and ethical AI use in school.</p>
+        <p>The portal answers the three parts of the challenge: fundamental AI concepts, practical AI tools and techniques, and ethical AI use.</p>
         <ul>
-          {PATHS.map((p) => (
-            <li key={p.id}>
-              <strong>{p.title}.</strong> {p.tsaSection}. {p.lessons.length} lessons at {p.place}. <Link to={`/learn/${p.id}`}>Open the path</Link>.
+          {MODULES.map((m) => (
+            <li key={m.id}>
+              <strong>
+                {m.number}. {m.title}.
+              </strong>{' '}
+              {m.tsaSection}. {coreLessons(m).length} core lessons and {furtherLessons(m).length} optional ones, and one instrument: {m.centerpiece.name.toLowerCase()}. <Link to={`/modules/${m.id}`}>Open the module</Link>.
             </li>
           ))}
         </ul>
-        <p>Progress, XP, ten ranks and nine badges track real work: finishing the lessons, solving the experiments, passing the checks and the final certification. Everything is saved only in your browser.</p>
       </section>
-      <section className="prose" aria-labelledby="game">
-        <h2 id="game">The game</h2>
+      <section aria-labelledby="use">
+        <h2 id="use">How to use it</h2>
+        <p>Every lesson is open from the start, in any order. A lesson is a few minutes of reading, sometimes a guided experiment, and a short check. The checks are for you: they are untimed, they explain every answer, you can try them again, and nothing is scored or unlocked.</p>
+        <p>Earlier versions of Parameter had points, levels, badges and a game. They were taken out so that nothing here competes with the ideas for your attention.</p>
+      </section>
+      <section aria-labelledby="data">
+        <h2 id="data">Your data</h2>
         <p>
-          <Link to="/play">Parameter: the lamplighter&apos;s harbor</Link> is the hands-on side of the same three learning areas. It is a 3D game, drawn in the browser as a moving comic poster in black, white and one hot red: flat cel shading, halftone dots and thick ink outlines. A red path and an Objective box always show where to go next. You walk a harbor plaza, step into six buildings, work small games called stations, and find hidden relics that each explain one idea. A classic 2D version of the same game runs on devices that cannot draw 3D, and you can choose it from the pause menu. Every station has an objective, a way to clear it, feedback that says why, and an XP reward, and every one of them is tied to a lesson.
-        </p>
-        <ul>
-          <li><strong>Fundamental AI concepts.</strong> The Loom House: the Curator&apos;s Cabinet (learning from labeled examples, and why coverage matters) and the Weight Frame (weights, bias and training). The Archive: the Timeline of Minds (the history of AI). Lessons: Understand AI.</li>
-          <li><strong>Practical AI tools and techniques.</strong> The Foundry Docks: the Anvil Orders (the five parts of a prompt, and keeping private details out) and the Weld Test (checking AI output when you cannot check everything). Lessons: Use AI.</li>
-          <li><strong>Ethical AI use.</strong> The Beacon: the Fairness Audit (bias, proxy traits, and what fixing it costs). The Trial Hall: six school scenarios and the final examination. Lessons: Use AI Responsibly.</li>
-          <li><strong>Your records.</strong> The Harbor Office: missions, the logbook and the Codex.</li>
-        </ul>
-        <p>
-          Nothing is hidden behind the game. Every lesson, the Codex and the tools stay open from the main menu, and the pause menu has an <em>Open every door</em> switch for anyone who wants to see everything. The stations are teaching simulations: the prompt forge follows fixed rules and is not a live AI, the classifier is a one-nearest-neighbor model, and the people in the audit are invented.
+          There are no accounts and no server. The only thing the site stores is which lessons you have opened and which you marked complete, kept in your browser&apos;s own storage. You can download that, load it on another device, or erase it from the <Link to="/overview">overview</Link>. If you used an earlier version on this device, your finished lessons were carried over and the earlier save was left untouched.
         </p>
       </section>
-      <section className="prose" aria-labelledby="research">
+      <section aria-labelledby="research">
         <h2 id="research">How the content was researched</h2>
-        <p>The lessons follow published AI education guidance, and every lesson names the idea it serves. References are in APA style. “n.d.” means the page shows no date.</p>
+        <p>The lessons follow published AI education guidance, and the lessons that come from it name the idea they serve. References are in APA style. “n.d.” means the page shows no date.</p>
         <ul className="refs">
           <li>AI4K12. (n.d.). <em>Five big ideas in AI</em>. {ext('https://ai4k12.org/', 'https://ai4k12.org/')}</li>
           <li>Computer Science Teachers Association &amp; AI4K12. (n.d.). <em>Identifying AI priorities for all K-12 students</em>. {ext('https://csteachers.org/ai-learning-priorities-for-all-k-12-students-about/', 'https://csteachers.org/ai-learning-priorities-for-all-k-12-students-about/')}</li>
@@ -98,17 +100,25 @@ export function About() {
           <li>The January 2024 AI-voice robocall in New Hampshire, and the FCC&apos;s later ruling on AI voices in robocalls.</li>
           <li>The U.S. Copyright Office&apos;s published position that material produced purely by AI, without human authorship, is not protected.</li>
         </ul>
+        <p>
+          The studies behind the Foundations, Synthesis and Ethics lessons (training-data extraction, physical adversarial attacks, few-shot learning, chain-of-thought prompting, model cards and the EU AI Act) are listed on the <Link to="/credits#research">credits page</Link>.
+        </p>
       </section>
-      <section className="prose" aria-labelledby="built">
+      <section aria-labelledby="built">
         <h2 id="built">How the site is built</h2>
-        <p>Parameter is a single-page site written in TypeScript with React, a user-interface library, and built with Vite. No website builder, page template or theme was used. The layout, the styles and every illustration were made for this project.</p>
-        <p>The pictures are drawn by code. A small brush engine in the project turns a few points into tapered ink strokes, hatching and dry-brush marks, so every picture on the site shares one pen. The experiments are small real programs: the neural network trains in your browser, and you can read its code in the project.</p>
-        <p>There is no server. Your progress is kept in your browser&apos;s own storage, and you can download it or erase it from the <Link to="/logbook">Logbook</Link>.</p>
+        <p>
+          Parameter is a single-page site written in TypeScript with React, a user-interface library, and built with Vite. No website builder, page template or theme was used. The layout, the styles and every illustration were made for this project.
+        </p>
+        <p>
+          The pictures are drawn by code. A small brush engine in the project turns a few points into tapered ink strokes, hatching and stippling, so every picture on the site shares one pen. The experiments are small real programs: the neural network in Foundations trains in your browser, and you can read its code in the project.
+        </p>
       </section>
-      <section className="prose" aria-labelledby="limits">
+      <section aria-labelledby="limits">
         <h2 id="limits">What we are upfront about</h2>
         <Callout icon="info">
-          <p>The Tool Atlas lists only tools whose rules we could check, each with the date. Some facts are marked “Reported, confirm” because we could not read the vendor page directly. The Prompt Lab uses pre-written sample responses and is not a live AI. The experiments are deliberately tiny so you can see how they work.</p>
+          <p>
+            The tool atlas lists only tools whose rules we could check, each with the date. Some facts are marked “Reported, confirm” because we could not read the vendor page directly. The prompt console in Synthesis is a deterministic simulation, not a live AI, and says so on the page. The experiments are deliberately tiny so you can see how they work.
+          </p>
         </Callout>
         <p>AI products change quickly. Treat dates on this site as a starting point and check the vendor&apos;s own page before you rely on a rule.</p>
       </section>
@@ -119,35 +129,49 @@ export function About() {
 export function Accessibility() {
   return (
     <Doc
-      title="Accessibility"
-      lead="We aim for WCAG 2.2 level AA. Here is what we did and what we know is still imperfect."
-      art={<Gangway className="plate" />}
+      kicker="Accessibility"
+      title={
+        <>
+          <em>Accessibility</em> statement
+        </>
+      }
+      lead="The target is WCAG 2.2 level AA. Here is what is built in, how it is checked, and what is still imperfect."
       toc={[
-        ['did', 'What we did'],
+        ['built', 'What is built in'],
+        ['checked', 'How it is checked'],
         ['known', 'Known limits'],
+        ['feedback', 'Feedback'],
       ]}
     >
-      <section className="prose" aria-labelledby="did">
-        <h2 id="did">What we did</h2>
+      <section aria-labelledby="built">
+        <h2 id="built">What is built in</h2>
         <ul>
-          <li><strong>Keyboard.</strong> Every control is a real link, button, input or select, reachable in a sensible order with a clear focus ring. A skip link jumps past the navigation. Nothing needs a mouse or a drag.</li>
-          <li><strong>Structure.</strong> One main heading per page, a logical heading order, landmarks, and labels on every form field.</li>
-          <li><strong>Colour.</strong> Text and key interface colours are checked against WCAG AA contrast by a script in the project (<code>pnpm contrast</code>). Meaning is never carried by colour alone. Right and wrong answers also show words and icons, and locked badges are hatched and carry a padlock. In the 3D game red marks the goal, and the goal is also named in words, with its distance, in the Objective box.</li>
-          <li><strong>Targets.</strong> Buttons and options are at least 48 pixels tall.</li>
-          <li><strong>The game.</strong> In 3D, the Objective box (top left) says what to do next and a red path leads there; a short tutorial teaches the controls and can be skipped. W A S D walk, the mouse or the left and right arrow keys turn the camera, E uses what is near and Esc pauses; on a touch screen a stick steers and dragging looks. Under the picture, a <em>Places and objects</em> list offers everything in the room as plain buttons, so the game never depends on walking or on seeing the picture. If the 3D view is too slow or too much, the pause menu switches to the classic 2D game or lowers the quality. Nothing flashes. Windows over the game trap focus and give it back. Sound is off until you turn it on and nothing needs it. Walking animation, camera easing, fades and pulsing stop when your system asks for reduced motion.</li>
-          <li><strong>Motion and sound.</strong> Movement is short and answers something you did. Nothing loops, and it all stops when your device asks for reduced motion. Sound is off by default and optional.</li>
-          <li><strong>Text.</strong> Body text uses Atkinson Hyperlegible, a typeface designed for legibility.</li>
-          <li><strong>Pictures.</strong> Every illustration has a text description. Where a picture shows your progress, such as the lanterns over the harbor or the scrolls in the Codex cabinet, the same numbers are written next to it. Diagrams have captions, and each experiment has a written summary of its result.</li>
+          <li><strong>Keyboard.</strong> Every control is a real link, button, input or select, reachable in a sensible order with a visible focus ring. A skip link jumps past the navigation. Nothing needs a mouse, a drag or a hover.</li>
+          <li><strong>Structure.</strong> One main heading per page, a logical heading order, landmarks, and a label on every form field. Focus moves to the page when you move to another page.</li>
+          <li><strong>Menu.</strong> On narrow screens the navigation becomes a menu that opens as a dialog: focus stays inside it, Escape closes it, and focus returns to the button.</li>
+          <li><strong>Colour.</strong> Text and key interface colours are checked against WCAG AA contrast by a script in the project (<code>pnpm contrast</code>). Meaning is never carried by colour alone: correct and incorrect answers, and the state of a lesson, always have a word as well.</li>
+          <li><strong>Targets.</strong> Buttons, links in menus and answer options are at least 44 pixels tall.</li>
+          <li><strong>Reflow.</strong> Pages are laid out again, not shrunk, for narrow screens, and have no sideways scrolling at 320 CSS pixels wide or at 200 percent zoom. Wide tables scroll inside a labelled region you can reach with the keyboard.</li>
+          <li><strong>Motion.</strong> Movement is short and answers something you did. Nothing loops or plays on its own, and all of it stops when your device asks for reduced motion.</li>
+          <li><strong>Text.</strong> Body text is a serif set at about 19 pixels with a comfortable line length. Interface text uses Atkinson Hyperlegible, a typeface designed for legibility.</li>
+          <li><strong>Pictures and instruments.</strong> Every illustration has a text description, and the labels on drawings are real text. Each instrument has keyboard controls and a written explanation of what it shows and why.</li>
         </ul>
       </section>
-      <section className="prose" aria-labelledby="known">
+      <section aria-labelledby="checked">
+        <h2 id="checked">How it is checked</h2>
+        <p>Each build runs the project&apos;s checks, including the contrast script. The pages were also scanned with the axe-core accessibility checker in a real browser and tried by keyboard at several screen widths. Automated checks catch only part of what matters.</p>
+      </section>
+      <section aria-labelledby="known">
         <h2 id="known">Known limits</h2>
         <ul>
-          <li>The decision-map plots in two experiments are visual. Their results are always repeated in text, but you cannot explore the plot itself with a screen reader.</li>
-          <li>The chart of the harbor on the Learn page scrolls sideways on small screens. Every stop on it is also in the list underneath.</li>
-          <li>We tested with an automated checker and by keyboard. We have not yet tested with every screen reader, so some rough edges may remain.</li>
+          <li>The drawings in the lessons and the instruments are visual by nature. Their meaning is always written out in text beside them, but the text cannot replace seeing the picture.</li>
+          <li>The neural topology and decision-map plots are explored with a keyboard and described in text, but we have not tested them with every screen reader, so some rough edges may remain.</li>
+          <li>Links to outside pages open sites that have their own accessibility.</li>
         </ul>
-        <p>If something does not work for you, tell your teacher or TSA advisor so it can be passed on and fixed.</p>
+      </section>
+      <section aria-labelledby="feedback">
+        <h2 id="feedback">Feedback</h2>
+        <p>If something here does not work for you, tell your teacher or TSA advisor so it can be passed on and fixed. Please say which page it was and what assistive technology you used.</p>
       </section>
     </Doc>
   );
@@ -156,26 +180,47 @@ export function Accessibility() {
 export function Credits() {
   return (
     <Doc
-      title="Credits"
-      lead="What this site is made of."
-      art={<PrintTable className="plate" />}
+      kicker="Credits"
+      title={
+        <>
+          Credits and <em>citations</em>
+        </>
+      }
+      lead="What this site is made of, and the research its lessons draw on."
       toc={[
-        ['art', 'Artwork and sound'],
+        ['research', 'Research cited in the lessons'],
+        ['art', 'Writing and artwork'],
         ['soft', 'Software and fonts'],
       ]}
     >
-      <section className="prose" aria-labelledby="art">
-        <h2 id="art">Artwork and sound</h2>
-        <p>All illustrations, characters, badges, rank insignia and icons are original artwork drawn in code for this project, in one shared ink-and-print style. No stock images are used. Interface sounds, the game\u2019s footsteps and room ambience, and the optional music are synthesized in your browser and use no audio files.</p>
-        <p>The look is influenced by ink illustration, woodblock printing and the menus of competitive games. No characters, scenes, logos or sounds from any other work are copied.</p>
+      <section aria-labelledby="research">
+        <h2 id="research">Research cited in the lessons</h2>
+        <ul>
+          <li>Buolamwini and Gebru, Gender Shades, 2018: per-group error rates of commercial face-analysis systems.</li>
+          <li>Carlini et al., Extracting Training Data from Large Language Models, 2021.</li>
+          <li>Eykholt et al., Robust Physical-World Attacks on Deep Learning Models, 2018.</li>
+          <li>Brown et al., Language Models are Few-Shot Learners, 2020.</li>
+          <li>Wei et al., Chain-of-Thought Prompting Elicits Reasoning in Large Language Models, 2022.</li>
+          <li>Mitchell et al., Model Cards for Model Reporting, 2019.</li>
+          <li>Regulation (EU) 2024/1689, the EU AI Act.</li>
+        </ul>
+        <p>Guidance and cases used in the other lessons are listed, with links, on the <Link to="/about#research">about page</Link>.</p>
       </section>
-      <section className="prose" aria-labelledby="soft">
+      <section aria-labelledby="art">
+        <h2 id="art">Writing and artwork</h2>
+        <p>The words, the lesson content, the icons and every illustration were written or drawn for this project. The illustrations are made in code with a small brush engine: tapered lines, uneven edges, hatching and stippling, so that they look inked by hand. No stock photography, video or audio is used.</p>
+        <p>The look is influenced by printed natural-history field guides and laboratory notebooks. No characters, scenes, logos or text from any other work are copied.</p>
+      </section>
+      <section aria-labelledby="soft">
         <h2 id="soft">Software and fonts</h2>
         <ul>
           <li>React, the user-interface library (MIT license).</li>
-          <li>Vite, the build tool (MIT license).</li>
-          <li>Three.js, a 3D graphics library for the browser (MIT license). Every shape, texture, shader and sound in the 3D game is made in code for this project; no models, textures or audio files are loaded.</li>
-          <li>Dela Gothic One, Barlow Condensed and Atkinson Hyperlegible, bundled with Fontsource (SIL Open Font License 1.1).</li>
+          <li>Vite and TypeScript, the build tool and the language (MIT license; Apache-2.0 license).</li>
+          <li>Newsreader, a typeface by Production Type for Google Fonts, used for headings and reading text (SIL Open Font License 1.1).</li>
+          <li>IBM Plex Mono, used for labels, figure numbers and numerals (SIL Open Font License 1.1).</li>
+          <li>Atkinson Hyperlegible, designed by the Braille Institute, used for interface text (SIL Open Font License 1.1).</li>
+          <li>The fonts are bundled with Fontsource and served from this site.</li>
+          <li>Vitest, Playwright and axe-core, used to test the site (MIT; Apache-2.0; MPL-2.0).</li>
         </ul>
         <p>No analytics, advertising or tracking code is included, and the site makes no requests to other servers.</p>
       </section>

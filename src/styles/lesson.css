@@ -1,0 +1,286 @@
+/* The lesson page: a rail, a reading column, and margin notes, like a field guide. */
+.lesson__head {
+  padding-top: var(--s-6);
+}
+.lesson__kicker {
+  margin-bottom: var(--s-3);
+}
+.lesson__title {
+  max-width: 52rem;
+  margin-bottom: var(--s-4);
+  font-size: var(--t-3);
+  font-weight: 350;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+}
+.lesson__lead {
+  max-width: 44rem;
+  margin-bottom: var(--s-5);
+  font-size: var(--t-1);
+  line-height: 1.45;
+  font-style: italic;
+  font-weight: 300;
+  color: var(--text-2);
+}
+.lesson__rule {
+  width: 100%;
+  height: 28px;
+  color: var(--hue-lo);
+  margin-bottom: var(--s-4);
+}
+
+.lesson__grid {
+  display: grid;
+  grid-template-columns: 14rem minmax(0, 38rem) minmax(0, 17rem);
+  column-gap: var(--s-7);
+  justify-content: space-between;
+  padding-block: var(--s-5) var(--s-4);
+  align-items: start;
+}
+@media (max-width: 75rem) {
+  .lesson__grid {
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+  .lesson__margin {
+    grid-column: 2;
+    margin-top: var(--s-7);
+  }
+}
+@media (max-width: 56rem) {
+  .lesson__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lesson__rail {
+    display: none;
+  }
+  .lesson__margin {
+    grid-column: 1;
+  }
+}
+
+/* the rail: where this lesson sits in its module */
+.rail-block + .rail-block {
+  margin-top: var(--s-6);
+}
+.rail-block__sub {
+  margin-top: var(--s-5);
+}
+.rail-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--graphite);
+}
+.rail-list li {
+  margin: 0;
+  border-bottom: 1px solid var(--rule);
+}
+.rail-list a {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr);
+  gap: var(--s-2);
+  align-items: baseline;
+  padding: 0.6rem 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  line-height: 1.35;
+  color: var(--graphite);
+  text-decoration: none;
+}
+.rail-list a:hover {
+  text-decoration: underline;
+}
+.rail-list .num {
+  font-size: 0.75rem;
+  color: var(--text-2);
+}
+.rail-list a[aria-current='page'] {
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--hue);
+  padding-left: var(--s-3);
+  margin-left: calc(var(--s-3) * -1);
+}
+.rail-jump {
+  position: sticky;
+  top: calc(var(--bar-h) + var(--s-4));
+}
+.rail-jump ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rail-jump li {
+  margin: 0;
+}
+.rail-jump a {
+  display: flex;
+  align-items: center;
+  min-height: 2.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  color: var(--graphite-2);
+}
+
+/* reading column */
+.lesson__main {
+  min-width: 0;
+}
+.beat {
+  margin-bottom: var(--s-7);
+}
+.beat h2 {
+  margin-bottom: var(--s-4);
+  font-size: var(--t-2);
+  font-weight: 400;
+}
+.beat__no {
+  display: block;
+  margin-bottom: var(--s-2);
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  color: var(--hue-lo);
+}
+.beat p {
+  font-size: var(--t-0);
+}
+.beat__figure {
+  margin-top: var(--s-6);
+}
+.lesson__block {
+  margin-top: var(--s-8);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--graphite);
+}
+.lesson__block h2 {
+  font-size: var(--t-2);
+}
+.worked {
+  padding: var(--s-5);
+  background: var(--bone-hi);
+  border: 1px solid var(--graphite);
+  border-left: 6px solid var(--hue);
+}
+.worked h2 {
+  font-size: 1.75rem;
+}
+.worked__take {
+  margin: 0;
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-sans);
+  font-size: var(--t-ui);
+}
+.experiment {
+  margin-inline: calc(var(--s-4) * -1);
+  padding: var(--s-6) var(--s-5);
+  background: var(--bone-hi);
+  border: 1px solid var(--graphite);
+  box-shadow: inset 0 0 0 5px var(--bone-hi), inset 0 0 0 6px var(--graphite);
+}
+.experiment__intro {
+  max-width: 36rem;
+}
+.experiment__note {
+  margin-bottom: var(--s-5);
+}
+@media (max-width: 40rem) {
+  .experiment {
+    padding: var(--s-5) var(--s-4);
+    margin-inline: calc(var(--gutter) * -0.5);
+  }
+}
+.summary__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.summary__list li {
+  position: relative;
+  padding: var(--s-3) 0 var(--s-3) var(--s-6);
+  border-bottom: 1px solid var(--rule);
+  margin: 0;
+}
+.summary__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1.15em;
+  width: 1.1rem;
+  height: 1.5px;
+  background: var(--hue);
+  box-shadow: 0 0 0 0;
+}
+.check {
+  padding: var(--s-5);
+  background: var(--bone-hi);
+  border: 1px solid var(--bone-rule);
+  border-radius: var(--radius);
+}
+.check-block .note {
+  margin-bottom: var(--s-4);
+}
+.lesson__finish {
+  margin-top: var(--s-8);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--graphite);
+}
+.finish__status {
+  display: grid;
+  gap: var(--s-3);
+  justify-items: start;
+  margin-bottom: var(--s-6);
+}
+.finish__nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--gap);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--rule);
+}
+.finish__nav .pager--next {
+  grid-column: 2;
+}
+@media (max-width: 40rem) {
+  .finish__nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .finish__nav .pager--next {
+    grid-column: 1;
+    align-items: flex-start;
+    margin-left: 0;
+    text-align: left;
+  }
+}
+
+/* margin notes */
+.margin-note {
+  padding-top: var(--s-3);
+  border-top: 1px solid var(--graphite);
+}
+.margin-note + .margin-note {
+  margin-top: var(--s-6);
+}
+.margin-note ul {
+  margin: 0;
+  padding-left: 1.1em;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+.margin-note dl {
+  margin: 0 0 var(--s-3);
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+.margin-note dt {
+  font-weight: 700;
+  margin-top: var(--s-3);
+}
+.margin-note dd {
+  margin: 0;
+  color: var(--text-2);
+}
+.margin-note--src p {
+  margin: 0;
+}

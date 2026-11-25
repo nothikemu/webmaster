@@ -1,25 +1,22 @@
 import { useId, useState } from 'react';
 import type { ChooserConfig, ClaimReviewConfig, SorterConfig } from '@/content/types';
 import { Btn, Callout } from '@/ui/primitives';
-import { Icon } from '@/art/Icons';
-import { play } from '@/audio/sfx';
 import type { WidgetProps } from './types';
 
-/** Sort each item into the right bin. Reveals the reason for every item after you check. */
-export function Sorter({ spec, onScore }: WidgetProps) {
+/**
+ * Generic guided experiments. None of them keeps a score: each one says, item by item, why an answer fits or does not,
+ * and every one can be cleared and tried again as often as you like.
+ */
+
+/** Sort each item into the bin it belongs to. After you check, every item explains itself. */
+export function Sorter({ spec }: WidgetProps) {
   const cfg = spec.config as SorterConfig;
   const uid = useId();
   const [picks, setPicks] = useState<(string | null)[]>(() => cfg.items.map(() => null));
   const [checked, setChecked] = useState(false);
-  const right = cfg.items.filter((it, i) => picks[i] === it.bin).length;
+  const allFit = cfg.items.every((it, i) => picks[i] === it.bin);
   const all = picks.every(Boolean);
 
-  const check = () => {
-    setChecked(true);
-    const score = Math.round((right / cfg.items.length) * 100);
-    play(score >= spec.pass ? 'right' : 'wrong');
-    onScore(score);
-  };
   const reset = () => {
     setPicks(cfg.items.map(() => null));
     setChecked(false);
@@ -28,34 +25,29 @@ export function Sorter({ spec, onScore }: WidgetProps) {
   return (
     <div className="stack">
       {cfg.items.map((it, i) => {
-        const ok = picks[i] === it.bin;
+        const fits = picks[i] === it.bin;
         return (
           <fieldset key={i} className="sort-item">
-            <legend>{it.text}</legend>
+            <legend>
+              <span className="label">Item {i + 1}</span>
+              <br />
+              {it.text}
+            </legend>
             <div className="sort-bins">
               {cfg.bins.map((b) => {
                 const state = checked ? (b.id === it.bin ? 'right' : picks[i] === b.id ? 'wrong' : '') : '';
                 return (
                   <label key={b.id} className={`option${state ? ` option--${state}` : ''}`}>
-                    <input
-                      type="radio"
-                      name={`${uid}-${i}`}
-                      checked={picks[i] === b.id}
-                      disabled={checked}
-                      onChange={() => {
-                        play('tick');
-                        setPicks((p) => p.map((v, j) => (j === i ? b.id : v)));
-                      }}
-                    />
+                    <input type="radio" name={`${uid}-${i}`} checked={picks[i] === b.id} disabled={checked} onChange={() => setPicks((p) => p.map((v, j) => (j === i ? b.id : v)))} />
                     <span>{b.label}</span>
-                    {state === 'right' ? <span className="option__mark"><Icon name="check" /> Best fit</span> : null}
-                    {state === 'wrong' ? <span className="option__mark"><Icon name="x" /> Not this</span> : null}
+                    {state === 'right' ? <span className="option__mark">Fits</span> : null}
+                    {state === 'wrong' ? <span className="option__mark">Does not fit</span> : null}
                   </label>
                 );
               })}
             </div>
             {checked ? (
-              <Callout icon={ok ? 'check' : 'info'} tone={ok ? 'good' : 'bad'}>
+              <Callout icon={fits ? 'check' : 'info'} tone={fits ? 'good' : 'bad'}>
                 <p>{it.why}</p>
               </Callout>
             ) : null}
@@ -64,15 +56,15 @@ export function Sorter({ spec, onScore }: WidgetProps) {
       })}
       <div className="row" role="status">
         {!checked ? (
-          <Btn variant="primary" disabled={!all} aria-disabled={!all} onClick={check}>
+          <Btn variant="primary" disabled={!all} aria-disabled={!all} onClick={() => setChecked(true)}>
             Check my sorting
           </Btn>
         ) : (
           <>
-            <p className="score-line">
-              <strong>{right} of {cfg.items.length}</strong> placed correctly.
-            </p>
-            <Btn variant="quiet" icon="reset" onClick={reset}>Try again</Btn>
+            <p className="note">{allFit ? 'Every item fits. The reasons above are still worth a read.' : 'Some items did not fit. Read the reasons, then clear and try again.'}</p>
+            <Btn variant="quiet" icon="reset" onClick={reset}>
+              Clear and try again
+            </Btn>
           </>
         )}
       </div>
@@ -80,28 +72,20 @@ export function Sorter({ spec, onScore }: WidgetProps) {
   );
 }
 
-/** One decision at a time, with feedback after each. Also builds a prompt as you go when `assemble` is set. */
-export function Chooser({ spec, onScore, assemble }: WidgetProps & { assemble?: boolean }) {
+/** One decision at a time, with an explanation after each. Also builds a prompt as you go when `assemble` is set. */
+export function Chooser({ spec, assemble }: WidgetProps & { assemble?: boolean }) {
   const cfg = spec.config as ChooserConfig;
   const uid = useId();
   const [step, setStep] = useState(0);
   const [picked, setPicked] = useState<(number | null)[]>(() => cfg.steps.map(() => null));
   const [done, setDone] = useState(false);
-  const s = cfg.steps[step]!;
-  const choice = picked[step];
-  const revealed = choice !== null && choice !== undefined && picked[step] !== null;
   const [shown, setShown] = useState(false);
-  const rightCount = cfg.steps.filter((st, i) => picked[i] === st.answer).length;
+  const s = cfg.steps[step]!;
+  const choice = picked[step] ?? null;
 
-  const reveal = () => {
-    setShown(true);
-    play(choice === s.answer ? 'right' : 'wrong');
-  };
   const next = () => {
     if (step === cfg.steps.length - 1) {
       setDone(true);
-      const score = Math.round((rightCount / cfg.steps.length) * 100);
-      onScore(score);
       return;
     }
     setStep(step + 1);
@@ -128,7 +112,9 @@ export function Chooser({ spec, onScore, assemble }: WidgetProps & { assemble?: 
         <>
           <fieldset>
             <legend>
-              <span className="label">Step {step + 1} of {cfg.steps.length}</span>
+              <span className="label">
+                Step {step + 1} of {cfg.steps.length}
+              </span>
               <br />
               {s.prompt}
             </legend>
@@ -136,19 +122,10 @@ export function Chooser({ spec, onScore, assemble }: WidgetProps & { assemble?: 
               const state = shown ? (n === s.answer ? 'right' : choice === n ? 'wrong' : '') : '';
               return (
                 <label key={n} className={`option${state ? ` option--${state}` : ''}`}>
-                  <input
-                    type="radio"
-                    name={`${uid}-${step}`}
-                    checked={choice === n}
-                    disabled={shown}
-                    onChange={() => {
-                      play('tick');
-                      setPicked((p) => p.map((v, i) => (i === step ? n : v)));
-                    }}
-                  />
+                  <input type="radio" name={`${uid}-${step}`} checked={choice === n} disabled={shown} onChange={() => setPicked((p) => p.map((v, i) => (i === step ? n : v)))} />
                   <span>{o}</span>
-                  {state === 'right' ? <span className="option__mark"><Icon name="check" /> Best choice</span> : null}
-                  {state === 'wrong' ? <span className="option__mark"><Icon name="x" /> Not this</span> : null}
+                  {state === 'right' ? <span className="option__mark">Strongest choice</span> : null}
+                  {state === 'wrong' ? <span className="option__mark">Not this one</span> : null}
                 </label>
               );
             })}
@@ -162,27 +139,27 @@ export function Chooser({ spec, onScore, assemble }: WidgetProps & { assemble?: 
           ) : null}
           <div className="row">
             {!shown ? (
-              <Btn variant="primary" disabled={!revealed} aria-disabled={!revealed} onClick={reveal}>
-                Lock in my choice
+              <Btn variant="primary" disabled={choice === null} aria-disabled={choice === null} onClick={() => setShown(true)}>
+                Show the reasoning
               </Btn>
             ) : (
               <Btn variant="primary" go onClick={next}>
-                {step === cfg.steps.length - 1 ? 'See my result' : 'Next step'}
+                {step === cfg.steps.length - 1 ? 'Finish' : 'Next step'}
               </Btn>
             )}
           </div>
         </>
       ) : (
         <div role="status" className="stack">
-          <p className="score-line">
-            <strong>{rightCount} of {cfg.steps.length}</strong> best choices.
-          </p>
+          <p className="note">That is every step.</p>
           {assemble ? (
             <Callout icon="info">
               <p>A prompt with a clear task, context, audience, format and limits gives the model more to work with. It also gives you something to check the result against.</p>
             </Callout>
           ) : null}
-          <Btn variant="quiet" icon="reset" onClick={restart}>Try again</Btn>
+          <Btn variant="quiet" icon="reset" onClick={restart}>
+            Go through it again
+          </Btn>
         </div>
       )}
     </div>
@@ -197,20 +174,14 @@ const VERDICTS: { id: Verdict; label: string }[] = [
 ];
 
 /** Read an AI-written paragraph and decide, claim by claim, what to do with it. */
-export function ClaimReview({ spec, onScore }: WidgetProps) {
+export function ClaimReview({ spec }: WidgetProps) {
   const cfg = spec.config as ClaimReviewConfig;
   const uid = useId();
   const [picks, setPicks] = useState<(Verdict | null)[]>(() => cfg.claims.map(() => null));
   const [checked, setChecked] = useState(false);
-  const right = cfg.claims.filter((c, i) => picks[i] === c.verdict).length;
+  const allMatch = cfg.claims.every((c, i) => picks[i] === c.verdict);
   const all = picks.every(Boolean);
 
-  const check = () => {
-    setChecked(true);
-    const score = Math.round((right / cfg.claims.length) * 100);
-    play(score >= spec.pass ? 'right' : 'wrong');
-    onScore(score);
-  };
   const reset = () => {
     setPicks(cfg.claims.map(() => null));
     setChecked(false);
@@ -223,7 +194,7 @@ export function ClaimReview({ spec, onScore }: WidgetProps) {
         <p>{cfg.source}</p>
       </blockquote>
       {cfg.claims.map((c, i) => {
-        const ok = picks[i] === c.verdict;
+        const matches = picks[i] === c.verdict;
         return (
           <fieldset key={i} className="claim">
             <legend>
@@ -236,25 +207,16 @@ export function ClaimReview({ spec, onScore }: WidgetProps) {
                 const state = checked ? (v.id === c.verdict ? 'right' : picks[i] === v.id ? 'wrong' : '') : '';
                 return (
                   <label key={v.id} className={`option${state ? ` option--${state}` : ''}`}>
-                    <input
-                      type="radio"
-                      name={`${uid}-${i}`}
-                      checked={picks[i] === v.id}
-                      disabled={checked}
-                      onChange={() => {
-                        play('tick');
-                        setPicks((p) => p.map((x, j) => (j === i ? v.id : x)));
-                      }}
-                    />
+                    <input type="radio" name={`${uid}-${i}`} checked={picks[i] === v.id} disabled={checked} onChange={() => setPicks((p) => p.map((x, j) => (j === i ? v.id : x)))} />
                     <span>{v.label}</span>
-                    {state === 'right' ? <span className="option__mark"><Icon name="check" /> Right call</span> : null}
-                    {state === 'wrong' ? <span className="option__mark"><Icon name="x" /> Not this</span> : null}
+                    {state === 'right' ? <span className="option__mark">Sound call</span> : null}
+                    {state === 'wrong' ? <span className="option__mark">Not this one</span> : null}
                   </label>
                 );
               })}
             </div>
             {checked ? (
-              <Callout icon={ok ? 'check' : 'info'} tone={ok ? 'good' : 'bad'}>
+              <Callout icon={matches ? 'check' : 'info'} tone={matches ? 'good' : 'bad'}>
                 <p>{c.why}</p>
               </Callout>
             ) : null}
@@ -263,15 +225,15 @@ export function ClaimReview({ spec, onScore }: WidgetProps) {
       })}
       <div className="row" role="status">
         {!checked ? (
-          <Btn variant="primary" disabled={!all} aria-disabled={!all} onClick={check}>
-            Check my verdicts
+          <Btn variant="primary" disabled={!all} aria-disabled={!all} onClick={() => setChecked(true)}>
+            Show my verdicts against the reasons
           </Btn>
         ) : (
           <>
-            <p className="score-line">
-              <strong>{right} of {cfg.claims.length}</strong> claims handled correctly.
-            </p>
-            <Btn variant="quiet" icon="reset" onClick={reset}>Try again</Btn>
+            <p className="note">{allMatch ? 'Your calls all match. The reasons are the useful part, so read them.' : 'Some calls differed. Read the reasons, then clear and try again.'}</p>
+            <Btn variant="quiet" icon="reset" onClick={reset}>
+              Clear and try again
+            </Btn>
           </>
         )}
       </div>

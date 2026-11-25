@@ -1,9 +1,9 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from '@/router';
 import { Icon, type IconName } from '@/art/Icons';
-import { play } from '@/audio/sfx';
+import { STATUS_LABEL, type LessonStatus } from '@/learning/state';
 
-type Variant = 'primary' | 'secondary' | 'quiet' | 'hue';
+type Variant = 'primary' | 'secondary' | 'quiet';
 
 interface BtnBase {
   variant?: Variant;
@@ -19,17 +19,9 @@ const cls = (v: Variant, o: BtnBase, extra?: string) =>
   ['btn', v === 'secondary' ? '' : `btn--${v}`, o.small ? 'btn--sm' : '', o.block ? 'btn--block' : '', extra ?? ''].filter(Boolean).join(' ');
 
 /** A real <button>. Has hover, pressed, focus and disabled states, and is at least 48px tall. */
-export function Btn({ variant = 'secondary', small, block, go, icon, children, className, onClick, ...rest }: BtnBase & ButtonHTMLAttributes<HTMLButtonElement>) {
+export function Btn({ variant = 'secondary', small, block, go, icon, children, className, ...rest }: BtnBase & ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button
-      type="button"
-      className={cls(variant, { small, block }, className)}
-      onClick={(e) => {
-        play('press');
-        onClick?.(e);
-      }}
-      {...rest}
-    >
+    <button type="button" className={cls(variant, { small, block }, className)} {...rest}>
       {icon ? <Icon name={icon} /> : null}
       {children}
       {go ? <Icon name="arrow-right" className="btn__go" /> : null}
@@ -38,9 +30,9 @@ export function Btn({ variant = 'secondary', small, block, go, icon, children, c
 }
 
 /** A real link that looks and behaves like a button. Use for navigation, never for actions. */
-export function LinkBtn({ to, variant = 'secondary', small, block, go, icon, children, className, onClick, ...rest }: BtnBase & { to: string; className?: string; 'aria-label'?: string; onClick?: () => void }) {
+export function LinkBtn({ to, variant = 'secondary', small, block, go, icon, children, className, ...rest }: BtnBase & { to: string; className?: string; 'aria-label'?: string }) {
   return (
-    <Link to={to} className={cls(variant, { small, block }, className)} onClick={() => { play('press'); onClick?.(); }} {...rest}>
+    <Link to={to} className={cls(variant, { small, block }, className)} {...rest}>
       {icon ? <Icon name={icon} /> : null}
       {children}
       {go ? <Icon name="arrow-right" className="btn__go" /> : null}
@@ -48,31 +40,13 @@ export function LinkBtn({ to, variant = 'secondary', small, block, go, icon, chi
   );
 }
 
-export function Panel({ children, tone = 'paper', lift, hue, className, as: Tag = 'div', ...rest }: { children?: ReactNode; tone?: 'paper' | 'ink' | 'shade'; lift?: boolean; hue?: boolean; className?: string; as?: 'div' | 'section' | 'article' | 'aside' } & Omit<React.HTMLAttributes<HTMLElement>, 'children'>) {
-  const c = ['panel', tone === 'ink' ? 'panel--ink' : tone === 'shade' ? 'panel--shade' : '', lift ? 'panel--lift' : '', hue ? 'panel--hue' : '', className ?? ''].filter(Boolean).join(' ');
+/** A quiet text link with a forward arrow. */
+export function GoLink({ to, children, className }: { to: string; children: ReactNode; className?: string }) {
   return (
-    <Tag className={c} data-surface={tone === 'ink' ? 'ink' : undefined} {...rest}>
+    <Link to={to} className={`go-link${className ? ` ${className}` : ''}`}>
       {children}
-    </Tag>
-  );
-}
-
-export function Chip({ children, tone, icon }: { children: ReactNode; tone?: 'ink' | 'hue' | 'seal'; icon?: IconName }) {
-  return (
-    <span className={`chip${tone ? ` chip--${tone}` : ''}`}>
-      {icon ? <Icon name={icon} /> : null}
-      {children}
-    </span>
-  );
-}
-
-/** A segmented progress meter. The numbers are always printed next to it, so it never relies on colour. */
-export function Meter({ value, label }: { value: number; label: string }) {
-  const v = Math.max(0, Math.min(100, Math.round(value)));
-  return (
-    <div className="meter" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={v} style={{ ['--value' as string]: v }}>
-      <div className="meter__fill" />
-    </div>
+      <Icon name="arrow-right" className="btn__go" />
+    </Link>
   );
 }
 
@@ -85,14 +59,25 @@ export function Callout({ icon = 'info', tone, children }: { icon?: IconName; to
   );
 }
 
-/** Visible heading block used at the top of inner pages. */
-export function PageHead({ title, lead, kicker, children }: { title: string; lead?: string; kicker?: string; children?: ReactNode }) {
+/** The lesson status as a shape and a word. Neutral language: not started, started, complete. */
+export function Status({ status }: { status: LessonStatus }) {
   return (
-    <header className="page-head">
-      {kicker ? <p className="label">{kicker}</p> : null}
-      <h1>{title}</h1>
-      {lead ? <p className="page-head__lead">{lead}</p> : null}
-      {children}
-    </header>
+    <span className={`status status--${status === 'not-started' ? 'none' : status}`}>
+      <span className="status__mark" aria-hidden="true" />
+      {STATUS_LABEL[status]}
+    </span>
+  );
+}
+
+/** A framed figure with a numbered caption, in the style of a plate in a printed field guide. */
+export function Figure({ no, caption, children, className }: { no: string; caption: ReactNode; children: ReactNode; className?: string }) {
+  return (
+    <figure className={`figure${className ? ` ${className}` : ''}`}>
+      <div className="plate">{children}</div>
+      <figcaption>
+        <span className="fig-no">Fig. {no}</span>
+        <span>{caption}</span>
+      </figcaption>
+    </figure>
   );
 }

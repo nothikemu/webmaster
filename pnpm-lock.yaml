@@ -8,13 +8,13 @@ importers:
 
   .:
     dependencies:
+      '@fontsource-variable/newsreader':
+        specifier: 5.3.0
+        version: 5.3.0
       '@fontsource/atkinson-hyperlegible':
         specifier: 5.3.0
         version: 5.3.0
-      '@fontsource/barlow-condensed':
-        specifier: 5.3.0
-        version: 5.3.0
-      '@fontsource/dela-gothic-one':
+      '@fontsource/ibm-plex-mono':
         specifier: 5.3.0
         version: 5.3.0
       react:
@@ -23,9 +23,6 @@ importers:
       react-dom:
         specifier: 18.3.1
         version: 18.3.1(react@18.3.1)
-      three:
-        specifier: 0.170.0
-        version: 0.170.0
     devDependencies:
       '@axe-core/playwright':
         specifier: 4.14.0
@@ -39,9 +36,6 @@ importers:
       '@types/react-dom':
         specifier: 18.3.7
         version: 18.3.7(@types/react@18.3.31)
-      '@types/three':
-        specifier: 0.170.0
-        version: 0.170.0
       '@typescript-eslint/eslint-plugin':
         specifier: 8.72.1
         version: 8.72.1(@typescript-eslint/parser@8.72.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)
@@ -338,14 +332,14 @@ packages:
     resolution: {integrity: sha512-d9zaMRSTIKDLhctzH12MtXvJKSSUhaHcjV+2Z+GK+EEY7XKpP5yR4x+N3TAcHTcu963nIr+TMcCb4DBCYX1z6Q==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
+  '@fontsource-variable/newsreader@5.3.0':
+    resolution: {integrity: sha512-rrzYi43qMpbzwuFtf9OkWH8sxAPVPcQQQEwXpPtwaKYeJ8yVg5aLs5kawmo1f2Q1t1M38TLmEKCkGVDsYwgdFw==}
+
   '@fontsource/atkinson-hyperlegible@5.3.0':
     resolution: {integrity: sha512-Sp8Ve8+rQmENY2Lv02VH7sLpntzTTvnncnJMTbRE7DX6TLxGraN4ykZfzaUWIoCFmaomwkvNiqmlPkrKBuDoSA==}
 
-  '@fontsource/barlow-condensed@5.3.0':
-    resolution: {integrity: sha512-RA7MmIx0v3eQ6Gcf74qLVLOwLB0GpPOzx+eU9iG/AmCnSJGcIWYeU8y6CEMGZ210MGwGg5CZhzLkkvyZdTTk1g==}
-
-  '@fontsource/dela-gothic-one@5.3.0':
-    resolution: {integrity: sha512-4A26Qs7TqYFWegJfYHx7KKWy01YybW/e7uhFDM8A8e1neVPm721laLnh0en60wtKihfNdCbJt0VVcEMHC4pHjw==}
+  '@fontsource/ibm-plex-mono@5.3.0':
+    resolution: {integrity: sha512-eTgnZjZEGk1QtD3ZstF+Vclo2HLAni8YMy34/DxllwZvyz1lR/1RF/xTiAquOBO7MvqBx8D2Ig2WCPMVfdZu7Q==}
 
   '@humanwhocodes/config-array@0.13.0':
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
@@ -521,9 +515,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@tweenjs/tween.js@23.1.3':
-    resolution: {integrity: sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==}
-
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
 
@@ -558,15 +549,6 @@ packages:
 
   '@types/react@18.3.31':
     resolution: {integrity: sha512-vfEqpXTvwT91yhmwdfouStN2hSKwTvyRs8qpLfADyrq/kxDw0hZM7Wk9Ug1FELj8hIby+S/+kQCSRFF32nv2Qw==}
-
-  '@types/stats.js@0.17.4':
-    resolution: {integrity: sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==}
-
-  '@types/three@0.170.0':
-    resolution: {integrity: sha512-CUm2uckq+zkCY7ZbFpviRttY+6f9fvwm6YqSqPfA5K22s9w7R4VnA3rzJse8kHVvuzLcTx+CjNCs2NYe0QFAyg==}
-
-  '@types/webxr@0.5.24':
-    resolution: {integrity: sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==}
 
   '@typescript-eslint/eslint-plugin@8.72.1':
     resolution: {integrity: sha512-5CokTWXpmbylfFabsbvHC0CAw3XLaGnoa+nFJX5FR592h/LoZsENUE6p/rg5xvkKrFEXz6pYmgI29AgXc2N3BQ==}
@@ -664,9 +646,6 @@ packages:
 
   '@vitest/utils@3.2.7':
     resolution: {integrity: sha512-x6BDOd7dyo3PFLY3I9/HJ25X/6OurhGXk2/B9gOZNPF7XDVjeBK4k01lQE5uvDpbuheErh91qYuE1E2OEjK3Rw==}
-
-  '@webgpu/types@0.1.74':
-    resolution: {integrity: sha512-lgiI4hbuLcI9unnm2cL/tvCaQU45dp0xcLWJh5uB/9MBGvIA4F8XIk7nSiBeg+K4xWGYwgZKn80LmERI5CxoTA==}
 
   acorn-jsx@5.3.2:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -997,9 +976,6 @@ packages:
       picomatch:
         optional: true
 
-  fflate@0.8.3:
-    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
-
   file-entry-cache@6.0.1:
     resolution: {integrity: sha512-7Gps/XWymbLk2QLYK4NzpMOrYjMhdIxXuIvy2QBsLE6ljuodKvdkWs/cpyJJ3CVIVpH0Oi1Hvg1ovbMzLdFBBg==}
     engines: {node: ^10.12.0 || >=12.0.0}
@@ -1311,9 +1287,6 @@ packages:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
     engines: {node: '>= 0.4'}
 
-  meshoptimizer@0.18.1:
-    resolution: {integrity: sha512-ZhoIoL7TNV4s5B6+rx5mC//fw8/POGyNxS/DZyCJeiZ12ScLfVwRE/GfsxwiTkMYYD5DmK2/JXnEVXqL4rF+Sw==}
-
   minimatch@10.2.6:
     resolution: {integrity: sha512-vpLQEs+VLCr1nU0BXS07maYoFwlDAH0gngQuuttxIwutDFEMHq2blX+8vpgxDdK3J1PwjCJiep77OitTZ4Ll1A==}
     engines: {node: 18 || 20 || >=22}
@@ -1586,9 +1559,6 @@ packages:
 
   text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
-
-  three@0.170.0:
-    resolution: {integrity: sha512-FQK+LEpYc0fBD+J8g6oSEyyNzjp+Q7Ks1C568WWaoMRLW+TkNNWmenWeGgJjV105Gd+p/2ql1ZcjYvNiPZBhuQ==}
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -1996,11 +1966,11 @@ snapshots:
 
   '@eslint/js@8.57.1': {}
 
+  '@fontsource-variable/newsreader@5.3.0': {}
+
   '@fontsource/atkinson-hyperlegible@5.3.0': {}
 
-  '@fontsource/barlow-condensed@5.3.0': {}
-
-  '@fontsource/dela-gothic-one@5.3.0': {}
+  '@fontsource/ibm-plex-mono@5.3.0': {}
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
@@ -2125,8 +2095,6 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.68.0':
     optional: true
 
-  '@tweenjs/tween.js@23.1.3': {}
-
   '@types/babel__core@7.20.5':
     dependencies:
       '@babel/parser': 7.29.13
@@ -2171,19 +2139,6 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.15
       csstype: 3.2.3
-
-  '@types/stats.js@0.17.4': {}
-
-  '@types/three@0.170.0':
-    dependencies:
-      '@tweenjs/tween.js': 23.1.3
-      '@types/stats.js': 0.17.4
-      '@types/webxr': 0.5.24
-      '@webgpu/types': 0.1.74
-      fflate: 0.8.3
-      meshoptimizer: 0.18.1
-
-  '@types/webxr@0.5.24': {}
 
   '@typescript-eslint/eslint-plugin@8.72.1(@typescript-eslint/parser@8.72.1(eslint@8.57.1)(typescript@5.9.3))(eslint@8.57.1)(typescript@5.9.3)':
     dependencies:
@@ -2331,8 +2286,6 @@ snapshots:
       '@vitest/pretty-format': 3.2.7
       loupe: 3.2.1
       tinyrainbow: 2.0.0
-
-  '@webgpu/types@0.1.74': {}
 
   acorn-jsx@5.3.2(acorn@8.19.0):
     dependencies:
@@ -2784,8 +2737,6 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.7
 
-  fflate@0.8.3: {}
-
   file-entry-cache@6.0.1:
     dependencies:
       flat-cache: 3.2.0
@@ -3101,8 +3052,6 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.6.0
 
   math-intrinsics@1.1.0: {}
-
-  meshoptimizer@0.18.1: {}
 
   minimatch@10.2.6:
     dependencies:
@@ -3430,8 +3379,6 @@ snapshots:
       has-flag: 4.0.0
 
   text-table@0.2.0: {}
-
-  three@0.170.0: {}
 
   tinybench@2.9.0: {}
 

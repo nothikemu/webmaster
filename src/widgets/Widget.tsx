@@ -2,19 +2,19 @@ import type { WidgetProps } from './types';
 import { Chooser, ClaimReview, Sorter } from './Generic';
 import { BiasAudit, Classifier, NetPlayground, NextToken, SpamLearner, TokenWindow } from './Bespoke';
 
-/** Picks the interactive experiment for a lesson. Every one reports a 0-100 score through `onScore`. */
+/** Picks the guided experiment for a lesson. Experiments keep no score: they show what happens and why. */
 export function Widget(props: WidgetProps) {
   switch (props.spec.id) {
     case 'spam-learner':
-      return <SpamLearner {...props} />;
+      return <SpamLearner />;
     case 'classifier':
-      return <Classifier {...props} />;
+      return <Classifier />;
     case 'network':
-      return <NetPlayground {...props} />;
+      return <NetPlayground />;
     case 'next-token':
-      return <NextToken {...props} />;
+      return <NextToken />;
     case 'token-window':
-      return <TokenWindow {...props} />;
+      return <TokenWindow />;
     case 'sorter':
       return <Sorter {...props} />;
     case 'chooser':
@@ -24,6 +24,6 @@ export function Widget(props: WidgetProps) {
     case 'claim-review':
       return <ClaimReview {...props} />;
     case 'bias-audit':
-      return <BiasAudit {...props} />;
+      return <BiasAudit />;
   }
 }

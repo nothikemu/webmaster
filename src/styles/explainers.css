@@ -1,0 +1,359 @@
+/* The three instruments: neural topology, prompt console, vulnerability matrix. */
+.instrument {
+  display: grid;
+  gap: var(--s-6);
+}
+.instrument__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: var(--s-6) var(--gap);
+  align-items: start;
+}
+.instrument__grid--wide {
+  grid-template-columns: minmax(0, 6.5fr) minmax(0, 4.5fr);
+}
+@media (max-width: 62rem) {
+  .instrument__grid,
+  .instrument__grid--wide {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.controls {
+  display: grid;
+  gap: var(--s-5);
+}
+.controls fieldset {
+  padding: var(--s-4);
+  border: 1px solid var(--bone-rule);
+  border-radius: var(--radius);
+  background: var(--bone);
+}
+.controls legend {
+  padding: 0 var(--s-2);
+  font-family: var(--font-sans);
+  font-size: var(--t-ui);
+  font-weight: 700;
+}
+.readout {
+  display: grid;
+  gap: var(--s-5);
+}
+.readout h3 {
+  margin-bottom: var(--s-3);
+}
+
+/* sliders */
+.slider {
+  margin-bottom: var(--s-3);
+}
+.slider__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+.slider__head label {
+  font-family: var(--font-sans);
+  font-size: var(--t-ui);
+  font-weight: 700;
+}
+.slider__head output {
+  font-size: 1.125rem;
+}
+.slider__track {
+  position: relative;
+}
+.slider__band {
+  position: absolute;
+  left: var(--lo);
+  width: calc(var(--hi) - var(--lo));
+  top: 50%;
+  height: 0.9rem;
+  transform: translateY(-50%);
+  background: var(--vermilion-wash);
+  border: 1.5px solid var(--vermilion-lo);
+  border-radius: 1px;
+  pointer-events: none;
+}
+.slider__track input {
+  position: relative;
+}
+.slider__hint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+
+/* presets */
+.presets {
+  padding: var(--s-4);
+  border: 1px solid var(--bone-rule);
+  background: var(--bone);
+}
+.presets__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+.preset {
+  display: grid;
+  gap: 0.2rem;
+  min-height: 3.5rem;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--graphite-2);
+  border-radius: var(--radius);
+  background: var(--bone-hi);
+  color: var(--graphite);
+  text-align: left;
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+.preset:hover {
+  border-color: var(--graphite);
+  background: var(--quiet);
+}
+.preset[aria-pressed='true'] {
+  border-color: var(--graphite);
+  background: var(--vermilion-wash);
+  box-shadow: inset 4px 0 0 var(--vermilion-lo);
+}
+.preset__name {
+  font-weight: 700;
+  font-size: var(--t-ui);
+}
+.preset__sum {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--text-2);
+}
+@media (max-width: 30rem) {
+  .presets__row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* briefs */
+.briefs {
+  padding: var(--s-4);
+  border: 1px solid var(--bone-rule);
+  background: var(--bone);
+}
+.briefs .filters,
+.matrix__pick .filters {
+  display: grid;
+  gap: var(--s-2);
+}
+.matrix__pick .filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 52rem) {
+  .matrix__pick .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.brief-opt {
+  margin: 0;
+}
+.brief {
+  margin-top: var(--s-4);
+}
+.brief__list {
+  margin: var(--s-3) 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+.brief__list li {
+  margin: 0;
+  padding: var(--s-3) 0;
+  border-top: 1px solid var(--rule);
+}
+.brief__list .tag {
+  margin-right: var(--s-2);
+}
+.brief__list .is-in .tag {
+  border-color: var(--cobalt-lo);
+  color: var(--cobalt-lo);
+}
+.brief__list .is-out .tag {
+  border-style: dashed;
+  border-color: var(--vermilion-lo);
+  color: var(--vermilion-lo);
+}
+
+/* the prompt, the odds, the metrics */
+.prompt-parts {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-sm);
+}
+.prompt-parts > div {
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--rule);
+}
+.prompt-parts dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-weight: 700;
+}
+.prompt-parts dd {
+  margin: var(--s-1) 0 0;
+  color: var(--text-2);
+}
+.prompt-parts .is-off dd {
+  font-style: italic;
+}
+.prompt-parts .is-off .tag {
+  border-style: dashed;
+  color: var(--text-2);
+}
+.odds {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-sans);
+}
+.odds li {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1fr) 3rem 4.25rem;
+  gap: var(--s-2);
+  align-items: center;
+  margin: 0 0 var(--s-2);
+  font-size: var(--t-sm);
+}
+.odds__bar {
+  display: block;
+  height: 1.1rem;
+  background: var(--bone-lo);
+  border: 1px solid var(--bone-rule);
+}
+.odds__bar > span {
+  display: block;
+  height: 100%;
+  transition: width var(--dur) var(--ease);
+}
+.odds--formal .odds__bar > span {
+  background: var(--vermilion);
+}
+.odds--casual .odds__bar > span {
+  background: repeating-linear-gradient(135deg, var(--graphite-2) 0 3px, var(--bone-hi) 3px 6px);
+}
+.odds__pct {
+  text-align: right;
+}
+.odds__kind {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+@media (max-width: 30rem) {
+  .odds li {
+    grid-template-columns: 4.5rem minmax(0, 1fr) 2.75rem;
+  }
+  .odds__kind {
+    display: none;
+  }
+}
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+  gap: var(--s-3) var(--s-5);
+  margin: 0;
+  padding: var(--s-4) 0;
+  border-block: 1px solid var(--graphite);
+}
+.metrics dt {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.metrics dd {
+  margin: 0;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+.draws {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 var(--s-2);
+}
+.change {
+  padding: var(--s-4) var(--s-5);
+  background: var(--bone-lo);
+  border-left: 4px solid var(--graphite);
+}
+.change p {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--t-ui);
+  line-height: 1.55;
+}
+.change p + p {
+  margin-top: var(--s-2);
+}
+.change .label {
+  margin-bottom: var(--s-2);
+}
+
+/* topology and matrix drawings */
+.topology__svg,
+.matrix__svg {
+  width: 100%;
+  height: auto;
+}
+.topology__out {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: var(--s-5) var(--gap);
+  align-items: start;
+}
+.topology__out .metrics {
+  border-block: 0;
+  padding-block: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 52rem) {
+  .topology__out {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.matrix__toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin: var(--s-4) 0;
+}
+.matrix__text h4 {
+  margin: 0 0 var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--t-mono);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.matrix__text section + section {
+  margin-top: var(--s-5);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--graphite);
+}
+.matrix__text ul,
+.matrix__text ol {
+  font-size: var(--t-0);
+}
+.matrix__match {
+  margin-top: var(--s-4);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--graphite);
+}

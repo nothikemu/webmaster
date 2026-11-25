@@ -1,85 +1,77 @@
 /*
-  Design tokens for Parameter (docs/DESIGN_SYSTEM.md). Every component reads these; nothing else in the CSS contains a raw colour.
-  Built on Apple's three Human Interface themes: clarity (type and space do the work), deference (the interface stays out of the
-  way of the content) and depth (layers and motion say what is on top). One accent, red, marks what you can act on. Everything
-  else is ink, paper and the grays between. An 8-point grid sets all spacing; a control is never smaller than 48 px.
-*/
+ * Parameter design tokens. A hand-inked field guide: warm bone paper, graphite ink, and three scientific accents
+ * (cobalt for structure, vermilion for language, ochre for caution). Every colour pair that carries text is checked by `pnpm contrast`,
+ * which reads the hex values below, so keep each colour as a plain 6-digit hex on one line.
+ */
 :root {
-  /* Ink and paper */
-  --ink: #0d0d0d;
-  --ink-2: #171717;
-  --ink-3: #262626;
-  --ink-line: #6b6b70;
-  --paper: #f4f3ee;
-  --paper-hi: #fdfcf9;
-  --paper-lo: #e9e7e0;
-  --paper-line: #b8b5ab;
+  /* paper */
+  --bone: #f1ece0;
+  --bone-hi: #f9f6ee;
+  --bone-lo: #e6dfcf;
+  --bone-line: #c9bfa6;
+  --bone-rule: #8c826c;
 
-  /* The game's one hot colour (docs/STYLE_GUIDE.md). Red is for what matters: the goal, the path, active states. -fill carries small text. */
-  --red: #e3122a; /* graphics and large bold text */
-  --red-fill: #c4102a; /* fills that carry normal-size paper text */
-  --red-deep: #8e0b1a; /* red text on paper */
+  /* ink */
+  --graphite: #17181d;
+  --graphite-2: #44454d;
+  --graphite-3: #5f6068;
 
-  /* Text. Pairs are checked by `pnpm contrast`. */
-  --text: #0d0d0d; /* on paper */
-  --text-2: #474644; /* secondary text on paper */
-  --text-ink: #fdfcf9; /* on ink */
-  --text-ink-2: #bdbbb5; /* secondary text on ink */
+  /* the dark plate (used sparingly, for the Ethics module and the footer) */
+  --night: #14151a;
+  --night-2: #1e2027;
+  --night-line: #3a3c46;
+  --on-night: #f6f2e8;
+  --on-night-2: #c4c0b3;
 
-  /* Action: black on paper, paper on ink. The -lo and -hi steps are for text. */
-  --seal: #c4102a;
-  --seal-lo: #8e0b1a; /* accent text on paper */
-  --seal-hi: #ff4b5c; /* accent text on ink */
+  /* cobalt: structure, networks, Foundations */
+  --cobalt: #2038c4;
+  --cobalt-lo: #1a2d9e;
+  --cobalt-hi: #9aabff;
+  --cobalt-wash: #dde2f5;
 
-  /* The three paths are told apart by value (charcoal, graphite, silver) and by hatching, never by a hue. */
-  --indigo: #2b2b2b;
-  --indigo-lo: #2b2b2b;
-  --indigo-hi: #c4c4c4;
-  --teal: #5b5b5b;
-  --teal-lo: #3d3d3d;
-  --teal-hi: #dcdcdc;
-  --ochre: #8c8c8c;
-  --ochre-lo: #333333;
-  --ochre-hi: #f0f0f0;
+  /* vermilion: language, prompts, Synthesis */
+  --vermilion: #d8421d;
+  --vermilion-lo: #a52f0e;
+  --vermilion-hi: #ff8f6d;
+  --vermilion-wash: #f4dcd1;
 
-  /* Feedback: always paired with an icon and words, and a hatched ground for the wrong answer. Never value alone. */
-  --good: #1f1f1f;
-  --good-hi: #e6e6e6;
-  --bad: #3a3a3a;
-  --bad-hi: #cfcfcf;
+  /* ochre: caution, risk, Ethics */
+  --ochre: #c78a0f;
+  --ochre-lo: #7a5300;
+  --ochre-hi: #f2bb3d;
+  --ochre-wash: #f0e3c0;
 
-  /* Illustration-only values (not used for text) */
-  --sky-1: #d6d4cf;
-  --sky-2: #b4b2ad;
-  --sun: #1a1a1a;
-  --hill-far: #9b9994;
-  --hill-near: #4d4b48;
-  --sea: #4d4d4d;
-  --sea-deep: #2c2c2c;
-  --wood: #5a5854;
-  --wood-deep: #2a2926;
-  --lantern: #f6f4ec;
+  /* roles */
+  --page: var(--bone);
+  --raised: var(--bone-hi);
+  --quiet: var(--bone-lo);
+  --text: var(--graphite);
+  --text-2: var(--graphite-2);
+  --text-3: var(--graphite-3);
+  --rule: var(--bone-line);
+  --rule-strong: var(--graphite);
+  --focus: var(--cobalt);
+  --good: var(--cobalt-lo);
+  --bad: var(--vermilion-lo);
 
-  /* Active path hue. Overridden by [data-path]. */
-  --hue: var(--seal);
-  --hue-lo: var(--seal-lo);
-  --hue-hi: var(--seal-hi);
+  /* type */
+  --font-serif: 'Newsreader Variable', 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --font-sans: 'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
-  /* Type */
-  --font-display: 'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
-  --font-ui: 'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
-  --font-body: 'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif;
-
-  --t-xs: 0.875rem;
+  --t-mono: 0.8125rem; /* labels, figure numbers, kickers */
+  --t-ui: 1rem; /* buttons, navigation, form text */
   --t-sm: 0.9375rem;
-  --t-0: 1.125rem; /* body: 18 px */
-  --t-1: 1.375rem;
-  --t-2: 1.875rem;
-  --t-3: clamp(2.25rem, 1.6rem + 2vw, 3.25rem);
-  --t-4: clamp(2.75rem, 1.5rem + 3.8vw, 4.75rem);
-  --t-5: clamp(3.1rem, 1rem + 8vw, 7.4rem);
+  --t-0: 1.1875rem; /* reading text */
+  --t-1: 1.4375rem; /* lead paragraphs */
+  --t-2: clamp(1.625rem, 1.35rem + 1.2vw, 2.125rem); /* section headings */
+  --t-3: clamp(2.125rem, 1.5rem + 2.8vw, 3.5rem); /* page titles */
+  --t-4: clamp(2.75rem, 1.5rem + 5.6vw, 6rem); /* the home headline */
 
-  /* Space (4px base) */
+  --lh-display: 1.04;
+  --lh-text: 1.62;
+
+  /* space: a 4px base */
   --s-1: 0.25rem;
   --s-2: 0.5rem;
   --s-3: 0.75rem;
@@ -88,53 +80,36 @@
   --s-6: 2rem;
   --s-7: 3rem;
   --s-8: 4.5rem;
-  --s-9: 7rem;
-  --gutter: clamp(1.25rem, 0.5rem + 3.2vw, 3.5rem);
-  --measure: 66ch;
+  --s-9: 6.5rem;
+  --s-10: 9rem;
 
-  /* Shape: one small diagonal cut per corner pair (the game's angled language, at a calmer volume). No hard shadows. */
-  --cut: 12px;
-  --cut-sm: 8px;
-  --bw: 1px;
-  --lift: 0px;
+  /* layout */
+  --wrap: 82rem;
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --gap: clamp(1rem, 2.4vw, 2rem);
+  --measure: 38rem;
+  --bar-h: 4.25rem;
+  --radius: 2px;
 
-  /* Motion: four durations, ease-out on the way in. Nothing in the interface bounces or loops. */
-  --dur-press: 100ms;
-  --dur-fast: 140ms;
-  --dur-mid: 220ms;
-  --dur-slow: 320ms;
+  /* motion: short, ease-out, and reduced to nothing when the reader asks for it */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
-
-  --focus: var(--ink);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
 }
 
-[data-path='understand'] {
-  --hue: var(--indigo);
-  --hue-lo: var(--indigo-lo);
-  --hue-hi: var(--indigo-hi);
-}
-[data-path='use'] {
-  --hue: var(--teal);
-  --hue-lo: var(--teal-lo);
-  --hue-hi: var(--teal-hi);
-}
-[data-path='responsible'] {
-  --hue: var(--ochre);
-  --hue-lo: var(--ochre-lo);
-  --hue-hi: var(--ochre-hi);
+@media (max-width: 30rem) {
+  :root {
+    --t-0: 1.125rem;
+    --t-1: 1.3125rem;
+    --bar-h: 3.75rem;
+  }
 }
 
-/* Dark surface: re-points text, focus and line tokens. Components do not need to know which surface they are on. */
-[data-surface='ink'] {
-  --text: var(--text-ink);
-  --text-2: var(--text-ink-2);
-  --focus: var(--paper-hi);
-  --hue-lo: var(--hue-hi);
-  --seal-lo: var(--seal-hi);
-  --line: var(--ink-line);
-  color: var(--text);
-}
-[data-surface='paper'] {
-  --line: var(--paper-line);
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0.01ms;
+    --dur: 0.01ms;
+    --dur-slow: 0.01ms;
+  }
 }

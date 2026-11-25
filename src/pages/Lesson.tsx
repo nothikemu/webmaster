@@ -1,223 +1,228 @@
-import { useCallback, useState } from 'react';
+import { useEffect } from 'react';
+import type { Lesson } from '@/content/types';
 import { Link } from '@/router';
-import { Icon } from '@/art/Icons';
-import { LESSON_ALT, LessonArt } from '@/art/LessonArt';
+import { GLOSSARY } from '@/content/glossary';
+import { coreLessons, furtherLessons, lessonLabel, lessonPath, moduleOf, neighbours } from '@/content/modules';
+import { dispatch, useLearning } from '@/learning/store';
+import { statusOf } from '@/learning/state';
+import { Btn, Figure, GoLink, Status } from '@/ui/primitives';
 import { Diagram } from '@/art/Diagram';
-import { Kernel } from '@/art/Kernel';
-import { MentorBust } from '@/art/Cast';
-import { hookFor, mentorFor } from '@/content/cast';
-import { CHECK_PASS, XP, lessonSteps } from '@/engine/progress';
-import { dispatch, useProgress } from '@/engine/store';
-import { lessonById, lessonNumber, neighbours, pathById } from '@/content/paths';
-import { glossaryById } from '@/content/glossary';
-import { Btn, Callout, Chip, LinkBtn, Panel } from '@/ui/primitives';
-
-const STEPS = ['learn', 'try', 'check', 'seal'] as const;
-const STEP_LABEL = { learn: 'Learn', try: 'Try', check: 'Check', seal: 'Finish' } as const;
+import { TuneRule } from '@/art/field/Marks';
 import { Widget } from '@/widgets/Widget';
-import { Quiz } from '@/widgets/Quiz';
-import NotFound from './NotFound';
+import { Check } from '@/widgets/Quiz';
 
-export default function LessonPage({ pathId, lessonId }: { pathId: string; lessonId: string }) {
-  const lesson = lessonById(lessonId);
-  const path = pathById(pathId);
-  if (!lesson || !path || lesson.path !== path.id) return <NotFound />;
-  return <LessonView key={lesson.id} lessonId={lesson.id} />;
-}
+/** One lesson: a reading column with margin notes, then a guided experiment (where there is one), an unscored check, and the next step. */
+export default function LessonPage({ lesson }: { lesson: Lesson }) {
+  const mod = moduleOf(lesson);
+  const status = useLearning((s) => statusOf(s, lesson.id));
+  const complete = status === 'complete';
+  const { prev, next } = neighbours(lesson);
+  const terms = lesson.glossary.map((id) => GLOSSARY.find((g) => g.id === id)).filter((g) => g !== undefined);
+  const core = coreLessons(mod);
+  const further = furtherLessons(mod);
+  const label = lessonLabel(lesson);
 
-function LessonView({ lessonId }: { lessonId: string }) {
-  const lesson = lessonById(lessonId)!;
-  const path = pathById(lesson.path)!;
-  const n = lessonNumber(lesson);
-  const steps = useProgress((s) => lessonSteps(s, lesson.id));
-  const saved = useProgress((s) => s.lessons[lesson.id]);
-  const { prev, next } = neighbours(lesson.id);
-  const first = !steps.learn ? 'learn' : !steps.try ? 'try' : !steps.check ? 'check' : 'seal';
-  const [step, setStep] = useState<'learn' | 'try' | 'check' | 'seal'>(first);
-  const [quizKey, setQuizKey] = useState(0);
-  const [result, setResult] = useState<number | null>(null);
+  useEffect(() => {
+    dispatch({ type: 'open', lesson: lesson.id });
+  }, [lesson.id]);
 
-  const onScore = useCallback((score: number) => dispatch({ type: 'tried', lesson: lesson.id, score }), [lesson.id]);
-  const best = saved?.tryScore ?? 0;
-  const mentor = mentorFor(path.id);
-  const hook = hookFor(path.id, lesson.id);
+  const sections = [
+    { id: 'read', label: 'Read' },
+    ...(lesson.example ? [{ id: 'example', label: 'Example' }] : []),
+    ...(lesson.widget ? [{ id: 'experiment', label: 'Experiment' }] : []),
+    { id: 'check', label: 'Check' },
+  ];
 
   return (
-    <div className="lesson" data-path={path.id}>
-      <header className="lesson-hero" data-surface="ink">
-        <LessonArt lessonId={lesson.id} path={path.id} index={n - 1} className="lesson-hero__art" label={LESSON_ALT[lesson.id] ?? lesson.title} />
-        <div className="wrap lesson-hero__copy">
-          <nav aria-label="Breadcrumb" className="crumbs">
-            <Link to="/learn">Learn</Link> <span aria-hidden="true">/</span> <Link to={`/learn/${path.id}`}>{path.title}</Link>
-          </nav>
-          <p className="label">Lesson {n} of {path.lessons.length}, about {lesson.minutes} minutes</p>
-          <h1>{lesson.title}</h1>
-          <p className="lesson-hero__kicker">{lesson.kicker}</p>
-        </div>
-      </header>
-
-      <div className="wrap lesson-body">
-        <nav className="steps" aria-label="Lesson steps">
+    <article className={`lesson hue-${mod.id}`} aria-labelledby="lesson-title">
+      <header className="lesson__head wrap">
+        <nav aria-label="Breadcrumb" className="crumbs">
           <ol>
-            {STEPS.map((id, i) => {
-              const done = id === 'learn' ? steps.learn : id === 'try' ? steps.try : id === 'check' ? steps.check : steps.done;
-              return (
-                <li key={id}>
-                  <button type="button" className="steps__btn" aria-current={step === id ? 'step' : undefined} onClick={() => setStep(id)}>
-                    <span className="steps__dot" aria-hidden="true">{done ? <Icon name="check" /> : i + 1}</span>
-                    <span>{STEP_LABEL[id]}</span>
-                    <span className="visually-hidden">{done ? ' (done)' : ' (not done yet)'}</span>
-                  </button>
-                </li>
-              );
-            })}
+            <li>
+              <Link to="/modules">Modules</Link>
+            </li>
+            <li>
+              <Link to={`/modules/${mod.id}`}>{mod.title}</Link>
+            </li>
+            <li aria-current="page">{lesson.core ? `Lesson ${label}` : `Go further ${label}`}</li>
           </ol>
         </nav>
+        <p className="kicker lesson__kicker">
+          <span className="num">{String(mod.number).padStart(2, '0')}</span> {mod.title} · {lesson.core ? `Lesson ${label} of ${core.length}` : 'Go further'} · {lesson.minutes} min
+        </p>
+        <h1 id="lesson-title" className="lesson__title">
+          {lesson.title}
+        </h1>
+        <p className="lesson__lead">{lesson.objective}</p>
+        <TuneRule className="lesson__rule" at={lesson.core ? (Number(label) - 0.5) / core.length : 0.5} />
+      </header>
 
-        <div className="lesson-main">
-          {step === 'learn' ? (
-          <section id="learn" tabIndex={-1} aria-labelledby="learn-h" className="lesson-sec">
-            <h2 id="learn-h" className="sec-title"><span className="sec-title__tag">Learn</span></h2>
-            <p className="lesson-objective"><strong>You will be able to:</strong> {lesson.objective}</p>
-            {hook ? (
-              <figure className="hook">
-                <MentorBust who={path.id} className="hook__bust" />
-                <blockquote className="hook__words">
-                  <p>{hook}</p>
-                </blockquote>
-                <figcaption className="hook__who">
-                  <strong>{mentor.name}</strong>, {mentor.trade}, at {path.place}
-                </figcaption>
-              </figure>
-            ) : null}
-            {lesson.beats.map((b, i) => (
-              <article key={b.heading} className={`beat${i % 2 ? ' beat--alt' : ''}`}>
-                <h3>{b.heading}</h3>
-                <div className="beat__text prose">
-                  {b.paragraphs.map((p, j) => (
-                    <p key={j}>{p}</p>
+      <div className="wrap lesson__grid">
+        <aside className="lesson__rail" aria-label="In this module">
+          <div className="rail-block">
+            <p className="label">In {mod.title}</p>
+            <ol className="rail-list">
+              {core.map((l, i) => (
+                <li key={l.id}>
+                  <Link to={lessonPath(l)} aria-current={l.id === lesson.id ? 'page' : undefined}>
+                    <span className="num">{i + 1}</span>
+                    {l.title}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+            {further.length ? (
+              <>
+                <p className="label rail-block__sub">Go further</p>
+                <ol className="rail-list rail-list--further">
+                  {further.map((l, i) => (
+                    <li key={l.id}>
+                      <Link to={lessonPath(l)} aria-current={l.id === lesson.id ? 'page' : undefined}>
+                        <span className="num">{String.fromCharCode(65 + i)}</span>
+                        {l.title}
+                      </Link>
+                    </li>
                   ))}
-                </div>
-                {b.visual ? <Diagram visual={b.visual} /> : null}
-              </article>
-            ))}
-            <Panel tone="shade" className="example">
-              <p className="label">Real-world example</p>
-              <h3>{lesson.example.title}</h3>
-              <p>{lesson.example.body}</p>
-              <p className="example__take"><strong>Takeaway:</strong> {lesson.example.takeaway}</p>
-            </Panel>
-            <div className="row">
-              {steps.learn ? (
-                <Chip tone="hue" icon="check">Learn step done</Chip>
-              ) : (
-                <Btn variant="primary" go onClick={() => { dispatch({ type: 'learned', lesson: lesson.id }); setStep('try'); }}>
-                  I have read this lesson (+{XP.learn} XP)
-                </Btn>
-              )}
-              {steps.learn ? <Btn variant="primary" go onClick={() => setStep('try')}>Continue to the experiment</Btn> : null}
-            </div>
-          </section>
-          ) : null}
-
-          {step === 'try' ? (
-          <section id="try" tabIndex={-1} aria-labelledby="try-h" className="lesson-sec">
-            <h2 id="try-h" className="sec-title"><span className="sec-title__tag">Try</span> {lesson.widget.title}</h2>
-            <p className="lesson-sec__intro">{lesson.widget.intro}</p>
-            <Panel className="bench" lift>
-              <Widget spec={lesson.widget} best={best} onScore={onScore} />
-            </Panel>
-            <p className="score-line" role="status">
-              {best >= lesson.widget.pass ? (
-                <><Icon name="check" /> Experiment solved. Your best score is <strong>{best}</strong>.</>
-              ) : (
-                <>Reach <strong>{lesson.widget.pass}</strong> to solve this experiment. Your best so far: <strong>{best}</strong>. You earn up to {XP.tryMax} XP in proportion to your score.</>
-              )}
-            </p>
-            {best >= lesson.widget.pass ? <div className="row"><Btn variant="primary" go onClick={() => setStep('check')}>Continue to the check</Btn></div> : null}
-          </section>
-          ) : null}
-
-          {step === 'check' ? (
-          <section id="check" tabIndex={-1} aria-labelledby="check-h" className="lesson-sec">
-            <h2 id="check-h" className="sec-title"><span className="sec-title__tag">Check</span> Knowledge check</h2>
-            {result === null ? (
-              <Panel className="bench">
-                <Quiz
-                  key={quizKey}
-                  questions={lesson.check}
-                  label="Knowledge check"
-                  onDone={(c) => {
-                    setResult(c);
-                    dispatch({ type: 'checked', lesson: lesson.id, correct: c });
-                  }}
-                />
-              </Panel>
-            ) : (
-              <Panel className="bench" role="status">
-                <p className="score-line">
-                  You answered <strong>{result} of {lesson.check.length}</strong> correctly. Your best is <strong>{saved?.checkBest ?? result}</strong>.
-                </p>
-                <p>
-                  {result >= CHECK_PASS ? 'That passes the check.' : `You need ${CHECK_PASS} of ${lesson.check.length} to pass. Re-read the part that tripped you up, then try again.`}
-                </p>
-                <div className="row">
-                  {result >= CHECK_PASS ? <Btn variant="primary" go onClick={() => setStep('seal')}>Finish the lesson</Btn> : null}
-                  <Btn variant="quiet" icon="reset" onClick={() => { setResult(null); setQuizKey((k) => k + 1); }}>Try the check again</Btn>
-                </div>
-              </Panel>
-            )}
-          </section>
-          ) : null}
-
-          {step === 'seal' ? (
-          <section id="seal" tabIndex={-1} aria-labelledby="seal-h" className="lesson-sec">
-            <h2 id="seal-h" className="sec-title"><span className="sec-title__tag">Finish</span> {steps.done ? 'Lesson complete' : 'What is left'}</h2>
-            {steps.done ? (
-              <Panel tone="ink" className="seal-panel">
-                <Kernel mood="cheer" className="seal-panel__kernel" />
-                <div>
-                  <p className="label">You finished it</p>
-                  <h3>{lesson.title}</h3>
-                  <ul className="takeaways">
-                    {lesson.takeaways.map((t) => (
-                      <li key={t}>{t}</li>
-                    ))}
-                  </ul>
-                  {lesson.codex.length ? (
-                    <p className="small">
-                      Added to your codex:{' '}
-                      {lesson.codex.map((id, i) => (
-                        <span key={id}>{i ? ', ' : ''}<Link to="/codex">{glossaryById(id)?.term}</Link></span>
-                      ))}
-                    </p>
-                  ) : null}
-                  <div className="row">
-                    {next ? <LinkBtn to={`/learn/${next.path}/${next.id}`} variant="primary" go>Next: {next.title}</LinkBtn> : <LinkBtn to="/certification" variant="primary" go>Take the final certification</LinkBtn>}
-                    <LinkBtn to="/logbook" variant="quiet">See your logbook</LinkBtn>
-                  </div>
-                </div>
-              </Panel>
-            ) : (
-              <Panel>
-                <p>A lesson is finished when you have done all three:</p>
-                <ul className="todo">
-                  <li className={steps.learn ? 'is-done' : ''}><Icon name={steps.learn ? 'check' : 'target'} /> Read the lesson and press the button.</li>
-                  <li className={steps.try ? 'is-done' : ''}><Icon name={steps.try ? 'check' : 'target'} /> Solve the experiment (score {lesson.widget.pass} or more).</li>
-                  <li className={steps.check ? 'is-done' : ''}><Icon name={steps.check ? 'check' : 'target'} /> Pass the knowledge check ({CHECK_PASS} of {lesson.check.length}).</li>
-                </ul>
-                <Callout icon="info"><p>XP is paid once for each step, and again only if you improve a score. Repeating a step you already did earns nothing, so there is no way to grind.</p></Callout>
-              </Panel>
-            )}
-          </section>
-          ) : null}
-
-          <nav className="lesson-nav" aria-label="Lesson navigation">
-            {prev ? <LinkBtn to={`/learn/${prev.path}/${prev.id}`} icon="arrow-left" variant="quiet">Previous: {prev.title}</LinkBtn> : <span />}
-            {next ? <LinkBtn to={`/learn/${next.path}/${next.id}`} go variant="quiet">Next: {next.title}</LinkBtn> : null}
+                </ol>
+              </>
+            ) : null}
+          </div>
+          <nav className="rail-block rail-jump" aria-label="On this page">
+            <p className="label">On this page</p>
+            <ul>
+              {sections.map((s) => (
+                <li key={s.id}>
+                  <a href={`#${s.id}`}>{s.label}</a>
+                </li>
+              ))}
+            </ul>
           </nav>
+        </aside>
+
+        <div className="lesson__main">
+          <section id="read" aria-label="Read" className="lesson__read">
+            {lesson.beats.map((b, i) => (
+              <section key={b.heading} className="beat" aria-labelledby={`beat-${i}`}>
+                <h2 id={`beat-${i}`}>
+                  <span className="beat__no num" aria-hidden="true">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  {b.heading}
+                </h2>
+                {b.paragraphs.map((p) => (
+                  <p key={p}>{p}</p>
+                ))}
+                {b.visual ? (
+                  <Figure no={`${label}.${i + 1}`} caption={b.visual.caption} className="beat__figure">
+                    <Diagram visual={b.visual} />
+                  </Figure>
+                ) : null}
+              </section>
+            ))}
+          </section>
+
+          {lesson.example ? (
+            <section id="example" aria-labelledby="example-h" className="lesson__block worked">
+              <p className="label">Worked example</p>
+              <h2 id="example-h">{lesson.example.title}</h2>
+              <p>{lesson.example.body}</p>
+              <p className="worked__take">
+                <strong>The point:</strong> {lesson.example.takeaway}
+              </p>
+            </section>
+          ) : null}
+
+          {lesson.widget ? (
+            <section id="experiment" aria-labelledby="experiment-h" className="lesson__block experiment">
+              <p className="label">Guided experiment</p>
+              <h2 id="experiment-h">{lesson.widget.title}</h2>
+              <p className="experiment__intro">{lesson.widget.intro}</p>
+              <p className="note experiment__note">Nothing here is scored or saved. Try things, change your mind, and start over as often as you like.</p>
+              <div className="experiment__bench">
+                <Widget spec={lesson.widget} />
+              </div>
+            </section>
+          ) : null}
+
+          <section id="check" aria-labelledby="check-h" className="lesson__block check-block">
+            <p className="label">Check</p>
+            <h2 id="check-h">Check your understanding</h2>
+            <p className="note">These questions are for you. They are untimed and unscored, every answer is explained, and you can try again.</p>
+            <Check questions={lesson.check} />
+          </section>
+
+          <section aria-label="Lesson summary" className="lesson__block summary">
+            <h2>The short version</h2>
+            <ul className="summary__list">
+              {lesson.takeaways.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+          </section>
+
+          <section aria-label="Finish this lesson" className="lesson__finish">
+            <div className="finish__status">
+              <Status status={status} />
+              <Btn variant={complete ? 'secondary' : 'primary'} aria-pressed={complete} onClick={() => dispatch({ type: complete ? 'uncomplete' : 'complete', lesson: lesson.id })} icon={complete ? 'reset' : 'check'}>
+                {complete ? 'Mark as not complete' : 'Mark this lesson complete'}
+              </Btn>
+              <p className="note">Saved on this device only. It is a bookmark for you, and it unlocks nothing.</p>
+            </div>
+            <nav className="finish__nav" aria-label="Next and previous lessons">
+              {prev ? (
+                <Link to={lessonPath(prev)} className="pager pager--prev">
+                  <span className="label">Previous</span>
+                  <span className="pager__title">{prev.title}</span>
+                </Link>
+              ) : (
+                <span />
+              )}
+              {next ? (
+                <Link to={lessonPath(next)} className="pager pager--next">
+                  <span className="label">Next lesson</span>
+                  <span className="pager__title">{next.title}</span>
+                </Link>
+              ) : (
+                <Link to={`/modules/${mod.id}`} className="pager pager--next">
+                  <span className="label">{lesson.core ? 'End of the core lessons' : 'Back to the module'}</span>
+                  <span className="pager__title">{lesson.core ? `${mod.title}: the instrument and further lessons` : mod.title}</span>
+                </Link>
+              )}
+            </nav>
+          </section>
         </div>
+
+        <aside className="lesson__margin" aria-label="Notes">
+          <div className="margin-note">
+            <p className="label">Key ideas</p>
+            <ul>
+              {lesson.takeaways.map((t) => (
+                <li key={t}>{t}</li>
+              ))}
+            </ul>
+          </div>
+          {terms.length ? (
+            <div className="margin-note margin-note--terms">
+              <p className="label">Terms in this lesson</p>
+              <dl>
+                {terms.map((g) => (
+                  <div key={g.id}>
+                    <dt>{g.term}</dt>
+                    <dd>{g.definition}</dd>
+                  </div>
+                ))}
+              </dl>
+              <GoLink to="/glossary">Open the glossary</GoLink>
+            </div>
+          ) : null}
+          {lesson.framework ? (
+            <div className="margin-note margin-note--src">
+              <p className="label">Aligned with</p>
+              <p className="small">{lesson.framework}</p>
+            </div>
+          ) : null}
+        </aside>
       </div>
-    </div>
+    </article>
   );
 }

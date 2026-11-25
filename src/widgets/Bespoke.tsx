@@ -1,8 +1,6 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useId, useMemo, useRef, useState } from 'react';
 import { Btn, Callout } from '@/ui/primitives';
 import { Icon } from '@/art/Icons';
-import { play } from '@/audio/sfx';
-import type { WidgetProps } from './types';
 import { KEYWORDS, TRAIN, runBoth } from './logic/spam';
 import { TEST_SET, narrowExamples, predict, testAccuracy, variedExamples, type Pt } from './logic/knn';
 import { DATASETS, Net, makeData, type DatasetId } from './logic/nn';
@@ -11,7 +9,7 @@ import { INSTRUCTION, STARTER_TEXT, WINDOW, fit, instructionVisible } from './lo
 import { APPLICANTS, FEATURE_LABEL, PICKS, audit, type Feature } from './logic/bias';
 
 /* ------------------------------------------------------------------ U1 */
-export function SpamLearner({ onScore }: WidgetProps) {
+export function SpamLearner() {
   const uid = useId();
   const [keys, setKeys] = useState<string[]>(['free', 'now']);
   const [guess, setGuess] = useState<'rules' | 'learned' | 'same' | null>(null);
@@ -19,12 +17,7 @@ export function SpamLearner({ onScore }: WidgetProps) {
   const result = useMemo(() => runBoth(keys), [keys]);
   const truth = result.ruleRight === result.learnedRight ? 'same' : result.learnedRight > result.ruleRight ? 'learned' : 'rules';
 
-  const run = () => {
-    setRan(true);
-    const score = 60 + (guess === truth ? 40 : 0);
-    play(guess === truth ? 'right' : 'wrong');
-    onScore(score);
-  };
+  const run = () => setRan(true);
 
   return (
     <div className="stack">
@@ -97,12 +90,12 @@ export function SpamLearner({ onScore }: WidgetProps) {
               </tbody>
             </table>
           </div>
-          <p className="score-line">
-            <strong>Your rules: {result.ruleRight} of 8.</strong> <strong>Learned filter: {result.learnedRight} of 8.</strong>
+          <p className="note">
+            Messages classified correctly: <strong>your rules, {result.ruleRight} of 8</strong>; <strong>the learned filter, {result.learnedRight} of 8</strong>.
           </p>
           <Callout icon={guess === truth ? 'check' : 'info'} tone={guess === truth ? 'good' : undefined}>
             <p>
-              {guess === truth ? 'Your prediction was right. ' : 'Not what you predicted, and that is the lesson. '}
+              {guess === truth ? 'That matches your prediction. ' : 'That differs from your prediction, which is worth noticing. '}
               Rules break on tricks like "fr33 pr1ze" and on honest messages that happen to contain a flagged word, such as "Is the library free on Saturday?". The learned filter
               weighs many words together, and it found its own weights from the examples.
             </p>
@@ -116,7 +109,7 @@ export function SpamLearner({ onScore }: WidgetProps) {
 
 /* ------------------------------------------------------------------ U2 */
 const GRID = 20;
-export function Classifier({ onScore }: WidgetProps) {
+export function Classifier() {
   const [pts, setPts] = useState<Pt[]>([]);
   const [ripe, setRipe] = useState(true);
   const [size, setSize] = useState(60);
@@ -134,7 +127,6 @@ export function Classifier({ onScore }: WidgetProps) {
   const add = (p: Pt[]) => {
     setPts((cur) => [...cur, ...p]);
     setTested(null);
-    play('tick');
   };
   const onClick = (e: React.MouseEvent<SVGSVGElement>) => {
     const r = svg.current!.getBoundingClientRect();
@@ -143,24 +135,21 @@ export function Classifier({ onScore }: WidgetProps) {
     add([{ x, y, ripe }]);
   };
   const test = () => {
-    const t = testAccuracy(pts);
-    setTested(t);
-    play(t.pct >= 75 ? 'right' : 'wrong');
-    onScore(t.pct);
+    setTested(testAccuracy(pts));
   };
 
   return (
     <div className="bench-cols bench-cols--wide">
       <div>
         <svg ref={svg} viewBox="0 0 100 100" className="plot" onClick={onClick} role="img" aria-label={`Plot of fruit by size (across) and sweetness (up). You have added ${pts.length} labeled examples. Click the plot to add one, or use the controls.`}>
-          <rect width="100" height="100" fill="var(--paper-hi)" />
+          <rect width="100" height="100" fill="var(--bone-hi)" />
           {[25, 50, 75].map((g) => (
-            <path key={g} d={`M${g} 0V100M0 ${g}H100`} stroke="var(--paper-line)" strokeWidth="0.4" strokeDasharray="1.2 1.6" />
+            <path key={g} d={`M${g} 0V100M0 ${g}H100`} stroke="var(--bone-line)" strokeWidth="0.4" strokeDasharray="1.2 1.6" />
           ))}
           {cells.map((c) =>
             c.ripe === null ? null : (
               <g key={`${c.x}-${c.y}`}>
-                <rect x={c.x * (100 / GRID)} y={100 - (c.y + 1) * (100 / GRID)} width={100 / GRID} height={100 / GRID} fill={c.ripe ? 'var(--teal)' : 'var(--ochre)'} opacity={0.32} />
+                <rect x={c.x * (100 / GRID)} y={100 - (c.y + 1) * (100 / GRID)} width={100 / GRID} height={100 / GRID} fill={c.ripe ? 'var(--cobalt)' : 'var(--vermilion)'} opacity={0.32} />
                 {c.ripe ? null : <rect x={c.x * (100 / GRID)} y={100 - (c.y + 1) * (100 / GRID)} width={100 / GRID} height={100 / GRID} fill="url(#hatch)" opacity={0.18} />}
               </g>
             ),
@@ -170,29 +159,29 @@ export function Classifier({ onScore }: WidgetProps) {
                 const wrong = tested.wrong.includes(t);
                 return (
                   <g key={i} transform={`translate(${t.x} ${100 - t.y})`}>
-                    {wrong ? <path d="M-2.4 -2.4L2.4 2.4M2.4 -2.4L-2.4 2.4" stroke="var(--seal)" strokeWidth="1.4" strokeLinecap="round" /> : <circle r="2.1" fill="none" stroke="var(--ink)" strokeWidth="0.6" strokeDasharray="1 1" />}
+                    {wrong ? <path d="M-2.4 -2.4L2.4 2.4M2.4 -2.4L-2.4 2.4" stroke="var(--vermilion-lo)" strokeWidth="1.4" strokeLinecap="round" /> : <circle r="2.1" fill="none" stroke="var(--graphite)" strokeWidth="0.6" strokeDasharray="1 1" />}
                   </g>
                 );
               })
             : null}
           {pts.map((p, i) =>
             p.ripe ? (
-              <circle key={i} cx={p.x} cy={100 - p.y} r="2.6" fill="var(--teal)" stroke="var(--ink)" strokeWidth="0.8" />
+              <circle key={i} cx={p.x} cy={100 - p.y} r="2.6" fill="var(--cobalt)" stroke="var(--graphite)" strokeWidth="0.8" />
             ) : (
-              <rect key={i} x={p.x - 2.4} y={100 - p.y - 2.4} width="4.8" height="4.8" fill="var(--ochre)" stroke="var(--ink)" strokeWidth="0.8" />
+              <rect key={i} x={p.x - 2.4} y={100 - p.y - 2.4} width="4.8" height="4.8" fill="var(--vermilion)" stroke="var(--graphite)" strokeWidth="0.8" />
             ),
           )}
           {/* where the next example will land, so the sliders and the map are visibly the same thing */}
           <g transform={`translate(${size} ${100 - sweet})`}>
-            {ripe ? <circle r="3.6" fill="none" stroke="var(--ink)" strokeWidth="0.7" strokeDasharray="1.4 1.2" /> : <rect x="-3.4" y="-3.4" width="6.8" height="6.8" fill="none" stroke="var(--ink)" strokeWidth="0.7" strokeDasharray="1.4 1.2" />}
-            <path d="M-6.4 0H-4.6M4.6 0H6.4M0 -6.4V-4.6M0 4.6V6.4" stroke="var(--ink)" strokeWidth="0.6" />
+            {ripe ? <circle r="3.6" fill="none" stroke="var(--graphite)" strokeWidth="0.7" strokeDasharray="1.4 1.2" /> : <rect x="-3.4" y="-3.4" width="6.8" height="6.8" fill="none" stroke="var(--graphite)" strokeWidth="0.7" strokeDasharray="1.4 1.2" />}
+            <path d="M-6.4 0H-4.6M4.6 0H6.4M0 -6.4V-4.6M0 4.6V6.4" stroke="var(--graphite)" strokeWidth="0.6" />
           </g>
           {pts.length === 0 ? (
             <text x="50" y="22" textAnchor="middle" className="plot__hint">
               Tap the map or use the sliders to add a fruit
             </text>
           ) : null}
-          <rect width="100" height="100" fill="none" stroke="var(--ink)" strokeWidth="1.2" />
+          <rect width="100" height="100" fill="none" stroke="var(--graphite)" strokeWidth="1.2" />
         </svg>
         <p className="plot-axis"><span>Size →</span><span>↑ Sweetness</span></p>
         <p className="small">Teal circles are ripe. Ochre squares are not ripe. The map shades where the model would say "ripe" (teal) or "not ripe" (ochre, hatched).</p>
@@ -225,8 +214,8 @@ export function Classifier({ onScore }: WidgetProps) {
           <div role="status">
             <Callout icon={tested.pct >= 75 ? 'check' : 'info'} tone={tested.pct >= 75 ? 'good' : undefined}>
               <p>
-                <strong>{tested.right} of {tested.total} right ({tested.pct}%).</strong>{' '}
-                {tested.pct >= 75 ? 'Your examples covered the plane well enough.' : 'The model has gaps. Look at where the red marks are, then add examples there.'}
+                <strong>Correct on {tested.right} of {tested.total} hidden fruits ({tested.pct}%).</strong>{' '}
+                {tested.pct >= 75 ? 'Your examples covered the map well.' : 'The model has gaps. Look at where the red marks are, then add examples there.'}
               </p>
             </Callout>
           </div>
@@ -237,7 +226,7 @@ export function Classifier({ onScore }: WidgetProps) {
 }
 
 /* ------------------------------------------------------------------ U3 */
-export function NetPlayground({ onScore }: WidgetProps) {
+export function NetPlayground() {
   const [ds, setDs] = useState<DatasetId>('ring');
   const [hidden, setHidden] = useState(3);
   const data = useMemo(() => makeData(ds), [ds]);
@@ -252,9 +241,6 @@ export function NetPlayground({ onScore }: WidgetProps) {
   const train = (n: number) => {
     net.train(data, n);
     setTick((t) => t + 1);
-    const acc = net.accuracy(data);
-    onScore(hard ? acc : Math.min(acc, 60));
-    play('tick');
   };
 
   const N = 24;
@@ -271,21 +257,21 @@ export function NetPlayground({ onScore }: WidgetProps) {
       <div>
         <svg viewBox="-1 -1 2 2" className="plot" role="img" aria-label={`Decision map of a network with ${hidden} hidden units on the ${ds} dataset. Accuracy ${acc} percent after ${net.epochs} training steps.`}>
           <g transform="scale(1 -1)">
-            <rect x="-1" y="-1" width="2" height="2" fill="var(--paper-hi)" />
+            <rect x="-1" y="-1" width="2" height="2" fill="var(--bone-hi)" />
             {cells.map((c) => (
               <g key={`${c.x}-${c.y}`}>
-                <rect x={-1 + (c.x * 2) / N} y={-1 + (c.y * 2) / N} width={2 / N} height={2 / N} fill={c.p >= 0.5 ? 'var(--teal)' : 'var(--ochre)'} opacity={0.15 + Math.abs(c.p - 0.5) * 0.7} />
+                <rect x={-1 + (c.x * 2) / N} y={-1 + (c.y * 2) / N} width={2 / N} height={2 / N} fill={c.p >= 0.5 ? 'var(--cobalt)' : 'var(--vermilion)'} opacity={0.15 + Math.abs(c.p - 0.5) * 0.7} />
                 {c.p < 0.5 ? <rect x={-1 + (c.x * 2) / N} y={-1 + (c.y * 2) / N} width={2 / N} height={2 / N} fill="url(#hatch)" opacity={0.1} /> : null}
               </g>
             ))}
             {data.map((s, i) =>
               s.label ? (
-                <circle key={i} cx={s.x} cy={s.y} r="0.034" fill="var(--teal)" stroke="var(--ink)" strokeWidth="0.012" />
+                <circle key={i} cx={s.x} cy={s.y} r="0.034" fill="var(--cobalt)" stroke="var(--graphite)" strokeWidth="0.012" />
               ) : (
-                <rect key={i} x={s.x - 0.032} y={s.y - 0.032} width="0.064" height="0.064" fill="var(--ochre)" stroke="var(--ink)" strokeWidth="0.012" />
+                <rect key={i} x={s.x - 0.032} y={s.y - 0.032} width="0.064" height="0.064" fill="var(--vermilion)" stroke="var(--graphite)" strokeWidth="0.012" />
               ),
             )}
-            <rect x="-1" y="-1" width="2" height="2" fill="none" stroke="var(--ink)" strokeWidth="0.02" />
+            <rect x="-1" y="-1" width="2" height="2" fill="none" stroke="var(--graphite)" strokeWidth="0.02" />
           </g>
         </svg>
         <p className="small">Circles are class 1 and squares are class 0. The shaded map is what the network would answer at every point.</p>
@@ -313,13 +299,13 @@ export function NetPlayground({ onScore }: WidgetProps) {
           <dl className="stats">
             <div><dt>Steps trained</dt><dd>{net.epochs}</dd></div>
             <div><dt>Loss (lower is better)</dt><dd>{net.loss(data).toFixed(3)}</dd></div>
-            <div><dt>Accuracy</dt><dd>{acc}%</dd></div>
+            <div><dt>Accuracy on this data</dt><dd>{acc}%</dd></div>
           </dl>
         </div>
         {hard ? (
-          <Callout icon="target"><p>Goal: reach <strong>90%</strong>. Try training with 1 hidden unit, then with 4 or 5. Notice what changes.</p></Callout>
+          <Callout icon="info"><p>Try training with 1 hidden unit, then with 4 or 5, and compare the shapes the boundary can bend into. Notice what changes, and why.</p></Callout>
         ) : (
-          <Callout icon="info"><p>Two blobs are easy. Switch to <strong>Ring</strong> or <strong>Corners</strong> to earn the full score.</p></Callout>
+          <Callout icon="info"><p>Two blobs can be split by a straight line, so even one hidden unit copes. Switch to <strong>Ring</strong> or <strong>Corners</strong> to see where hidden units start to matter.</p></Callout>
         )}
       </div>
     </div>
@@ -327,41 +313,18 @@ export function NetPlayground({ onScore }: WidgetProps) {
 }
 
 /* ------------------------------------------------------------------ U4 */
-export function NextToken({ onScore }: WidgetProps) {
+export function NextToken() {
   const [start, setStart] = useState(0);
   const [temp, setTemp] = useState(0.2);
   const [tokens, setTokens] = useState<string[]>(STARTS[0]!.tokens);
-  const [manual, setManual] = useState(0);
-  const lastLow = useRef<string | null>(null);
-  const lastHigh = useRef<string | null>(null);
-  const [tasks, setTasks] = useState({ low: false, high: false, manual: false });
   const cands = useMemo(() => candidates(tokens, temp), [tokens, temp]);
-
-  useEffect(() => {
-    const score = (tasks.low ? 34 : 0) + (tasks.high ? 33 : 0) + (tasks.manual ? 33 : 0);
-    if (score > 0) onScore(score);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tasks]);
 
   const gen = () => {
     const out = generate(STARTS[start]!.tokens, 10, temp, Math.random);
-    const text = render(out);
     setTokens(out);
-    play('tick');
-    if (temp <= 0.3) {
-      if (lastLow.current === text) setTasks((t) => ({ ...t, low: true }));
-      lastLow.current = text;
-    } else if (temp >= 1.2) {
-      if (lastHigh.current !== null && lastHigh.current !== text) setTasks((t) => ({ ...t, high: true }));
-      lastHigh.current = text;
-    }
   };
   const choose = (tok: string) => {
     setTokens((t) => [...t, tok]);
-    play('tick');
-    const n = manual + 1;
-    setManual(n);
-    if (n >= 3) setTasks((t) => ({ ...t, manual: true }));
   };
 
   return (
@@ -369,7 +332,7 @@ export function NextToken({ onScore }: WidgetProps) {
       <div className="stack">
         <div className="field">
           <label htmlFor="lm-start">Start the sentence with</label>
-          <select id="lm-start" className="select" value={start} onChange={(e) => { const i = +e.target.value; setStart(i); setTokens(STARTS[i]!.tokens); lastLow.current = null; lastHigh.current = null; }}>
+          <select id="lm-start" className="select" value={start} onChange={(e) => { const i = +e.target.value; setStart(i); setTokens(STARTS[i]!.tokens); }}>
             {STARTS.map((s, i) => (
               <option key={s.label} value={i}>{s.label}</option>
             ))}
@@ -388,11 +351,14 @@ export function NextToken({ onScore }: WidgetProps) {
           <Btn variant="primary" onClick={gen}>Write 10 more words</Btn>
           <Btn variant="quiet" icon="reset" onClick={() => setTokens(STARTS[start]!.tokens)}>Start over</Btn>
         </div>
-        <ul className="tasklist">
-          <li className={tasks.low ? 'is-done' : ''}><Icon name={tasks.low ? 'check' : 'target'} /> Set temperature to 0.3 or lower and write twice from the same start. The text should match.</li>
-          <li className={tasks.high ? 'is-done' : ''}><Icon name={tasks.high ? 'check' : 'target'} /> Set temperature to 1.2 or higher and write twice. The text should differ.</li>
-          <li className={tasks.manual ? 'is-done' : ''}><Icon name={tasks.manual ? 'check' : 'target'} /> Build part of a sentence yourself by picking three next words ({Math.min(manual, 3)} of 3).</li>
-        </ul>
+        <div className="things-to-try">
+          <p className="label">Things worth trying</p>
+          <ul>
+            <li>Set temperature to 0.3 or lower and write twice from the same start. The two texts should match.</li>
+            <li>Set it to 1.2 or higher and write twice. The texts should differ.</li>
+            <li>Build part of a sentence yourself by picking three next words from the list.</li>
+          </ul>
+        </div>
       </div>
       <div>
         <p className="label">What could come next, and how likely it is</p>
@@ -414,17 +380,10 @@ export function NextToken({ onScore }: WidgetProps) {
 }
 
 /* ------------------------------------------------------------------ U5 */
-export function TokenWindow({ onScore }: WidgetProps) {
+export function TokenWindow() {
   const [text, setText] = useState(STARTER_TEXT);
   const f = fit(text);
   const ok = instructionVisible(text);
-  useEffect(() => {
-    if (ok && text !== STARTER_TEXT) {
-      onScore(100);
-      play('right');
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ok]);
 
   return (
     <div className="stack">
@@ -433,7 +392,7 @@ export function TokenWindow({ onScore }: WidgetProps) {
         <textarea id="tw-text" className="textarea" rows={6} value={text} onChange={(e) => setText(e.target.value)} />
         <span className="field__hint">Edit it. Move the instruction, or cut the passage. The instruction starts with “{INSTRUCTION.charAt(0).toUpperCase() + INSTRUCTION.slice(1)}”.</span>
       </div>
-      <p className="score-line" role="status">
+      <p className="note" role="status">
         <strong>{f.total} tokens.</strong> The window holds the last <strong>{WINDOW}</strong>. {f.dropped.length > 0 ? `${f.dropped.length} fell out and the model cannot see them.` : 'Everything fits.'}
       </p>
       <p className="tokens-view" aria-label="Your text split into tokens. Tokens that fell outside the window are shown crossed out.">
@@ -453,11 +412,10 @@ export function TokenWindow({ onScore }: WidgetProps) {
 }
 
 /* ------------------------------------------------------------------ R1 */
-export function BiasAudit({ onScore }: WidgetProps) {
+export function BiasAudit() {
   const [on, setOn] = useState<Set<Feature>>(new Set(['skill', 'exp', 'club', 'zip']));
   const a = useMemo(() => audit(on), [on]);
   const toggle = (f: Feature) => {
-    play('tick');
     setOn((cur) => {
       const n = new Set(cur);
       if (n.has(f)) n.delete(f);
@@ -465,10 +423,6 @@ export function BiasAudit({ onScore }: WidgetProps) {
       return n;
     });
   };
-  useEffect(() => {
-    onScore(a.score);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [a.score]);
   const sel = new Set(a.selected.map((x) => x.id));
 
   return (
@@ -487,8 +441,7 @@ export function BiasAudit({ onScore }: WidgetProps) {
           <dl className="stats">
             <div><dt>Neighborhood A picked</dt><dd>{a.rateA}%</dd></div>
             <div><dt>Neighborhood B picked</dt><dd>{a.rateB}%</dd></div>
-            <div><dt>Top-skill picked</dt><dd>{a.qualified} of {PICKS}</dd></div>
-            <div><dt>Audit score</dt><dd>{a.score}</dd></div>
+            <div><dt>Strongest applicants picked</dt><dd>{a.qualified} of {PICKS}</dd></div>
           </dl>
         </div>
         <Callout icon={a.score >= 80 ? 'check' : 'warning'} tone={a.score >= 80 ? 'good' : 'bad'}>
