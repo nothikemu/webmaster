@@ -115,3 +115,24 @@ Not done or not verified
 - The widgets, the older page CSS and the lesson text were re-skinned rather than rewritten, and the classic 2D game keeps its older inked art.
 - The audio has still not been heard.
 
+
+## 2026-11-25: Parameter as an illustrated field guide, without the game layer
+
+Asked for (the owner's redesign brief): an exceptionally art-directed field guide to how machines learn; research current award-winning sites first; original hand-inked artwork; no gamification at all; keep the three modules, glossary, About, Accessibility and Credits; keep learner completion data safe; make every route as polished as the home page; verify in a browser.
+
+Done
+- **Research.** Inspected specific award-winning sites in a headless browser at desktop and phone sizes (details and limits in `docs/DESIGN_SYSTEM.md`). The Awwwards archive could not be opened. Network access to the reference sites was requested and approved.
+- **Removed:** the game and its 3D engine, the audio, points, levels, ranks, badges, streaks, missions, the certification, the scored scenarios and lab, the achievements and challenge pages, three.js and the old fonts.
+- **Learner data.** A new neutral store (`src/learning/`) keeps only opened and completed lessons. Finished lessons from earlier saves are carried over and the earlier key is left untouched; export and import accept the old format; erase removes everything, old keys included, after a confirmation.
+- **Old addresses** redirect to real pages with a note, in the browser and as build-time HTML pages (`src/content/legacy.ts`).
+- **Content.** The brief's fifteen lessons are the core of Foundations, Synthesis and Ethics: six reuse lessons already in the repository and nine were restored from the first version in git history (`71ebb54`). The nine current lessons without a place are kept as optional "go further" lessons. Experiments and checks lost their pass marks, scores and sounds; the scenarios became unscored cases; the myth-or-fact card became a misconceptions list; the glossary gained nine terms.
+- **Design.** New tokens (bone, graphite, cobalt, vermilion, ochre), Newsreader, IBM Plex Mono and Atkinson Hyperlegible, a 12-column editorial grid, a different composition for each route and each module, a compact full-screen menu on phones.
+- **Artwork.** Original plates for the home page and each module, drawn in code with the ink engine; annotations in HTML.
+- **Instruments.** Neural topology, prompt console (a labelled deterministic simulation with four presets and three briefs) and vulnerability matrix, each with a keyboard path, a written explanation and a pure, tested model.
+- **Checks.** Unit tests, a new `scripts/smoke.mjs` (every page, overflow at 320/390/768/1280, axe, menu, old URLs, migration, checks, instruments), 53 contrast pairs.
+
+Not done or not verified
+- **Compliance risk:** the recorded official requirement A3 asks for a gamified interface. See `docs/COMPLIANCE_CHECKLIST.md`.
+- Screen readers, Firefox and Safari, and physical phones were not tested.
+- The live Vercel deployment was not opened from this environment.
+- Several reference sites only partly rendered (see the design system document), so the research is narrower than the brief asked for.

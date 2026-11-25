@@ -114,6 +114,60 @@ function Synthesis() {
   }, []);
 }
 
+/** The same plate recomposed for a phone: two rows of chips, a larger dial, and the odds beneath. */
+function SynthesisNarrow() {
+  return useMemo(() => {
+    const out: ReactNode[] = [];
+    const chip = (x: number, y: number, w: number, text: string, kind: 'role' | 'task' | 'con', i: number) => {
+      const poly: Pt[] = [[x, y], [x + w, y], [x + w, y + 46], [x, y + 46]];
+      out.push(<Wash key={`cw${i}`} pts={poly} smooth={false} color={kind === 'task' ? C.boneLo : C.vermilionWash} opacity={1} seed={i + 1} />);
+      out.push(<Loop key={`c${i}`} pts={poly} smooth={false} w={2.2} seed={40 + i} wob={0.7} />);
+      out.push(<Note key={`t${i}`} x={x + w / 2} y={y + 29} anchor="middle" size={15} color={C.ink}>{text}</Note>);
+    };
+    const bracket = (x0: number, x1: number, y: number, label: string, color: string, seed: number) => {
+      out.push(<Pen key={`b${seed}`} pts={[[x0, y + 12], [x0, y], [x1, y], [x1, y + 12]]} w={2.8} smooth={false} color={color} wob={0.7} seed={seed} />);
+      out.push(<Note key={`bl${seed}`} x={(x0 + x1) / 2} y={y - 14} anchor="middle" size={13} color={color === C.ink ? C.ink : C.vermilionLo}>{label}</Note>);
+    };
+    chip(24, 80, 106, 'You are', 'role', 1);
+    chip(134, 80, 140, 'an analyst.', 'role', 2);
+    chip(298, 80, 136, 'Summarize', 'task', 3);
+    chip(438, 80, 128, 'the report', 'task', 4);
+    bracket(24, 274, 66, 'ROLE: whose view?', C.vermilion, 3);
+    bracket(298, 566, 66, 'TASK: what to do', C.ink, 4);
+    chip(24, 190, 98, 'in three', 'con', 5);
+    chip(126, 190, 104, 'bullets,', 'con', 6);
+    chip(234, 190, 130, 'no jargon.', 'con', 7);
+    out.push(<Pen key="cursor" pts={[[376, 194], [376, 232]]} w={3.6} smooth={false} color={C.vermilion} wob={0.3} seed={11} taper={0.1} />);
+    bracket(24, 364, 176, 'CONSTRAINTS: how to check it', C.vermilionLo, 5);
+    // the temperature dial
+    out.push(<Round key="dial" cx={512} cy={216} r={52} w={2.6} fill={C.boneHi} seed={7} irr={0.015} />);
+    for (let a = -140; a <= 140; a += 20) {
+      const t = ((a - 90) * Math.PI) / 180;
+      const r1 = 56;
+      const r2 = a % 40 === 0 ? 70 : 65;
+      out.push(<Pen key={`tk${a}`} pts={[[512 + Math.cos(t) * r1, 216 + Math.sin(t) * r1], [512 + Math.cos(t) * r2, 216 + Math.sin(t) * r2]]} w={1.8} smooth={false} wob={0.15} taper={0.3} color={C.graphite2} seed={a + 200} />);
+    }
+    const pt = ((-38 - 90) * Math.PI) / 180;
+    out.push(<Pen key="needle" pts={[[512, 216], [512 + Math.cos(pt) * 40, 216 + Math.sin(pt) * 40]]} w={4.5} smooth={false} color={C.vermilion} wob={0.3} seed={9} />);
+    out.push(<Round key="hub" cx={512} cy={216} r={8} w={2} fill={C.boneHi} seed={10} />);
+    out.push(<Note key="dl" x={512} y={296} anchor="middle" size={12} color={C.graphite2}>TEMPERATURE</Note>);
+    out.push(<Note key="nl" x={24} y={322} size={12} color={C.graphite2}>THE NEXT WORD, AND THE ODDS OF EACH</Note>);
+    const cands: [string, number][] = [['•', 0.46], ['Revenue', 0.22], ['The', 0.13], ['Q3', 0.08], ['Costs', 0.05], ['—', 0.03]];
+    cands.forEach(([word, pr], i) => {
+      const y = 338 + i * 28;
+      const len = 380 * pr / 0.46;
+      const poly: Pt[] = [[140, y], [140 + len, y], [140 + len, y + 18], [140, y + 18]];
+      out.push(<Wash key={`pw${i}`} pts={poly} smooth={false} color={i === 0 ? C.vermilion : C.vermilionWash} opacity={i === 0 ? 0.55 : 1} seed={60 + i} off={[1.2, 1]} />);
+      if (i === 0) out.push(<Shade key="ps" pts={poly} spacing={4} angle={52} color={C.vermilionLo} opacity={0.6} weight={0.9} seed={61} />);
+      out.push(<Loop key={`p${i}`} pts={poly} smooth={false} w={1.8} seed={70 + i} wob={0.5} />);
+      out.push(<Note key={`pt${i}`} x={128} y={y + 14} anchor="end" size={14} color={C.ink}>{word}</Note>);
+      out.push(<Note key={`pp${i}`} x={150 + len} y={y + 14} size={13} color={C.graphite2}>{Math.round(pr * 100)}%</Note>);
+    });
+    out.push(<Dots key="g" pts={ell(320, 520, 280, 8, 20, 0.02, 3)} count={90} opacity={0.4} seed={4} />);
+    return out;
+  }, []);
+}
+
 function Ethics() {
   return useMemo(() => {
     const out: ReactNode[] = [];
@@ -209,12 +263,18 @@ const BODY: Record<ModuleId, () => ReactNode> = { foundations: Foundations, synt
 export function ModulePlate({ module, large }: { module: ModuleId; large?: boolean }) {
   const [w, h] = SIZES[module];
   const Body = BODY[module];
+  const label = large ? DESCRIPTIONS[module] : undefined;
   return (
     <figure className={`module-plate module-plate--${module} figure`}>
       <div className="plate">
-        <svg viewBox={`0 0 ${w} ${h}`} role={large ? 'img' : undefined} aria-label={large ? DESCRIPTIONS[module] : undefined} aria-hidden={large ? undefined : true} focusable="false">
+        <svg viewBox={`0 0 ${w} ${h}`} className={module === 'synthesis' ? 'plate-wide' : undefined} role={large ? 'img' : undefined} aria-label={label} aria-hidden={large ? undefined : true} focusable="false">
           <Body />
         </svg>
+        {module === 'synthesis' ? (
+          <svg viewBox="0 0 640 540" className="plate-narrow" role={large ? 'img' : undefined} aria-label={label} aria-hidden={large ? undefined : true} focusable="false">
+            <SynthesisNarrow />
+          </svg>
+        ) : null}
       </div>
     </figure>
   );

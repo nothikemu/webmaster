@@ -1363,3 +1363,15 @@
 .term__where a {
   overflow-wrap: anywhere;
 }
+
+.plate-narrow {
+  display: none;
+}
+@media (max-width: 44rem) {
+  .plate-wide {
+    display: none;
+  }
+  .plate-narrow {
+    display: block;
+  }
+}

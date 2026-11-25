@@ -4,120 +4,93 @@ The semifinal interview asks you to show and explain the knowledge you gained bu
 
 ## The 60-second pitch
 
-Parameter teaches grades 9-12 how AI works, how to use it well, and how to use it responsibly. Each of 15 lessons has a short explanation with a diagram, a real-world example, an experiment you run yourself, and a three-question check. XP, levels, nine badges and a dashboard track real work. Progress is saved only in the browser.
+Parameter is an illustrated field guide to how machines learn, for grades 9 to 12. It has three modules (Foundations, Synthesis, Ethics) of five core lessons each, a small instrument you can turn by hand in each module, a glossary and a tool atlas. A lesson is a short read, sometimes an experiment, and an unscored check that explains every answer. Nothing is timed, scored or locked, and the only thing saved is which lessons you finished, on your own device.
+
+## Why there is no gamification (be ready for this one)
+
+- **The decision.** The earlier version had points, ranks, badges, streaks, missions and a 3D game. The owner's redesign brief removed all of it, so that nothing competes with the ideas, and so that a check is a place to learn, not a place to be graded. The earlier version is in git history (commit 815acc2).
+- **What replaced it.** A neutral overview that marks each lesson not started, started or complete and says "n of 5 core lessons complete". Marking a lesson complete is explicit and reversible, and unlocks nothing.
+- **The risk to name yourself.** The official challenge requirements recorded in `docs/RESEARCH_2026-27.md` (A3) ask for an interactive, gamified interface with badges, experience points and a progress dashboard. A portal without gamification may not satisfy that. Say plainly that this was a deliberate design decision, that you flagged it, and that you confirmed (or still need to confirm) with the advisor. Do not claim the event "does not require it" unless the advisor read the current rules and said so.
+- **Likely question: "Where is the progress tracking?"** Answer: on the overview page. It tracks completion neutrally and visually (status marks, counts per module) without points or rewards.
 
 ## Architecture in one picture
 
 ```
-content (plain data) ──► engine (pure rules) ──► store ──► React pages
- lessons, glossary,        progress.ts: XP,        keeps one     show state,
- tools, scenarios,         levels, badges,         object and    call dispatch()
- certification             recommendations         saves it
-                           persistence.ts: validate + save
-widgets/logic (pure maths) ──► widgets (React) report a 0-100 score ──► engine
+content (plain data) ──► learning/state.ts (pure rules) ──► store ──► React pages
+ modules, lessons,         open / complete / uncomplete      one object,   read state,
+ glossary, tools, cases    persistence.ts: save, migrate,    saved to      call dispatch()
+                           export, import                    localStorage
+widgets/logic and explainers/*Model.ts (pure maths) ──► widgets and instruments (React)
 ```
 
-- **Why this shape:** the rules (what earns XP, when a badge unlocks) are one pure function, `applyEvent`, with no browser code. That is why they can be tested, and why you can explain them.
-- **Stack:** React 18 and TypeScript, built by Vite into static files. No backend, no database, no accounts. Three self-hosted fonts. Everything else is our own code.
-- **Why not a framework like Next.js:** nothing here needs a server. A static site is the simplest thing that can be public and password-free, which the submission requires.
-- **Routing:** a 60-line router (`src/router.tsx`) using the History API. The build copies `index.html` into a folder per route so every page is a real URL on any host.
+- **Why this shape:** the rules are tiny pure functions with no browser code, so they can be tested and explained. The instruments' models (`topologyModel.ts`, `consoleModel.ts`, `matrixModel.ts`) are pure too.
+- **Stack:** React 18 and TypeScript, built by Vite into static files. No backend, no database, no accounts. Three self-hosted font families. Everything else is our own code.
+- **Why not Next.js:** nothing here needs a server. A static site is the simplest thing that can be public and password-free, which the submission requires.
+- **Routing:** a small router (`src/router.tsx`) using the History API. The build copies `index.html` into a folder per route, and writes small redirect pages for old addresses, so every page is a real URL on any host.
 
-## The gamification, and why it is fair
+## Learner data and migration
 
-Rules live in `src/engine/progress.ts` and the Logbook explains them to players.
+- One key, `parameter/learning/v2`: `{ opened, completed, last }`. No points, no scores.
+- Earlier saves (`parameter/v1`, `tideweight/v1`) are read once. Only finished lessons (and which were opened) are copied. The earlier key is **left untouched**, and removed only when the learner presses "Erase everything stored here" and confirms.
+- An unreadable save is kept under another key, not destroyed. A hand-edited save is rebuilt by `sanitize`. If `localStorage` is blocked the site works from memory and says so.
+- Tests: `tests/learning.test.ts`, and the migration checks in `pnpm smoke`.
 
-- XP is paid **once per step**: read (20), experiment (up to 60, in proportion to score), check (20 per correct answer plus 30 for perfect), seal a lesson (40), finish a path (150), a badge (100), the certification (300).
-- **Improving a score pays only the difference.** Repeating a finished step pays nothing. So there is no way to grind. The tests `cannot be ground` and `pays ... only the improvement` prove it.
-- **Badges are computed from completed work**, never from visits. The test `no badge from visiting, reading, or clicking` proves it.
-- A lesson is *done* only when all three of learn, experiment solved and check passed (2 of 3) are true.
-- 10 levels with thresholds 0, 120, 320, 620, 1000, 1500, 2100, 2800, 3600, 4500. The total XP available is about 5,000 (15 lessons at 210, three paths at 150, nine badges at 100, the certification at 300, six scenarios at 25, one Lab clear at 60), so a thorough player can reach the top.
+## The three instruments (be ready to demo and explain each)
 
-Question to expect: *"Why not give XP for every click?"* Answer: it would reward doing nothing useful, and the brief and the research (CSTA, Common Sense) both stress that points should follow learning.
+| Module | File | What is really happening |
+| --- | --- | --- |
+| Foundations: Neural topology | `explainers/topologyModel.ts` | A 3-4-3-1 feed-forward network with fixed weights. Each unit is a weighted sum passed through a sigmoid. You can step through the layers, see each sum, and change one weight. Negative weights are dashed so sign is never colour alone. |
+| Synthesis: Prompt console | `explainers/consoleModel.ts` | **A deterministic simulation, not a model.** Four settings change the logits of eight possible first words, then temperature rescales them (softmax). It reports variety (normalised entropy), the on-task share and a drift risk, and ten draws using ten fixed random numbers so only the settings change the result. |
+| Ethics: Vulnerability matrix | `explainers/matrixModel.ts` | Four failures with causes, signs and mitigations from the lessons, and a before-and-after grid on **illustrative** numbers (stated on the page). |
 
-## The five real experiments (be ready to demo and explain each)
+## The five older experiments (still in the lessons)
 
 | Lesson | File | What is really happening |
 | --- | --- | --- |
-| u1 Rules or examples? | `widgets/logic/spam.ts` | A keyword rule filter versus a **naive Bayes** classifier. Training counts how often each word appears in spam and in normal messages; classification adds up each word's log-odds. |
-| u2 Learning from examples | `widgets/logic/knn.ts` | **k-nearest neighbors**. A new point takes the majority label of its 3 closest examples. Narrow examples give a narrow model, so it fails on the hidden test set. |
-| u3 Neural networks | `widgets/logic/nn.ts` | A real network: 2 inputs, tanh hidden units, a sigmoid output, trained by **full-batch gradient descent with backpropagation**. About 60 lines. One hidden unit cannot solve the ring. Five can. |
-| u4 Next-word machine | `widgets/logic/lm.ts` | A **trigram language model** over a short story. Counts become probabilities. Temperature raises the counts to the power 1/T, then renormalizes. |
-| u5 Tokens and context | `widgets/logic/tokens.ts` | A simple tokenizer and a window that keeps the **last 48 tokens**. A simplification, labeled as one. |
+| Rules versus learning | `widgets/logic/spam.ts` | A keyword rule filter versus a **naive Bayes** classifier. Training counts how often each word appears in spam and in normal messages; classification adds up each word's log-odds. |
+| Learning from examples | `widgets/logic/knn.ts` | **k-nearest neighbors**. A new point takes the majority label of its 3 closest examples. Narrow examples give a narrow model, so it fails on the hidden test set. |
+| Neural networks | `widgets/logic/nn.ts` | A real network: 2 inputs, tanh hidden units, a sigmoid output, trained by **full-batch gradient descent with backpropagation**. One hidden unit cannot solve the ring. Five can. |
+| The next-word machine | `widgets/logic/lm.ts` | A **trigram language model** over a short story. Counts become probabilities. Temperature raises the counts to the power 1/T, then renormalizes. |
+| Tokens and context | `widgets/logic/tokens.ts` | A simple tokenizer and a window that keeps the **last 48 tokens**. A simplification, labeled as one. |
+| Bias and fairness | `widgets/logic/bias.ts` | Deleting the neighborhood feature is not enough because the rowing club is a **proxy**. |
 
-`R1 Bias` (`bias.ts`) shows that deleting the neighborhood feature is not enough because the rowing club is a **proxy**.
+All have unit tests in `tests/widgets-logic.test.ts`. None keeps a score any more: each says what happened and why.
 
-All of these have unit tests in `tests/widgets-logic.test.ts`.
+## The art (say how it is made)
+
+Every illustration is code. `src/art/ink.ts` draws tapered, wobbling brush strokes, hatching and stippling from seeded points, so a drawing is the same on every load. `src/art/field/` composes the plates. Annotations are real HTML laid over the drawings (or a numbered list on a phone), not text baked into an image.
 
 ## Research process (say this honestly)
 
 1. Read the official 2026-27 TSA theme and submission pages and the Texas TSA rulebook, event guidelines and generative-AI policy. We could **not** read the national Webmaster rules or rating form (member-only).
-2. Read the AI4K12, CSTA, Common Sense, UNESCO and NIST pages and built the three paths around them. Each lesson names the idea it serves.
+2. Read the AI4K12, CSTA, Common Sense, UNESCO and NIST pages and built the content around them. Lessons name the idea they serve where they come from that guidance.
 3. Checked tool age and account rules on vendor help pages and stamped each with a date. Where we could not read the vendor page we say "Reported, confirm".
-4. Everything is in `docs/RESEARCH_2026-27.md`, including what was and was not verified.
+4. For the redesign: inspected specific award-winning sites in a browser (see `docs/DESIGN_SYSTEM.md` for exactly which, what rendered and what did not). The Awwwards archive itself could not be opened.
+5. Everything is in `docs/RESEARCH_2026-27.md` and `docs/DESIGN_SYSTEM.md`, including what was and was not verified.
 
 ## Accessibility decisions
 
-- Native controls only, so keyboard and screen readers work without extra code. A visible skip link is the first Tab stop. Focus moves to the new page after navigation.
-- Contrast is checked by a script that reads the CSS tokens (`pnpm contrast`).
-- Meaning never depends on colour alone: words and icons for right/wrong, hatching for locked, status written out.
-- 48px minimum targets, reduced-motion support, sound off by default, Atkinson Hyperlegible body text.
-- axe (WCAG 2.2 AA tags) runs on every page at desktop and phone width in `pnpm smoke`.
+- Native controls only, so keyboard and screen readers work without extra code. A skip link is the first Tab stop. Focus moves to the page after navigation. The mobile menu is a native dialog.
+- Contrast is checked by a script that reads the CSS tokens (`pnpm contrast`, 53 pairs).
+- Meaning never depends on colour alone: words and shapes for correct and incorrect, for lesson status, for negative weights and for the matrix cells.
+- Targets of 44 px or more, reduced-motion support, no sound, Atkinson Hyperlegible for interface text.
+- axe runs on 20 page states, and the page is checked for sideways scrolling at four widths, in `pnpm smoke`.
 - Honest limits: not tested with real screen readers; Chromium only.
-
-## Design decisions
-
-See `docs/DESIGN_SYSTEM.md`. Short version: one ink-and-paper palette, one seal-red action colour, one flat hue per path, chamfered panels with hard shadows, original SVG art in a single ink-brush style, and a deliberate list of looks we avoided. Be ready to explain how the art is generated by code: `src/art/ink.ts` draws tapered, wobbling brush strokes and hatching from seeded points.
 
 ## Testing and iteration
 
-- `pnpm test`: 107 unit tests over the XP rules, ranks and streaks, saving and corrupt-save recovery, every lesson's structure and answer key, the experiments' maths, scoring, the mentors' lines, the myth-or-fact set, the codex drill and the wording of unverified tool facts.
-- `pnpm smoke`: a real browser finishes a lesson (210 XP), reloads (progress persists), resets, checks keyboard behavior, and scans every page for accessibility problems.
-- Real bugs found and fixed by testing: the header overflowed on phones; the selected-answer style hid the right/wrong colours; six lessons were missing diagrams; the XP chip's accessible name did not match its visible text; stats lists broke their semantics; a codex definition gave away its own term in the drill ("weights" inside the definition of "Weight"); the links inside the harbor picture and the sea chart had spoken names that left out their visible numbers.
-
-## The picture is also the progress display
-
-Be ready to explain this, because it is the idea that holds the design together.
-
-- **The harbor lights up.** There are fifteen lanterns on the festoon, one per lesson, in three groups for the three paths. `Home.tsx` passes a list of fifteen true-or-false values to `Harbor.tsx`. A finished place flies a pennant, and the lighthouse beam turns on after the certification.
-- **Two layers.** The harbor is two SVG drawings stacked exactly. The base has thousands of points and three texture filters, so it is drawn once and never again. The lanterns, pennants and links live in a second, light drawing on top. Lighting a lantern redraws only that.
-- **The sea chart** (`ChartMap.tsx`) works the same way: paper drawn once, stops drawn on top as real links. A dashed leg becomes a solid line when both of its stops are finished.
-- **The Codex cabinet** gains a scroll per collected term, and **the Logbook cabin** hangs a medal per badge.
-- Every one of these repeats its numbers in text, so the pictures are never the only way to know your progress.
-
-## Missions and the audio system
-
-- **Missions** (`engine/progress.ts`, `MISSIONS`) are twelve short runs of objectives. Each objective is a function of the saved state, such as "lesson finished" or "scored 100 in the experiment", so a mission cannot be completed by visiting or clicking. They are checked after every event, like badges, each pays once, and a save from an earlier version is credited when it loads.
-- **Audio** (`audio/engine.ts`, `music.ts`, `sfx.ts`) is one Web Audio graph with a master volume and two buses. Nothing is created until the player switches sound on. The soundtrack is generated live, so it needs no files and never repeats exactly. Be ready to explain how a browser's autoplay rule shapes the design.
-- **Why the game is black, white and red while the pages are monochrome:** the pages are a calm place to read, so they stay ink on paper; the game is an action space, and one hot colour does the one job a colour is for there: it says "this matters, go here" (the goal, the path, active things). Everything else is black and white so the red is always the loudest thing in the picture. (Original work: the inspiration is a design vocabulary, no assets.)
-- **Why the site is monochrome:** the identity is ink on paper, and every value is a gray. The paths are told apart by value and by name, and feedback never relies on value alone.
-
-## The game (`/play`)
-
-Say this: the game is not a gamified skin on the portal. It is six small games, each built around one idea you can explain, in a harbor you walk. Every station teaches something a lesson also teaches, and every lesson, the Codex and the tools stay open from the menu, so judges can read everything without playing.
-
-- **The 3D renderer (be able to draw this).** Scene -> HDR colour plus a depth texture -> bloom of the brightest parts -> one fullscreen "stylise" shader. The shader turns light level into ink: paper where it is bright, then hatching, cross-hatching, dense lines, solid ink. Outlines come from the depth texture: a big jump in inverse depth is a silhouette, a change in its slope is a crease. Inverse depth is used because it is linear across a flat surface in screen space, so flat walls give no false lines. Say plainly that Three.js does the 3D drawing and the project's own shaders and scene code do the look.
-- **2D and 3D share one game.** The stations, relics, saves and dialogues are the same code; only the stage differs. 3D is lazy-loaded so the 2D game and the rest of the site never download it. Be ready to explain why (580 kB).
-- **Rooms and movement (2D).** A room is a wide SVG in two layers: the back wall moves at half speed, the furniture at full speed, which is what makes the depth. One animation loop moves the player, the camera and Kernel by writing straight to the DOM, so walking never re-renders React. Be ready to explain why (re-rendering 60 times a second would be slow and is unnecessary).
-- **Accessibility of a game.** The stage is a `role="application"` widget, because a game has to take keys itself. Because that is hard on a screen reader, every hotspot in a room is also a plain button in the "In this room" list. Dialogs are native `<dialog>` elements, so focus is trapped and Escape works without custom code.
-- **The six stations, in one sentence each.** Cabinet: a nearest-neighbor model and a label budget, with a round where the model has only seen the west. Weight Frame: one neuron, turned by hand or by gradient descent. Anvil: a rule-based forge (say plainly it is not an AI) that shows what each part of a prompt does. Weld Test: triage when you cannot check everything. Audit: find the proxy for district and fix it, and notice that fixing it did not cost accuracy because the unfair signal was noise. Timeline: order seven milestones from feedback alone.
-- **Honesty.** Every simulation says what it is on the screen where it appears. Do not describe the forge or the screener as a real model.
-- **What testing found.** The automated playthrough (`pnpm playtest`) found that two moths could overlap so one could not be clicked, and that Escape never opened the pause menu on a real keyboard because the dialog opened during the keydown and the browser's own Escape handling closed it. Both are good stories: they show why you test with real input.
-- **Likely question: "Why a game for a Webmaster entry?"** Because the challenge is to teach, and a station makes a student do the thing (spend a label budget, set a weight, spot an invented source) instead of reading about it. The required content is all still there as ordinary pages.
-
-## Technical challenges worth telling
-
-- Making the neural network converge reliably in the browser, and proving it with a test.
-- Chamfered borders in CSS: a clipped outer layer in the border colour plus an inset clipped layer for the fill.
-- Keeping one source of truth: the codex count, the path progress numbers and the route list are all computed from the content data, so they cannot drift from it.
+- `pnpm test`: unit tests over every lesson's structure and answer key, the experiments' maths, the learner state and migration, the old-address map, and the three instruments' models.
+- `pnpm smoke`: a real browser loads every page, checks sideways scrolling, runs axe, exercises the menu with the keyboard, follows old addresses, migrates an earlier save, answers a check wrongly and retries, and drives each instrument.
+- Real problems found by that testing: the hero annotations overflowed on phones; a large ochre numeral failed contrast; the "page moved" note was lost when the redirect used a static page (it now carries the old address in the link); a long reference URL overflowed at 320 px.
 
 ## Questions to practice
 
-1. Walk me through what happens when a student finishes a check.
-2. Why is the neural network experiment real and not an animation?
-3. How do you know the badges cannot be earned by clicking around?
-4. What happens if localStorage is blocked or the save is corrupted?
-5. What could be wrong with the facts in your lessons, and how would you find out?
-6. What did you cut, and why?
-7. How did you decide which AI tools to include, and which to leave out?
-8. Show me one thing you changed after testing it.
+1. Why did you remove the gamification, and what does the event's requirement say about it?
+2. Walk me through what happens when a student answers a check wrongly.
+3. What exactly is stored on a learner's device, and what happens to an earlier save?
+4. Is the prompt console a real model? How do you know the numbers mean something?
+5. How do the hero drawing's annotations stay accessible?
+6. What happens if localStorage is blocked or the save is corrupted?
+7. What could be wrong with the facts in your lessons, and how would you find out?
+8. What did you cut, and why? What did you keep that the brief did not list?
 9. Which tools did you use to build this, and what did each one do?

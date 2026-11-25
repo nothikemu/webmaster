@@ -1,21 +1,17 @@
 # Parameter
 
-A free, game-inspired AI learning portal for grades 9 to 12, built for the **TSA Webmaster 2026-27** challenge: *design and develop an interactive Artificial Intelligence (AI) learning portal*.
+A free, illustrated **field guide to how machines learn**, for grades 9 to 12, built for the **TSA Webmaster 2026-27** challenge: *design and develop an interactive Artificial Intelligence (AI) learning portal*.
 
-- **Three learning paths** (fundamental concepts, practical tools and techniques, ethical use), 15 lessons, each opened by one of three mentors.
-- **Real experiments**: train a neural network, teach a classifier, watch a language model predict words, audit a biased screener.
-- **Gamification that tracks real work**: XP, ten ranks with their own insignia, nine badges, a day streak, a progress dashboard, a final certification with a printable certificate.
-- **Twelve missions** in four groups, each a run of real objectives checked against finished work, with a one-time XP bonus.
-- **One look, ink, paper and one red** (see [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md), built on principles from Apple's Human Interface Guidelines: clarity, deference, hierarchy, whitespace, few elements per screen). The site's illustrations are inked in code and printed in the game's three colours, and the 3D game is a moving comic poster (cel bands, halftone dots, thick ink outlines, one hot red; see [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)), with original synthesized music and sound effects (both off until you switch them on).
-- **A world that fills in as you learn**: a lantern lights over the harbor for every finished lesson, the sea chart inks in your route, and the Codex cabinet gains a scroll for every term.
-- **Practice**: one page for the Prompt Lab, six scenarios, the Tool Atlas (dated, sourced), a Codex with a drill, a daily myth-or-fact card and the final certification. Optional synthesized sound.
-- All progress stays in the browser. No accounts, no server, no tracking.
+- **Three modules**, each with five core lessons: **Foundations** (what AI is and is not, rules versus learning, neural networks, training and inference, data and features), **Synthesis** (how a model reads a prompt, roles, tasks and constraints, examples and few-shot prompting, reasoning step by step, evaluating outputs) and **Ethics** (bias and fairness, privacy and data leakage, adversarial inputs, transparency and explanation, accountability). Earlier lessons without a place in those fifteen are kept as optional "go further" lessons in the matching module.
+- **Three instruments**, one per module: *Neural topology* (follow a signal through a small network and change a weight), *Prompt console* (a clearly labelled simulation of how prompt settings shift a model's output) and *Vulnerability matrix* (four ways a system fails, with a realistic mitigation and a before-and-after comparison).
+- **Guided experiments, unscored checks and six decision cases.** Checks are untimed, explain every answer and can be tried again. Nothing is scored, timed, locked or rewarded.
+- **A glossary** (46 terms, each linking to where it is taught), a **tool atlas** (dated, sourced) and a set of common misconceptions.
+- **A calm overview** of which lessons you have opened or marked complete. It is saved only in this browser, with no accounts, no server and no tracking. You can download it, load it, or erase it.
+- **Original artwork**, hand-inked in code: a plate for the home page and one for each module.
 
-> **Read before submitting:** [`docs/COMPLIANCE_CHECKLIST.md`](docs/COMPLIANCE_CHECKLIST.md) lists what is met, what is still open and what your advisor has to confirm. The sources are in [`docs/RESEARCH_2026-27.md`](docs/RESEARCH_2026-27.md).
+The design is documented in [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md), the research and compliance notes in [docs/COMPLIANCE_CHECKLIST.md](docs/COMPLIANCE_CHECKLIST.md) and [docs/RESEARCH_2026-27.md](docs/RESEARCH_2026-27.md).
 
-## The game
-
-`/play` is a playable 3D browser game on top of the portal (with a classic 2D version for devices that cannot draw 3D): walk a harbor plaza drawn as a moving comic poster in black, white and red, follow the red path and the Objective box to the next goal, enter six buildings, work six small stations (each teaches one idea and pays XP), and find seventeen hidden relics. Arrow keys or A/D walk, E uses, L lifts the lantern, T opens Tasks, U tunes the lantern, Esc pauses; touch and mouse work too. **Every task is done inside the game**: the Tasks window holds the missions, lessons, experiments, quizzes, practice tools and your progress, so you never leave the harbor to start or finish one. Finished work earns points to spend on the lantern's three parameters (Reach, Glow, Stride). Design, mapping to the three required learning areas, and accessibility notes are in [docs/GAME_DESIGN.md](docs/GAME_DESIGN.md). `pnpm playtest` plays the built game in a real browser.
+> **Read before submitting:** the official challenge requirements recorded in `docs/RESEARCH_2026-27.md` (item A3) ask for a *gamified* interface with badges, experience points and a progress dashboard. This version removes all gamification on purpose, at the owner's direction. See `docs/COMPLIANCE_CHECKLIST.md` (A3) and confirm with your advisor before you submit.
 
 ## Run it
 
@@ -47,64 +43,44 @@ pnpm lint
 pnpm contrast
 ```
 
-End-to-end browser test of the built site (routes, a full lesson, persistence, keyboard, and an axe accessibility scan at 1280px and 390px). It needs a Chromium; set `CHROMIUM_PATH` if Playwright's own is not installed:
+A browser check of the built site: every page, sideways scrolling at 320, 390, 768 and 1280 px, axe accessibility scans, the mobile menu, old addresses, earlier saves, the unscored checks and the three instruments. It needs a Chromium; set `CHROMIUM_PATH` if Playwright's own is not installed:
 
 ```bash
 pnpm build && pnpm smoke
 ```
 
-The game has its own real-browser playthrough (new game, walking, every station, unlocks, saving, reset, keyboard, sound opt-in, an axe scan and a phone):
+## Your data, and old addresses
 
-```bash
-pnpm playtest
-```
+The only thing the site stores is which lessons you opened and which you marked complete (`parameter/learning/v2` in `localStorage`). Earlier versions saved points, levels, badges and game progress under `parameter/v1` (and `tideweight/v1`). On first load, the finished lessons from such a save are carried over to the new key and **the earlier save is left untouched**; it is removed only when you choose "Erase everything stored here" on the overview. Exports from earlier versions can be loaded too (only lesson completion is read).
+
+The pages that used to exist (the game, missions, certification, challenges, achievements, the three "paths") redirect to the nearest page that still exists, with a short note, including when JavaScript is off (`src/content/legacy.ts`, written as small HTML pages at build time).
 
 ## Deploy
 
 `dist/` is a complete static site: every page is a real folder with its own `index.html`, plus a `404.html`. Nothing needs a server or a database, so any static host works. The project is set up for **Vercel**.
 
-### Vercel
+`vercel.json` holds everything Vercel needs: the Vite framework preset, `pnpm install --frozen-lockfile`, the build command `pnpm lint && pnpm test && pnpm contrast && pnpm build` (a failing check stops the deployment), the output directory `dist`, and the headers (a strict Content-Security-Policy and friends on every page, and long-lived caching for the fingerprinted files in `/assets/`).
 
-`vercel.json` holds everything Vercel needs: the Vite framework preset, `pnpm install --frozen-lockfile`, the build command `pnpm lint && pnpm test && pnpm contrast && pnpm build` (a failing check stops the deployment), the output directory `dist`, and the headers (a strict Content-Security-Policy and friends on every page, and `Cache-Control: public, max-age=31536000, immutable` on the fingerprinted files in `/assets/`). The site is served from the root of its domain, so there is no base path.
+To publish it (once, by the repository owner): sign in at <https://vercel.com> with GitHub, choose **Add New... > Project**, import `nothikemu/webmaster`, leave the detected settings as they are, name the production branch under **Settings > Git**, and press **Deploy**. Open the live URL in a private window and open a lesson address directly to check deep links. The build creates `sitemap.xml` from Vercel's `VERCEL_PROJECT_PRODUCTION_URL`; set `SITE_URL` for a custom domain.
 
-To publish it (once, by the repository owner):
-
-1. Sign in at <https://vercel.com> with GitHub, choose **Add New... > Project**, and **Import** `nothikemu/webmaster` (install the Vercel GitHub app for that repository if asked).
-2. Leave the detected settings as they are. They come from `vercel.json`: Framework **Vite**, Build Command `pnpm lint && pnpm test && pnpm contrast && pnpm build`, Output Directory `dist`, Install Command `pnpm install --frozen-lockfile`. No environment variables are needed.
-3. Under **Settings > Git > Production Branch**, name the branch to publish (this repository develops on `claude/wizardly-goldberg-fkot9u`; `main` is the usual choice once the work is merged). Every push to the production branch is a production deploy; every other branch and pull request gets its own preview URL.
-4. Press **Deploy**. When it finishes, Vercel shows the live URL (`https://<project>.vercel.app`). Open it in a private window, then open `/play/` and `/learn/understand/` directly to check deep links.
-
-The build creates `sitemap.xml` automatically from Vercel's own `VERCEL_PROJECT_PRODUCTION_URL`; to set a different origin (a custom domain), add an environment variable `SITE_URL=https://your-domain` in the project settings. If Vercel cannot find pnpm 10, add the environment variable `ENABLE_EXPERIMENTAL_COREPACK=1` so it uses the version in `package.json`.
-
-The old GitHub Pages workflow has been removed. The copy already published at `https://nothikemu.github.io/webmaster/` stays online at its last version until the owner turns it off (**Settings > Pages**).
-
-To build and check the same thing locally:
-
-```bash
-pnpm build
-pnpm preview
-```
-
-`SITE_URL` adds a `sitemap.xml` to a local build too.
-
-**The TSA submission is one website URL that must be public and not password-protected.** Open the deployed URL in a private window before you upload it.
+**The TSA submission is one website URL that must be public and not password-protected.**
 
 ## How it is organized
 
 | Path | What lives there |
 | --- | --- |
-| `src/content/` | All teaching content as plain data: lessons, glossary, tools, scenarios, certification questions, the mentors' lines, the myth-or-fact set and the codex drill builder |
-| `src/engine/` | The rules of XP, ranks, badges and streaks (`progress.ts`, pure and tested), saving (`persistence.ts`), the store |
-| `src/widgets/` | The interactive experiments. The maths lives in `widgets/logic/` with no React in it |
-| `src/art/` | Original artwork as code: an ink-brush engine, a prop kit, the two-layer harbor, the sea chart, a scene for every page, 15 lesson illustrations, the cast (Kernel and three mentors), badge emblems, rank crests, icons |
-| `src/ui/`, `src/pages/` | Components and pages |
-| `src/styles/` | Design tokens and CSS |
-| `src/audio/` | Synthesized interface sounds (Web Audio, off by default) |
-| `tests/`, `scripts/` | Unit tests, the contrast checker, the browser smoke test |
-| `docs/` | Research, design system, compliance checklist, interview guide |
+| `src/content/` | All teaching content as plain data: the three modules, their lessons (`lessons/`), the glossary, misconceptions, tools, cases, routes and the old-address map (`legacy.ts`) |
+| `src/learning/` | What is remembered about a learner: `state.ts` (pure), `persistence.ts` (saving, migration, export and import), `store.ts` |
+| `src/explainers/` | The three instruments and their pure models |
+| `src/widgets/` | The guided experiments and the unscored check. The maths lives in `widgets/logic/` with no React in it |
+| `src/art/` | The ink engine (`ink.ts`), the drawing helpers and the plates (`field/`), the diagram renderer, icons |
+| `src/pages/`, `src/ui/` | Pages, the shell and primitives |
+| `src/styles/` | Tokens and CSS |
+| `tests/`, `scripts/` | Unit tests, the contrast checker, the browser check (`smoke.mjs`) |
+| `docs/` | Design system, research, compliance checklist, interview guide, progress log |
 
-Dependencies are deliberately few: React, plus three self-hosted open-licensed fonts. The build tool and test tools are development-only.
+Dependencies are deliberately few: React, plus three self-hosted open-licensed font families. The build and test tools are development-only.
 
 ## Licenses and credits
 
-Music and sound effects are synthesized in the browser and use no audio files. Fonts: Dela Gothic One, Barlow Condensed, Atkinson Hyperlegible (SIL Open Font License 1.1). Code: MIT. Artwork and sounds are original and generated by code in this repository. See the site's Credits page for the full list.
+Fonts: Newsreader, IBM Plex Mono and Atkinson Hyperlegible (SIL Open Font License 1.1). Code: MIT. Artwork is original and generated by code in this repository. See the site's Credits page for the full list.

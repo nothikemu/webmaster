@@ -7,8 +7,8 @@ Each line maps an **official requirement** to the part of the product that meets
 | # | Requirement (official source) | Where it is met | Evidence | Status |
 | --- | --- | --- | --- | --- |
 | A1 | Interactive AI learning portal for grades 9-12 that demystifies AI (tsaweb.org Themes and Problems) | The whole site | Content written for grades 9-12; `tests/content.test.ts` | Met |
-| A2 | At least three distinct learning sections: fundamental concepts, practical tools and techniques, ethical use | Paths: Understand AI, Use AI, Use AI Responsibly (`/learn/*`) | `curriculum meets the TSA requirements` tests: 3 paths, 15 lessons, 5 each, mapped to the three sections | Met |
-| A3 | Interactive, gamified interface (badges, XP, progress dashboard) that visually tracks completion | XP and ten ranks, nine badges, a day streak, the Logbook dashboard, path meters, the lesson route with step ticks, and four pictures that fill in with progress (harbor lanterns, the sea chart, the Codex cabinet, the Logbook medal rail) | `tests/engine.test.ts` (rules); `scripts/smoke.mjs` finishes a lesson in a real browser and checks 210 XP, persistence and reset | Met |
+| A2 | At least three distinct learning sections: fundamental concepts, practical tools and techniques, ethical use | Modules: Foundations, Synthesis, Ethics (`/modules/*`), five core lessons each plus optional lessons | `tests/content.test.ts`: three modules mapped to the three sections, five core lessons each in the agreed order, every earlier lesson kept | Met |
+| A3 | **Interactive, gamified interface (e.g. digital badges, experience points, a progress dashboard) that visually tracks completion** (as recorded in `RESEARCH_2026-27.md`) | **Removed on purpose, at the owner's direction (redesign brief of 2026-11-25).** There are no points, levels, badges, streaks, timers, leaderboards, rewards or unlockable content. What remains: a neutral overview that marks each lesson not started, started or complete, and shows 'n of 5 core lessons complete' per module, saved only on this device. | `pnpm smoke` checks that no page links to the old game, missions, achievements or challenge pages and that no points, level or streak display exists. | **OPEN, RISK: the recorded requirement asks for a gamified interface. Confirm with your advisor that the event accepts a portal without gamification before you submit. If it does not, the earlier gamified version is in git history (commit 815acc2).** |
 | A4 | Semifinalist interview | `docs/INTERVIEW_GUIDE.md` | Team must read and be able to explain it | Team action |
 | A5 | One website URL, public, not password-protected (tsaweb.org preconference page; Texas Online Submission Guidelines) | `dist/` is a static site with no login, no accounts. It is configured for Vercel (`vercel.json`; steps in the README) and served from the root of its domain. The earlier GitHub Pages copy at https://nothikemu.github.io/webmaster/ stays at its last version until it is turned off. | The built site passes the full smoke suite locally. The Vercel project has not been created yet, so there is no live Vercel URL to check. | **OPEN until the Vercel project exists and its URL is opened in a private window** |
 
@@ -42,26 +42,24 @@ On 2026-11-10 a web search surfaced public copies of **earlier** Webmaster rules
 
 | Standard | How it is checked | Result |
 | --- | --- | --- |
-| WCAG 2.2 AA contrast | `pnpm contrast` checks 35 colour pairs read from the CSS tokens | All pass |
-| WCAG 2.2 AA automated scan | `pnpm smoke` runs axe (wcag2a, 2aa, 21a, 21aa, 22aa) on all 30 routes at 1280px and 390px | 0 serious, critical or moderate findings in the loaded state (last run 2026-11-10) |
-| No horizontal scroll | Smoke test checks every route at 1280px and 390px; manual check at 320px | Pass |
+| WCAG 2.2 AA contrast | `pnpm contrast` checks 53 colour pairs read from the CSS tokens | All pass |
+| WCAG 2.2 AA automated scan | `pnpm smoke` runs axe (wcag2a, 2aa, 21a, 21aa, 22aa) on 20 pages at 1280px, plus the menu open, an instrument in use and an answered check at 390px | 0 serious or critical findings (last run 2026-11-25) |
+| No horizontal scroll | `pnpm smoke` checks every page (36) at 320, 390, 768 and 1280px, and text enlarged to 200% on a 640px window | Pass |
 | Keyboard | Skip link is the first Tab stop; focus moves to the new page after navigation; every control is native | Pass in smoke test |
-| Motion | Four durations, no bounce, nothing that loops, so no pause control is needed. `prefers-reduced-motion` stops all animation and transitions (`base.css`) | By design; not tested with a screen recording |
-| Sound and music | Off by default, opt-in, original, no autoplay. No audio files. No audio context exists until the player switches sound on. Separate master, music and effects volumes, and a mute button, all saved. | Smoke test checks: no context before opt-in; the music button starts a running engine that schedules notes and puts signal on the output; the button stops it. **A person has not listened to it**, so judge the music by ear. |
-| Privacy | No analytics, no third-party requests, `connect-src 'self'` in `_headers` | Verified: zero failed or external requests in the smoke test |
-| Content accuracy | `tests/content.test.ts` checks structure, answer keys and that every claim appears in its source text. **It cannot check facts.** | Facts need human review, see below |
+| Motion | Three short durations, no bounce, nothing that loops, no autoplay. `prefers-reduced-motion` removes all animation and transitions (`base.css`, `tokens.css`) | Checked in `pnpm smoke`; not tested with a screen recording |
+| Sound | None. The earlier synthesized sound and music were removed with the game. | n/a |
+| Privacy | No analytics, no third-party requests, `connect-src 'self'` in `vercel.json`. The only stored data is which lessons were opened or completed, in `localStorage`. | Verified: the smoke test finishes with zero console errors; no external requests are made by the pages |
+| Content accuracy | `tests/content.test.ts` checks structure, answer keys and that every claim appears in its source text. **It cannot check facts.** The facts in the nine lessons restored from the first version of the portal (and in the vulnerability matrix) are quoted from that version, not re-verified. | Facts need human review, see below |
 
-## D2. The game (added with `/play`)
+## D2. The redesign of 2026-11-25
 
-- [x] The game is an addition, not a replacement: every required lesson, the Codex, the Tool Atlas, the scenarios and the certification stay ordinary pages reachable from the main menu (checked by the smoke test on all 31 routes).
-- [x] The three required learning areas each have stations and relics, mapped in `docs/GAME_DESIGN.md`.
-- [x] No secrets, no accounts, no network requests; progress is saved only in the browser, with an erase button in the pause menu.
-- [x] All artwork is drawn in code and all sound is synthesized in the browser: no stock images, no audio files, nothing copied. (The generative-AI policy question in section C still applies to how the project was produced; it is unresolved.)
-- [x] Simulations are labeled as simulations on the screen they appear on (the forge is not a live AI; the classifier is a one-nearest-neighbor model; the audit's people are invented).
-- [x] Keyboard, touch and mouse play; a non-visual route to every action ("In this room"); sound off by default; reduced motion respected.
-- [x] The 3D version uses Three.js (MIT license, credited on the Credits page); everything drawn or heard is generated in code. WebGL2 is required for 3D; without it the 2D version starts automatically.
-- [x] The poster look (black, white and one red; cel bands, halftone, thick outlines, slanted menus) is a *design vocabulary* chosen after research, written up in `docs/STYLE_GUIDE.md`. It uses no asset, name, logo, character, font, music or iconography from any game; every shape, texture, shader and sound is generated in code. (Reviewers should still judge whether the resemblance is acceptable under the competition's originality rule; that decision is not ours to make.)
-- [x] Red is never the only signal: the goal is also named in words with its distance in the Objective box and on its label; locked doors say "Locked" in words; contrast of the red pairs is checked by `pnpm contrast`.
+- [x] **No gamification.** Removed: points, levels, ranks, badges, streaks, missions, timed modes, leaderboards, the certification and its certificate, the scored scenarios and lab, the game and its 3D engine, sound and music. Checks and experiments are untimed, unscored, explained and repeatable. Nothing is locked.
+- [x] **Learner data is carried over, not erased.** Finished lessons from `parameter/v1` and `tideweight/v1` saves are copied to `parameter/learning/v2`; the earlier key is left untouched until the learner erases it (`tests/learning.test.ts`, `pnpm smoke`).
+- [x] **Old addresses do not break.** `/play`, `/missions`, `/achievements`, `/challenge/*`, `/certification`, `/learn/*` and the like redirect to the nearest page that exists, with a note, including without JavaScript (`src/content/legacy.ts`; `tests/learning.test.ts`; `pnpm smoke`).
+- [x] **Simulations are labelled.** The prompt console says on the page that no model is called and that the same settings always give the same numbers. The vulnerability matrix says its numbers are illustrative. The neural topology uses fixed example weights.
+- [x] **Every instrument has a keyboard path and a text explanation** (sliders, a select, buttons, a table of the arithmetic, a live-region note saying what changed and why).
+- [x] **All artwork is drawn in code**; no stock images; nothing copied from the reference sites. The design research and its limits are in `docs/DESIGN_SYSTEM.md`.
+- [x] **Content merge decision.** The redesign brief lists fifteen lessons that match the first version of the portal, while the repository's current lessons were different. The fifteen listed lessons are the core of each module (six reuse current lessons, nine are restored from the first version in git history), and every current lesson without a place in them is kept as an optional go-further lesson (nine of them). Nothing was deleted.
 - [ ] Not tested with a screen reader or on a physical phone.
 
 ## E. Known gaps, stated plainly
@@ -69,9 +67,11 @@ On 2026-11-10 a web search surfaced public copies of **earlier** Webmaster rules
 1. **Not verified:** the Webmaster rating form and criteria (member-only). We did not invent weights or page limits.
 2. **Facts need a human re-check** before launch: every lesson statement, the five real-world cases, and the Tool Atlas entries marked "Reported, confirm".
 3. **Screen readers** were not run. Automated and keyboard testing only.
+3a. **Gamification (A3).** See the A3 row. This is the main compliance risk of the redesign.
+3b. The Awwwards archive could not be opened, so the design research covers the specific sites listed in `docs/DESIGN_SYSTEM.md` and no more.
 4. **Browsers:** tested in Chromium only (Firefox, Safari not run).
 5. **Axe scans the loaded state**, not every state of every experiment.
-6. The decision-map plots in two experiments are visual. Their results are repeated in text.
+6. The decision-map plots in two experiments, the neural topology drawing and the matrix grid are visual. Their results are repeated in text.
 7. Image, writing and data AI tools are **not** in the Tool Atlas because their official pages were not read. Four of the eight listed tools are read on the vendor's page; the other four are marked "Reported, confirm".
-8. The deployment workflow reports success, but the live URL was not opened from the build environment, which cannot reach it. Open it in a private window before you submit.
-9. The artwork is drawn by code. It was checked in screenshots at 1440 and 390 pixels wide, not on a range of real devices.
+8. The live URL was not opened from the build environment, which cannot reach it. Open it in a private window before you submit.
+9. The artwork is drawn by code. It was checked in screenshots at 1440 and 390 pixels wide (and for overflow at 320 and 768), not on a range of real devices.
