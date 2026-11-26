@@ -136,3 +136,14 @@ Not done or not verified
 - Screen readers, Firefox and Safari, and physical phones were not tested.
 - The live Vercel deployment was not opened from this environment.
 - Several reference sites only partly rendered (see the design system document), so the research is narrower than the brief asked for.
+
+## 2026-11-26: deploy to GitHub Pages again
+
+Asked for: "deploy" (meant GitHub Pages, not Vercel).
+
+- Restored `.github/workflows/pages.yml` (lint, test, contrast, then build with `BASE=/<repository>/` and `SITE_URL`; deploys `dist/` with the Pages actions). It runs on pushes to `main` and `claude/wizardly-goldberg-fkot9u` and by hand.
+- `vite.config.ts` reads `BASE` again (default `/`, so Vercel and local builds are unchanged). The redirect pages for old addresses, their canonical links and the sitemap now carry the base path (`/webmaster/overview/?moved=...`). The router and the favicon already handled a base path.
+- `scripts/smoke.mjs` has the `SMOKE_BASE` sub-folder mode back (nothing is served outside the sub-folder, like Pages). With `BASE=/webmaster/` built, the whole smoke suite passes under `SMOKE_BASE=/webmaster/`; the root build passes it too.
+- `vercel.json` is kept; the README describes both hosts.
+
+Not verified: the Pages setting (Source: GitHub Actions) and whether the `github-pages` environment allows the dev branch could not be read from the build environment, and the live URL could not be opened (the host is not reachable from here).

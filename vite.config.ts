@@ -9,7 +9,7 @@ import { legacyPages } from './src/content/legacy';
  * The site is a single-page app, but every page also needs a real URL that works when someone
  * opens it directly or refreshes. After the build we copy index.html into a folder for each route
  * (dist/modules/foundations/index.html and so on) and write a 404.html that does the same job for
- * unknown URLs (Vercel serves 404.html with a 404 status). Any static host can serve the result. No server code is involved.
+ * unknown URLs (GitHub Pages and Vercel both serve 404.html with a 404 status). Any static host can serve the result. No server code is involved.
  */
 function staticRoutes(): Plugin {
   let config: ResolvedConfig;
@@ -21,6 +21,8 @@ function staticRoutes(): Plugin {
     },
     closeBundle() {
       const out = resolve(config.root, config.build.outDir);
+      // '' at the root of a domain, '/repository' on a GitHub Pages project site. Every address written below carries it.
+      const prefix = config.base.replace(/\/$/, '');
       const shell = join(out, 'index.html');
       if (!existsSync(shell)) return;
       for (const route of ROUTES) {
@@ -36,7 +38,7 @@ function staticRoutes(): Plugin {
         const dir = join(out, from);
         mkdirSync(dir, { recursive: true });
         const [path, hash] = redirect.to.split('#');
-        const target = `${path === '/' ? '/' : path + '/'}?moved=${encodeURIComponent(from)}${hash ? '#' + hash : ''}`;
+        const target = `${prefix}${path === '/' ? '/' : path + '/'}?moved=${encodeURIComponent(from)}${hash ? '#' + hash : ''}`;
         writeFileSync(
           join(dir, 'index.html'),
           `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>This page has moved · Parameter</title>` +
@@ -45,11 +47,11 @@ function staticRoutes(): Plugin {
             `<p>${redirect.note}</p><p><a href="${target}" style="color:#1a2d9e">Continue to the right page</a></p></body></html>\n`,
         );
       }
-      // The public origin, for the sitemap: SITE_URL if set, otherwise the production domain Vercel exposes at build time.
+      // The public origin, for the sitemap: SITE_URL if set (GitHub Pages), otherwise the production domain Vercel exposes at build time.
       const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
       const site = (process.env.SITE_URL ?? (vercel ? `https://${vercel}` : '')).replace(/\/$/, '');
       if (site) {
-        const urls = ROUTES.map((r) => `  <url><loc>${site}${r === '/' ? '/' : r + '/'}</loc></url>`).join('\n');
+        const urls = ROUTES.map((r) => `  <url><loc>${site}${prefix}${r === '/' ? '/' : r + '/'}</loc></url>`).join('\n');
         writeFileSync(
           join(out, 'sitemap.xml'),
           `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
@@ -60,8 +62,9 @@ function staticRoutes(): Plugin {
 }
 
 export default defineConfig({
-  // Served from the root of its own domain (Vercel), so assets and pages live at / and no base path is needed.
-  base: '/',
+  // The root of its own domain (Vercel, a custom domain) unless BASE says otherwise: the GitHub Pages workflow
+  // sets BASE=/<repository>/ because a project site is served from that sub-folder.
+  base: process.env.BASE ?? '/',
   plugins: [react(), staticRoutes()],
   resolve: { alias: { '@': resolve(__dirname, 'src') } },
   build: { target: 'es2022', sourcemap: false, cssCodeSplit: true },

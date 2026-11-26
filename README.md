@@ -57,11 +57,11 @@ The pages that used to exist (the game, missions, certification, challenges, ach
 
 ## Deploy
 
-`dist/` is a complete static site: every page is a real folder with its own `index.html`, plus a `404.html`. Nothing needs a server or a database, so any static host works. The project is set up for **Vercel**.
+`dist/` is a complete static site: every page is a real folder with its own `index.html`, plus a `404.html`. Nothing needs a server or a database, so any static host works. The project is set up for **GitHub Pages**, and still carries a `vercel.json` for Vercel.
 
-`vercel.json` holds everything Vercel needs: the Vite framework preset, `pnpm install --frozen-lockfile`, the build command `pnpm lint && pnpm test && pnpm contrast && pnpm build` (a failing check stops the deployment), the output directory `dist`, and the headers (a strict Content-Security-Policy and friends on every page, and long-lived caching for the fingerprinted files in `/assets/`).
+**GitHub Pages.** `.github/workflows/pages.yml` runs `pnpm lint`, `pnpm test` and `pnpm contrast` (a failing check stops the deployment), builds with `BASE=/<repository>/` (a project site lives in that sub-folder) and publishes `dist/`. It runs on every push to `main` or to `claude/wizardly-goldberg-fkot9u`, and from the Actions tab. One-time setup by the repository owner: **Settings > Pages > Build and deployment > Source: GitHub Actions**. If the deploy step is refused for a branch, add that branch under **Settings > Environments > github-pages > Deployment branches**. The site is then at <https://nothikemu.github.io/webmaster/>. Pages cannot set response headers, so the Content-Security-Policy and caching headers in `vercel.json` do not apply there. To test the sub-folder build locally: `BASE=/webmaster/ pnpm build && SMOKE_BASE=/webmaster/ pnpm smoke`.
 
-To publish it (once, by the repository owner): sign in at <https://vercel.com> with GitHub, choose **Add New... > Project**, import `nothikemu/webmaster`, leave the detected settings as they are, name the production branch under **Settings > Git**, and press **Deploy**. Open the live URL in a private window and open a lesson address directly to check deep links. The build creates `sitemap.xml` from Vercel's `VERCEL_PROJECT_PRODUCTION_URL`; set `SITE_URL` for a custom domain.
+**Vercel (optional).** `vercel.json` holds the framework preset, `pnpm install --frozen-lockfile`, the same gates, the output directory `dist` and the headers. Import the repository at <https://vercel.com>, leave the detected settings alone, and it builds for the root of its domain (no `BASE`). The sitemap origin comes from `SITE_URL`, or from Vercel's `VERCEL_PROJECT_PRODUCTION_URL`.
 
 **The TSA submission is one website URL that must be public and not password-protected.**
 

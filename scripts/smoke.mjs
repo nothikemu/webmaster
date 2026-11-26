@@ -11,8 +11,21 @@ import AxeBuilder from '@axe-core/playwright';
 const dist = join(fileURLToPath(new URL('..', import.meta.url)), 'dist');
 const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.json': 'application/json', '.txt': 'text/plain' };
 
+// SMOKE_BASE tests a sub-folder deploy such as a GitHub Pages project site (build with BASE=/webmaster/, then SMOKE_BASE=/webmaster/).
+const sub = (process.env.SMOKE_BASE ?? '/').replace(/\/?$/, '/');
+const root = sub.slice(0, -1);
+
 const server = createServer(async (req, res) => {
-  const p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
+  let p = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
+  if (sub !== '/') {
+    // Like GitHub Pages: nothing exists outside the repository sub-folder.
+    if (!p.startsWith(sub) && p !== root) {
+      res.statusCode = 404;
+      res.end('not found');
+      return;
+    }
+    p = p.slice(root.length) || '/';
+  }
   let file = join(dist, p);
   try {
     if ((await stat(file)).isDirectory()) file = join(file, 'index.html');
@@ -29,7 +42,7 @@ const server = createServer(async (req, res) => {
   }
 });
 await new Promise((r) => server.listen(0, r));
-const base = `http://localhost:${server.address().port}`;
+const base = `http://localhost:${server.address().port}${root}`;
 
 /** Every real page in dist: a folder with an index.html that is not a redirect stub. */
 async function routes() {
@@ -109,7 +122,7 @@ await check('a made-up address shows the helpful not-found page with a 404 statu
   await page.waitForSelector('main h1');
   assert(res.status() === 404, `status ${res.status()}`);
   assert((await page.textContent('main h1')).includes('not in the guide'), 'wrong heading');
-  assert(await page.locator('main a[href="/modules/"]').count() > 0, 'no way back');
+  assert(await page.locator(`main a[href="${root}/modules/"]`).count() > 0, 'no way back');
   await ctx.close();
 });
 
@@ -290,7 +303,7 @@ for (const [from, to, why] of [
     const { ctx, page } = await fresh();
     await page.goto(base + from, { waitUntil: 'networkidle' });
     await page.waitForSelector('main h1', { timeout: 8000 });
-    assert(new URL(page.url()).pathname === to, `ended at ${new URL(page.url()).pathname}`);
+    assert(new URL(page.url()).pathname === root + to, `ended at ${new URL(page.url()).pathname}`);
     assert((await page.locator('h1').count()) === 1, 'not a real page');
     await ctx.close();
   });
